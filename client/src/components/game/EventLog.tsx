@@ -20,25 +20,22 @@ export function EventLog({ events }: Props) {
       </div>
 
       <div className="relative">
-        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-48 overflow-y-auto pr-1 pb-4">
           {reversed.map((ev, i) => (
             <div
               key={ev.id}
-              className={`flex gap-2 items-start text-xs leading-relaxed transition-colors ${
-                i === 0
-                  ? 'text-amber-200'
-                  : i === 1
-                  ? 'text-amber-500/70'
-                  : 'text-amber-800/50'
+              className={`flex gap-2 items-start text-xs leading-relaxed ${
+                i === 0 ? 'text-amber-200/95'
+                : i <= 2 ? 'text-amber-500/65'
+                : 'text-amber-800/45'
               }`}
             >
-              <span className={`shrink-0 mt-0.5 text-[8px] ${i === 0 ? 'text-amber-600' : 'text-amber-900'}`}>▸</span>
+              <span className={`shrink-0 mt-0.5 text-[9px] leading-none ${i === 0 ? 'text-amber-500' : 'text-amber-900/60'}`}>▸</span>
               <span className={i === 0 ? 'font-medium' : ''}>{ev.text}</span>
             </div>
           ))}
         </div>
-        {/* Bottom fade */}
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
     </DarkPanel>
   );

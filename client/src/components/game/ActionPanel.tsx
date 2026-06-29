@@ -67,9 +67,14 @@ function PlayerRow({
 
 function SubmittedBadge({ label, sub }: { label: string; sub?: string }) {
   return (
-    <div className="bg-black/30 border border-amber-900/20 rounded p-3 text-center">
-      <p className="text-amber-500 text-xs">{label}</p>
-      {sub && <p className="text-amber-800 text-[10px] mt-1">{sub}</p>}
+    <div className="bg-green-950/20 border border-green-800/30 rounded-lg p-3 text-center">
+      <div className="flex items-center justify-center gap-2 mb-0.5">
+        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-green-500" fill="none">
+          <path d="M3 8l4 4 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <p className="text-green-400 text-xs font-semibold">{label}</p>
+      </div>
+      {sub && <p className="text-green-700/70 text-[10px] mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -81,18 +86,18 @@ function ConfirmButton({ label, color, disabled, onClick }: {
   onClick: () => void;
 }) {
   const active: Record<RowColor, string> = {
-    red:     'bg-red-900/60 border-red-700/60 text-red-300 hover:bg-red-900/80',
-    amber:   'bg-amber-900/60 border-amber-700/60 text-amber-300 hover:bg-amber-900/80',
-    violet:  'bg-violet-900/60 border-violet-700/60 text-violet-300 hover:bg-violet-900/80',
-    emerald: 'bg-emerald-900/60 border-emerald-700/60 text-emerald-300 hover:bg-emerald-900/80',
+    red:     'bg-red-900/70 border-red-600/80 text-red-100 hover:bg-red-900/90 shadow-[0_0_14px_rgba(239,68,68,0.15)]',
+    amber:   'bg-amber-900/70 border-amber-600/80 text-amber-100 hover:bg-amber-900/90 shadow-[0_0_14px_rgba(217,119,6,0.15)]',
+    violet:  'bg-violet-900/70 border-violet-600/80 text-violet-100 hover:bg-violet-900/90 shadow-[0_0_14px_rgba(139,92,246,0.15)]',
+    emerald: 'bg-emerald-900/70 border-emerald-600/80 text-emerald-100 hover:bg-emerald-900/90 shadow-[0_0_14px_rgba(16,185,129,0.15)]',
   };
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`w-full py-2.5 text-xs font-cinzel tracking-widest uppercase rounded border transition-colors ${
+      className={`w-full py-2.5 text-xs font-cinzel tracking-widest uppercase rounded border transition-all ${
         disabled
-          ? 'bg-gray-900/50 border-gray-800/30 text-gray-700 cursor-not-allowed'
+          ? 'bg-stone-950/50 border-stone-800/25 text-stone-700 cursor-not-allowed'
           : active[color]
       }`}
     >
@@ -159,9 +164,20 @@ export function ActionPanel({
     : myRole === 'doctor' ? doctorTargets
     : [];
 
+  const headerAccent = phase === 'night' ? 'text-violet-400'
+    : phase === 'voting' ? 'text-red-400'
+    : 'text-amber-500';
+
+  const headerLabel = phase === 'night' ? 'Night Action'
+    : phase === 'voting' ? 'Cast Your Vote'
+    : phase === 'day' ? 'Discussion'
+    : 'Action';
+
   return (
     <DarkPanel className="p-4 flex flex-col gap-3">
-      <p className="text-amber-700 text-[10px] uppercase tracking-widest text-center">Action</p>
+      <p className={`text-[10px] uppercase tracking-widest text-center font-cinzel font-semibold ${headerAccent}`}>
+        {headerLabel}
+      </p>
 
       {/* ── Night ───────────────────────────────────────────────────────── */}
       {phase === 'night' && nc && imAlive && (

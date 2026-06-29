@@ -16,10 +16,10 @@ const PHASE_TOTAL: Record<string, number> = {
   voting: 60,
 };
 
-const COLORS: Record<string, { bar: string; text: string; warn: string }> = {
-  night:  { bar: 'bg-violet-600',  text: 'text-violet-400',  warn: 'bg-red-700' },
-  day:    { bar: 'bg-amber-500',   text: 'text-amber-400',   warn: 'bg-red-600' },
-  voting: { bar: 'bg-red-600',     text: 'text-red-400',     warn: 'bg-red-800' },
+const COLORS: Record<string, { bar: string; urgentBar: string; text: string; urgentText: string }> = {
+  night:  { bar: 'bg-violet-600',  urgentBar: 'bg-red-600',  text: 'text-violet-300', urgentText: 'text-red-400' },
+  day:    { bar: 'bg-amber-500',   urgentBar: 'bg-red-500',  text: 'text-amber-300',  urgentText: 'text-red-400' },
+  voting: { bar: 'bg-red-600',     urgentBar: 'bg-red-800',  text: 'text-red-300',    urgentText: 'text-red-500' },
 };
 
 function formatSecs(secs: number): string {
@@ -35,17 +35,11 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
 
   useEffect(() => {
     if (paused) {
-      if (pausedTimeRemaining != null) {
-        setSecsLeft(Math.max(0, Math.ceil(pausedTimeRemaining / 1000)));
-      }
+      if (pausedTimeRemaining != null) setSecsLeft(Math.max(0, Math.ceil(pausedTimeRemaining / 1000)));
       return;
     }
     if (!phaseEndAt) { setSecsLeft(null); return; }
-
-    const tick = () => {
-      const remaining = Math.max(0, Math.ceil((phaseEndAt - Date.now()) / 1000));
-      setSecsLeft(remaining);
-    };
+    const tick = () => setSecsLeft(Math.max(0, Math.ceil((phaseEndAt - Date.now()) / 1000)));
     tick();
     const id = setInterval(tick, 500);
     return () => clearInterval(id);
@@ -53,21 +47,20 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
 
   if (!total || !c) return null;
 
-  // Paused state: show frozen bar with ⏸ label
   if (paused && secsLeft !== null) {
     const pct = Math.max(0, Math.min(100, (secsLeft / total) * 100));
     return (
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-black/30 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-amber-700/40 rounded-full"
-            style={{ width: `${pct}%` }}
-          />
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-[10px]">
+          <span className="text-amber-700 uppercase tracking-widest flex items-center gap-1.5">
+            <span>⏸</span>
+            <span>Paused</span>
+          </span>
+          <span className="font-mono tabular-nums text-amber-600">{formatSecs(secsLeft)}</span>
         </div>
-        <span className="text-[11px] font-mono tabular-nums text-amber-700/80 flex items-center gap-1">
-          <span className="text-[9px]">⏸</span>
-          {formatSecs(secsLeft)}
-        </span>
+        <div className="h-2 bg-black/50 rounded-full overflow-hidden">
+          <div className="h-full bg-amber-800/35 rounded-full" style={{ width: `${pct}%` }} />
+        </div>
       </div>
     );
   }
@@ -78,18 +71,19 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
   const isUrgent = secsLeft <= 10;
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-black/30 rounded-full overflow-hidden">
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-[10px]">
+        <span className="text-amber-800/60 uppercase tracking-widest">Time remaining</span>
+        <span className={`font-mono tabular-nums font-semibold ${isUrgent ? c.urgentText + ' animate-pulse' : c.text}`}>
+          {formatSecs(secsLeft)}
+        </span>
+      </div>
+      <div className="h-2 bg-black/50 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${isUrgent ? c.warn : c.bar}`}
+          className={`h-full rounded-full transition-all duration-500 ${isUrgent ? c.urgentBar : c.bar}`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className={`text-[11px] font-mono tabular-nums min-w-[28px] text-right ${
-        isUrgent ? 'text-red-400 font-bold' : c.text
-      }`}>
-        {formatSecs(secsLeft)}
-      </span>
     </div>
   );
 }

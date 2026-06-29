@@ -147,12 +147,14 @@ export function GameView({
       {/* ── Main content ────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0">
 
-        {/* Centre: phase banner + player arc */}
+        {/* Centre: phase banner + village stage */}
         <div className="flex-1 flex gap-3 min-w-0 min-h-0">
-          <DarkPanel className="flex-1 flex flex-col gap-3 p-4 min-w-0 overflow-hidden">
+          <DarkPanel className="relative flex-1 flex flex-col gap-3 p-4 min-w-0 overflow-hidden">
+            {/* Subtle warm-center radial for "village stage" feel */}
+            <div className="absolute inset-0 pointer-events-none rounded-lg bg-[radial-gradient(ellipse_80%_55%_at_50%_55%,rgba(180,120,40,0.045)_0%,transparent_100%)]" />
 
             {/* Phase banner + timer */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 relative z-10">
               <PhaseBanner
                 phase={room.phase}
                 round={room.round}
@@ -164,15 +166,15 @@ export function GameView({
 
             {/* Announcement banner */}
             {room.lastAnnouncement && (
-              <div className="flex-shrink-0 bg-amber-950/20 border border-amber-800/30 rounded-lg px-4 py-3 text-center">
-                <p className="text-amber-300/85 text-sm italic leading-relaxed">
+              <div className="flex-shrink-0 relative z-10 bg-amber-950/25 border border-amber-700/25 rounded-lg px-4 py-3 text-center">
+                <p className="text-amber-300/90 text-sm italic leading-relaxed">
                   {room.lastAnnouncement}
                 </p>
               </div>
             )}
 
-            {/* Player arc */}
-            <div className="flex-1 min-h-0">
+            {/* Player grid — centered in remaining space */}
+            <div className="flex-1 relative z-10 flex items-center justify-center min-h-0 overflow-y-auto py-1">
               <GamePlayerGrid
                 players={room.players}
                 currentPlayerId={playerId}
@@ -185,7 +187,7 @@ export function GameView({
         </div>
 
         {/* Right panel */}
-        <div className="w-full lg:w-60 xl:w-64 flex flex-row lg:flex-col gap-3 shrink-0 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto">
+        <div className="w-full lg:w-64 xl:w-72 flex flex-row lg:flex-col gap-3 shrink-0 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto">
           <div className="flex flex-col gap-3 min-w-[15rem] lg:min-w-0 lg:w-full">
             <RolePanel
               myRole={myRole}

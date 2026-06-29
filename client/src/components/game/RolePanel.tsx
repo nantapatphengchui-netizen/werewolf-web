@@ -74,8 +74,8 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
 
   if (!myRole) {
     return (
-      <DarkPanel className="flex items-center justify-center p-6 min-h-[200px]">
-        <p className="text-amber-800 text-sm animate-pulse">Receiving your role...</p>
+      <DarkPanel className="flex items-center justify-center p-5 min-h-[120px]">
+        <p className="text-amber-800 text-xs animate-pulse">Role not loaded — reconnecting...</p>
       </DarkPanel>
     );
   }
@@ -89,100 +89,91 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
 
   return (
     <DarkPanel className="flex flex-col overflow-hidden">
-      {/* Tabs */}
-      <div className="flex border-b border-amber-900/40">
-        {(['role', 'info'] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-2.5 text-xs font-cinzel tracking-[0.2em] uppercase transition-colors ${
-              tab === t
-                ? 'text-amber-300 border-b-2 border-amber-500 -mb-px'
-                : 'text-amber-700 hover:text-amber-500'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      {/* Header label */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-amber-900/30">
+        <p className="text-amber-800 text-[9px] uppercase tracking-[0.3em] font-cinzel">Your Role</p>
+        {/* Tabs */}
+        <div className="flex gap-0.5">
+          {(['role', 'info'] as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-2.5 py-1 text-[9px] font-cinzel tracking-[0.2em] uppercase rounded transition-colors ${
+                tab === t
+                  ? 'text-amber-300 bg-amber-900/30'
+                  : 'text-amber-800 hover:text-amber-600'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Role tab */}
       {tab === 'role' && (
-        <div className="flex flex-col items-center p-5 gap-4">
-          {/* Icon circle */}
+        <div className="p-4 flex items-center gap-3">
+          {/* Compact icon */}
           <div
-            className={`w-24 h-24 rounded-full ${info.bgClass} border-2 flex items-center justify-center`}
-            style={{ borderColor: info.accentColor + '60' }}
+            className={`w-14 h-14 rounded-lg ${info.bgClass} border flex items-center justify-center shrink-0`}
+            style={{ borderColor: info.accentColor + '50' }}
           >
-            {iconEl}
+            <div className="scale-75">
+              {iconEl}
+            </div>
           </div>
 
-          {/* Role name */}
-          <div className="text-center">
-            <p className="font-cinzel text-xl font-bold tracking-widest" style={{ color: info.accentColor }}>
+          {/* Role name + team + description */}
+          <div className="flex-1 min-w-0">
+            <p className="font-cinzel text-base font-bold tracking-wider leading-tight" style={{ color: info.accentColor }}>
               {info.name.toUpperCase()}
             </p>
-            <p className="text-amber-800 text-[10px] uppercase tracking-widest mt-0.5">
-              {info.alignment === 'werewolf' ? 'Werewolf Team' : 'Village Team'}
+            <p className="text-[10px] uppercase tracking-widest mt-0.5 mb-1.5" style={{ color: info.accentColor + 'aa' }}>
+              {info.alignment === 'werewolf' ? 'Wolf Pack' : 'Village'}
+            </p>
+            <p className="text-amber-600/70 text-[11px] leading-snug">
+              {info.description}
             </p>
           </div>
-
-          {/* Description */}
-          <p className="text-amber-600/80 text-xs text-center leading-relaxed px-1">
-            {info.description}
-          </p>
         </div>
       )}
 
       {/* Info tab */}
       {tab === 'info' && (
-        <div className="p-5 space-y-4">
-          <div>
-            <p className="text-amber-700 text-[10px] uppercase tracking-widest mb-1.5">Alignment</p>
-            <p className="text-sm font-semibold" style={{ color: info.accentColor }}>
-              {info.alignment === 'werewolf' ? 'Werewolf' : 'Village'}
-            </p>
-          </div>
-
-          {myRole === 'werewolf' && teammates.length > 0 && (
+        <div className="p-4 space-y-3">
+          {myRole === 'werewolf' && (
             <div>
-              <p className="text-amber-700 text-[10px] uppercase tracking-widest mb-1.5">
-                Wolf Pack
-              </p>
-              <div className="space-y-1">
-                {teammates.map(t => (
-                  <div key={t.id} className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 flex-shrink-0" />
-                    <span className="text-red-300 text-sm">{t.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {myRole === 'werewolf' && teammates.length === 0 && (
-            <div>
-              <p className="text-amber-700 text-[10px] uppercase tracking-widest mb-1.5">Wolf Pack</p>
-              <p className="text-amber-800 text-xs">You hunt alone.</p>
+              <p className="text-amber-800 text-[9px] uppercase tracking-widest mb-1.5">Wolf Pack</p>
+              {teammates.length > 0 ? (
+                <div className="space-y-1">
+                  {teammates.map(t => (
+                    <div key={t.id} className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-600/80 shrink-0" />
+                      <span className="text-red-300 text-xs">{t.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-amber-800 text-xs">You hunt alone.</p>
+              )}
             </div>
           )}
 
           {myRole !== 'werewolf' && (
             <div>
-              <p className="text-amber-700 text-[10px] uppercase tracking-widest mb-1.5">Allies</p>
-              <p className="text-amber-600 text-xs">The village — but you don't know who is who.</p>
+              <p className="text-amber-800 text-[9px] uppercase tracking-widest mb-1">Allies</p>
+              <p className="text-amber-700/70 text-xs leading-snug">Village — but you don't know who is who.</p>
             </div>
           )}
 
           <div>
-            <p className="text-amber-700 text-[10px] uppercase tracking-widest mb-1.5">Night Action</p>
-            <p className="text-amber-600 text-xs leading-relaxed">
-              {info.nightAction ?? 'You have no night action. Sleep soundly — or at least try to.'}
+            <p className="text-amber-800 text-[9px] uppercase tracking-widest mb-1">Night Action</p>
+            <p className="text-amber-700/70 text-xs leading-snug">
+              {info.nightAction ?? 'No night action. Sleep soundly — or try to.'}
             </p>
           </div>
         </div>
       )}
-
     </DarkPanel>
   );
 }

@@ -20,11 +20,11 @@ export function GameStatusPanel({ room }: Props) {
       <div className="grid grid-cols-2 gap-2 text-center">
         <div className="bg-green-950/20 rounded-lg border border-green-900/25 py-2.5">
           <p className="text-green-400 font-cinzel text-2xl font-bold leading-none">{alive}</p>
-          <p className="text-green-900 text-[10px] uppercase tracking-widest mt-1">Alive</p>
+          <p className="text-green-700/70 text-[10px] uppercase tracking-widest mt-1">Alive</p>
         </div>
         <div className="bg-red-950/20 rounded-lg border border-red-900/25 py-2.5">
-          <p className="text-red-700 font-cinzel text-2xl font-bold leading-none">{dead}</p>
-          <p className="text-red-900/80 text-[10px] uppercase tracking-widest mt-1">Dead</p>
+          <p className="text-red-500 font-cinzel text-2xl font-bold leading-none">{dead}</p>
+          <p className="text-red-700/60 text-[10px] uppercase tracking-widest mt-1">Dead</p>
         </div>
       </div>
 
