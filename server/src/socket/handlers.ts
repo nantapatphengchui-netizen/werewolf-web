@@ -175,6 +175,10 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     const { room, roleMap } = result;
     const werewolfIds = rooms.getWerewolfIds(room.code);
 
+    // Broadcast game_started first so the client clears stale state, then deliver
+    // each player's private role — Socket.IO serializes on one TCP connection so
+    // role_assigned always arrives after game_started for that socket.
+    io.to(room.code).emit('game_started', { room });
     for (const [persistentId, role] of roleMap) {
       const socketId = rooms.getSocketId(persistentId);
       const targetSocket = socketId ? io.sockets.sockets.get(socketId) : undefined;
@@ -183,7 +187,6 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
       }
     }
 
-    io.to(room.code).emit('game_started', { room });
     if (room.phaseEndAt) schedulePhaseTimer(room.code, room.phase, room.phaseEndAt, io, rooms);
     console.log(`[game] started in ${room.code} — roles assigned to ${roleMap.size} players`);
   });
@@ -256,12 +259,12 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     }
     const { room, roleMap } = result;
     const werewolfIds = rooms.getWerewolfIds(room.code);
+    io.to(room.code).emit('game_started', { room });
     for (const [persistentId, role] of roleMap) {
       const socketId = rooms.getSocketId(persistentId);
       const s = socketId ? io.sockets.sockets.get(socketId) : undefined;
       if (s) s.emit('role_assigned', { role, werewolfIds: role === 'werewolf' ? werewolfIds : [] });
     }
-    io.to(room.code).emit('game_started', { room });
     if (room.phaseEndAt) schedulePhaseTimer(room.code, room.phase, room.phaseEndAt, io, rooms);
     console.log(`[game] restarted in ${room.code}`);
   });
@@ -414,12 +417,12 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     const { room, roleMap } = result;
     clearPhaseTimer(room.code);
     const werewolfIds = rooms.getWerewolfIds(room.code);
+    io.to(room.code).emit('game_started', { room });
     for (const [persistentId, role] of roleMap) {
       const socketId = rooms.getSocketId(persistentId);
       const s = socketId ? io.sockets.sockets.get(socketId) : undefined;
       if (s) s.emit('role_assigned', { role, werewolfIds: role === 'werewolf' ? werewolfIds : [] });
     }
-    io.to(room.code).emit('game_started', { room });
     if (room.phaseEndAt) schedulePhaseTimer(room.code, room.phase, room.phaseEndAt, io, rooms);
     console.log(`[host] game force-restarted in ${room.code}`);
   });

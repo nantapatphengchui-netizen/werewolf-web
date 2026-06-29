@@ -1,7 +1,9 @@
 import type { Role } from '../../types/game';
 
 function werewolfCount(playerCount: number): number {
-  return playerCount <= 10 ? 2 : 3;
+  if (playerCount <= 5) return 1;
+  if (playerCount <= 10) return 2;
+  return 3;
 }
 
 function shuffle<T>(arr: T[]): T[] {

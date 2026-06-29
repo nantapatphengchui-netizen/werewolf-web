@@ -174,7 +174,7 @@ export function CreateJoinForm({
       )}
 
       <p className="text-center text-amber-900/70 text-xs mt-6">
-        8–12 players required to start
+        5–12 players required to start
       </p>
     </DarkPanel>
   );

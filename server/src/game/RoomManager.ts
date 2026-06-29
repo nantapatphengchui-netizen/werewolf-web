@@ -1,7 +1,7 @@
 import type { Player, RoomState, GamePhase, Role, GameEvent } from '../types/game';
 import { assignRoles } from './roles/roleAssigner';
 
-const MIN_PLAYERS = 8;
+const MIN_PLAYERS = 5;
 const MAX_PLAYERS = 12;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_EVENT_LOG = 30;
