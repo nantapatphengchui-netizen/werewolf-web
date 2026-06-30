@@ -63,8 +63,8 @@ export function HostControls({
           disabled={!canStart}
           className={`shrink-0 px-6 py-2 font-cinzel text-xs tracking-[0.2em] uppercase rounded border transition-all active:scale-95 ${
             canStart
-              ? 'bg-red-950/70 border-red-700/60 text-red-200 shadow-[0_0_16px_rgba(185,28,28,0.25)] hover:bg-red-900/70 hover:shadow-[0_0_24px_rgba(185,28,28,0.4)]'
-              : 'bg-gray-900/40 border-gray-800/30 text-gray-700 cursor-not-allowed'
+              ? 'bg-red-800/80 border-red-500/70 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:bg-red-700/90 hover:shadow-[0_0_30px_rgba(220,38,38,0.7)]'
+              : 'bg-gray-900/40 border-gray-700/40 text-gray-500 cursor-not-allowed'
           }`}
         >
           Start Game
