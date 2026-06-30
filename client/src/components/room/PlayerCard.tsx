@@ -42,7 +42,7 @@ export function PlayerCard({ player, index, isCurrentPlayer, isReady }: Props) {
       }`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/avatar-hooded.jpg"
+          src="/avatar-hooded.png"
           alt=""
           draggable={false}
           className={`w-full h-full object-cover object-[50%_18%] transition-all duration-300 ${
