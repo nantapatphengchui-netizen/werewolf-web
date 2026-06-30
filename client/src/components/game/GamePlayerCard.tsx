@@ -24,10 +24,7 @@ function DeadOverlay() {
 
 function WolfBadge() {
   return (
-    <div
-      className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-red-950 border border-red-700/70 flex items-center justify-center z-20"
-      title="Werewolf teammate"
-    >
+    <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-red-950 border border-red-700/70 flex items-center justify-center z-20" title="Werewolf teammate">
       <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
         <path d="M5 3Q4 7 6 12M8 2Q8 7 8 13M11 3Q12 7 10 12" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
@@ -35,14 +32,21 @@ function WolfBadge() {
   );
 }
 
-function SubmittedBadge() {
+function ActionDoneBadge() {
   return (
-    <div
-      className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full bg-green-950 border border-green-600/70 flex items-center justify-center z-20"
-      title="Action submitted"
-    >
+    <div className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full bg-green-950 border border-green-600/70 flex items-center justify-center z-20" title="Action submitted">
       <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
         <path d="M3 8l4 4 6-6" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function SelectedBadge() {
+  return (
+    <div className="absolute bottom-1.5 right-1.5 w-5 h-5 rounded-full bg-amber-900 border border-amber-400/80 flex items-center justify-center z-20">
+      <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
+        <path d="M3 8l4 4 6-6" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
   );
@@ -65,6 +69,9 @@ interface Props {
   isWerewolfTeammate: boolean;
   voteCount?: number;
   actionSubmitted?: boolean;
+  isValidTarget?: boolean;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
 export function GamePlayerCard({
@@ -74,20 +81,34 @@ export function GamePlayerCard({
   isWerewolfTeammate,
   voteCount,
   actionSubmitted,
+  isValidTarget = false,
+  isSelected = false,
+  onClick,
 }: Props) {
   const alive = player.isAlive;
   const offline = alive && !player.isConnected;
   const revealedInfo = player.revealedRole ? ROLE_INFO[player.revealedRole] : null;
+  const targetingActive = onClick !== undefined;
+  const isInvalidTarget = targetingActive && alive && !isValidTarget && !isCurrentPlayer;
 
-  const cardClass = !alive
-    ? 'border-stone-800/40 bg-stone-950/30 grayscale'
-    : offline
-    ? 'border-stone-700/30 bg-black/30 opacity-50'
-    : isCurrentPlayer
-    ? 'border-amber-500/70 bg-amber-950/20 shadow-[0_0_18px_rgba(217,119,6,0.18),inset_0_1px_0_rgba(251,191,36,0.06)]'
-    : isWerewolfTeammate
-    ? 'border-red-700/60 bg-red-950/15 shadow-[0_0_12px_rgba(185,28,28,0.22)]'
-    : 'border-amber-900/25 bg-black/25';
+  let cardClass: string;
+  if (!alive) {
+    cardClass = 'border-stone-800/40 bg-stone-950/30 grayscale cursor-default';
+  } else if (isSelected) {
+    cardClass = 'border-2 border-amber-400/90 bg-amber-950/25 shadow-[0_0_20px_rgba(251,191,36,0.35)] cursor-pointer';
+  } else if (isValidTarget) {
+    cardClass = 'border border-amber-600/50 bg-amber-950/10 hover:border-amber-400/80 hover:bg-amber-950/20 hover:shadow-[0_0_14px_rgba(251,191,36,0.2)] cursor-pointer';
+  } else if (isInvalidTarget) {
+    cardClass = 'border border-stone-800/30 bg-black/20 opacity-40 cursor-not-allowed';
+  } else if (offline) {
+    cardClass = 'border-stone-700/30 bg-black/30 opacity-50 cursor-default';
+  } else if (isCurrentPlayer) {
+    cardClass = 'border-amber-500/70 bg-amber-950/20 shadow-[0_0_18px_rgba(217,119,6,0.18),inset_0_1px_0_rgba(251,191,36,0.06)] cursor-default';
+  } else if (isWerewolfTeammate) {
+    cardClass = 'border-red-700/60 bg-red-950/15 shadow-[0_0_12px_rgba(185,28,28,0.22)] cursor-default';
+  } else {
+    cardClass = 'border-amber-900/25 bg-black/25 cursor-default';
+  }
 
   const dotClass = alive && player.isConnected
     ? 'bg-green-400 shadow-[0_0_5px_rgba(74,222,128,0.65)]'
@@ -96,8 +117,10 @@ export function GamePlayerCard({
     : 'bg-red-900/70';
 
   return (
-    <div className={`relative flex flex-col items-center rounded-xl border p-2 gap-1 transition-all duration-300 w-[88px] shrink-0 ${cardClass}`}>
-
+    <div
+      onClick={isValidTarget || isSelected ? onClick : undefined}
+      className={`relative w-full h-full flex flex-col items-center rounded-xl border p-2 gap-1 transition-all duration-200 select-none ${cardClass}`}
+    >
       {player.isHost && <HostBadge />}
 
       {/* Number badge */}
@@ -105,15 +128,15 @@ export function GamePlayerCard({
         <span className="text-amber-300 text-[8px] font-bold font-cinzel">{index + 1}</span>
       </div>
 
-      {/* Status top-right */}
+      {/* Status — top right */}
       {isWerewolfTeammate && alive ? (
         <WolfBadge />
       ) : (
         <div className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full z-10 ${dotClass}`} />
       )}
 
-      {/* Avatar */}
-      <div className="relative w-full h-[100px] mt-2 rounded-lg overflow-hidden bg-[#090805] border border-amber-900/15">
+      {/* Avatar — fills remaining height */}
+      <div className="relative w-full flex-1 min-h-0 mt-2 rounded-lg overflow-hidden bg-[#090805] border border-amber-900/15">
         <PlayerSilhouette isAlive={alive} />
         {!alive && <DeadOverlay />}
         {offline && (
@@ -121,7 +144,8 @@ export function GamePlayerCard({
             <span className="text-[8px] text-stone-500 uppercase tracking-[0.15em]">Away</span>
           </div>
         )}
-        {isCurrentPlayer && actionSubmitted && alive && <SubmittedBadge />}
+        {isCurrentPlayer && actionSubmitted && alive && <ActionDoneBadge />}
+        {isSelected && !actionSubmitted && <SelectedBadge />}
         {typeof voteCount === 'number' && voteCount > 0 && (
           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 min-w-[22px] h-[18px] flex items-center justify-center bg-red-950/95 border border-red-600/70 rounded-full px-1.5">
             <span className="text-red-200 text-[10px] font-bold leading-none">{voteCount}</span>
@@ -129,17 +153,15 @@ export function GamePlayerCard({
         )}
       </div>
 
-      {/* Name row */}
-      <div className="flex items-center justify-center gap-1 w-full px-0.5 mt-0.5">
-        <p className={`text-[11px] font-semibold tracking-wide truncate text-center leading-tight ${
-          !alive ? 'text-stone-600'
-          : offline ? 'text-stone-500'
-          : isCurrentPlayer ? 'text-amber-100'
-          : 'text-amber-200/85'
-        }`}>
-          {player.name}
-        </p>
-      </div>
+      {/* Name */}
+      <p className={`text-[11px] font-semibold tracking-wide truncate text-center leading-tight w-full px-0.5 mt-0.5 ${
+        !alive ? 'text-stone-600'
+        : offline ? 'text-stone-500'
+        : isCurrentPlayer ? 'text-amber-100'
+        : 'text-amber-200/85'
+      }`}>
+        {player.name}
+      </p>
 
       {/* Sub-label */}
       {isCurrentPlayer && alive && (
@@ -148,8 +170,6 @@ export function GamePlayerCard({
       {!alive && !revealedInfo && (
         <span className="text-[8px] text-red-900/80 uppercase tracking-[0.15em] font-cinzel -mt-0.5">Dead</span>
       )}
-
-      {/* Revealed role (only after death/game over) */}
       {revealedInfo && (
         <p className="text-[9px] font-cinzel font-bold tracking-widest -mt-0.5" style={{ color: revealedInfo.accentColor }}>
           {revealedInfo.name.toUpperCase()}
