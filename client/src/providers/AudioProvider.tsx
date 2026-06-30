@@ -9,6 +9,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
+import { useAudioPhaseStore } from '@/store/audioPhaseStore';
 
 // ── Track map ─────────────────────────────────────────────────────────────────
 // Place audio files in client/public/audio/.
@@ -61,11 +62,11 @@ export function useAudioContext(): AudioCtxValue {
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 interface Props {
-  phase: string;
   children: ReactNode;
 }
 
-export function AudioProvider({ phase, children }: Props) {
+export function AudioProvider({ children }: Props) {
+  const phase = useAudioPhaseStore(s => s.phase);
   const [muted,  setMutedState]  = useState(readMuted);
   const [volume, setVolumeState] = useState(readVolume);
 

@@ -4,10 +4,14 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRoom } from '@/hooks/useRoom';
 import { CreateJoinForm } from '@/components/lobby/CreateJoinForm';
+import { useAudioPhaseStore } from '@/store/audioPhaseStore';
 
 export default function HomePage() {
   const router = useRouter();
   const { room, error, isConnected, createRoom, joinRoom, clearError } = useRoom();
+  const setAudioPhase = useAudioPhaseStore(s => s.setPhase);
+
+  useEffect(() => { setAudioPhase('lobby'); }, [setAudioPhase]);
 
   useEffect(() => {
     if (room) {

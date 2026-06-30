@@ -9,8 +9,7 @@ import { PlayerGrid } from '@/components/room/PlayerGrid';
 import { HostControls } from '@/components/room/HostControls';
 import { HostAdminPanel } from '@/components/room/HostAdminPanel';
 import { GameView } from '@/components/game/GameView';
-import { AudioProvider } from '@/providers/AudioProvider';
-import { AudioControls } from '@/components/ui/AudioControls';
+import { useAudioPhaseStore } from '@/store/audioPhaseStore';
 
 const PHASE_TINT: Record<string, string> = {
   lobby:  'bg-black/55',
@@ -47,8 +46,9 @@ export default function RoomPage() {
     hostPauseTimer, hostResumeTimer, hostExtendTimer, hostEndPhase,
     hostRestartGame, hostReturnToLobby,
   } = useRoom();
-  const myRole     = useGameStore(s => s.myRole);
+  const myRole      = useGameStore(s => s.myRole);
   const werewolfIds = useGameStore(s => s.werewolfIds);
+  const setAudioPhase = useAudioPhaseStore(s => s.setPhase);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -57,6 +57,10 @@ export default function RoomPage() {
     }, 1500);
     return () => clearTimeout(timer);
   }, [room, isConnected, router]);
+
+  useEffect(() => {
+    if (room) setAudioPhase(room.phase);
+  }, [room?.phase, setAudioPhase]);
 
   if (!room) return null;
 
@@ -72,17 +76,7 @@ export default function RoomPage() {
   const isReady  = room.readyPlayers.includes(playerId ?? '');
 
   return (
-    <AudioProvider phase={room.phase}>
-      {/* Fixed music widget — visible in both lobby and game, below modals */}
-      <div className="fixed bottom-4 right-4 z-[45] pointer-events-auto">
-        <div className="bg-black/65 backdrop-blur-sm border border-amber-900/30 rounded-lg px-3 py-2 flex items-center gap-2">
-          <span className="text-amber-900/50 text-[9px] uppercase tracking-widest font-cinzel hidden sm:inline">
-            Music
-          </span>
-          <AudioControls />
-        </div>
-      </div>
-
+    <>
       {/* ── Game screen ─────────────────────────────────────────────────────── */}
       {!isLobby && (
         <main className="relative min-h-screen flex flex-col">
@@ -178,6 +172,6 @@ export default function RoomPage() {
           </div>
         </main>
       )}
-    </AudioProvider>
+    </>
   );
 }

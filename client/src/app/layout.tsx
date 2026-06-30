@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cinzel, Inter } from 'next/font/google';
 import './globals.css';
 import { SocketProvider } from '@/providers/SocketProvider';
+import { AudioShell } from '@/providers/AudioShell';
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${cinzel.variable} ${inter.variable}`}>
       <body>
-        <SocketProvider>{children}</SocketProvider>
+        <SocketProvider><AudioShell>{children}</AudioShell></SocketProvider>
       </body>
     </html>
   );
