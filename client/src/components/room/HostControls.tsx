@@ -19,56 +19,65 @@ export function HostControls({
   onReady,
   isReady,
 }: Props) {
-  const needed = minPlayers - playerCount;
+  const needed   = minPlayers - playerCount;
   const allReady = readyCount === playerCount && playerCount > 0;
 
   return (
-    <div className="bg-black/70 backdrop-blur-md border border-amber-900/30 rounded-lg px-4 py-3 flex items-center gap-3 flex-wrap">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-black/55 backdrop-blur-md border border-amber-900/22 rounded-xl">
 
-      {/* Ready button — always visible */}
+      {/* Ready button */}
       <button
         onClick={onReady}
-        className={`shrink-0 px-5 py-2 font-cinzel text-xs tracking-[0.15em] uppercase rounded border transition-all active:scale-95 ${
+        className={`shrink-0 px-5 py-2 font-cinzel text-xs tracking-[0.15em] uppercase rounded-lg border transition-all duration-200 active:scale-95 ${
           isReady
-            ? 'bg-green-950/60 border-green-700/60 text-green-300 hover:bg-green-950/80'
-            : 'bg-amber-950/40 border-amber-700/50 text-amber-300 hover:bg-amber-900/50'
+            ? 'bg-green-950/50 border-green-700/45 text-green-300 shadow-[0_0_14px_rgba(74,222,128,0.15)] hover:bg-green-900/55'
+            : 'bg-amber-950/22 border-amber-800/32 text-amber-400 hover:bg-amber-950/40 hover:border-amber-700/45'
         }`}
       >
-        {isReady ? '✓ Ready' : 'Ready Up'}
+        {isReady ? '✓ Ready' : 'Ready'}
       </button>
 
       {/* Status text */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 text-center">
         {playerCount < minPlayers ? (
-          <p className="text-amber-700 text-xs leading-snug">
-            Need <span className="text-amber-400 font-semibold">{needed}</span> more player{needed !== 1 ? 's' : ''} to start
-            <span className="text-amber-900 ml-1">({playerCount}/{minPlayers})</span>
+          <p className="text-amber-700/75 text-[11px]">
+            Need{' '}
+            <span className="text-amber-400 font-semibold">{needed}</span>
+            {' '}more player{needed !== 1 ? 's' : ''}
+            <span className="text-amber-900/55 ml-1.5">({playerCount}/{minPlayers})</span>
           </p>
         ) : allReady ? (
-          <p className="text-green-500 text-xs font-semibold">All players ready!</p>
+          <p className="text-green-500/85 text-[11px] font-cinzel tracking-wide">
+            All ready — host can start!
+          </p>
         ) : (
-          <p className="text-amber-700 text-xs">{readyCount}/{playerCount} ready</p>
+          <p className="text-amber-700/70 text-[11px]">
+            <span className="text-amber-400 font-semibold">{readyCount}</span>
+            <span className="text-amber-900/55"> / {playerCount} ready</span>
+          </p>
         )}
         {!isHost && (
-          <p className="text-amber-900/60 text-[10px] flex items-center gap-1 mt-0.5">
-            <span className="animate-pulse inline-block">●</span> Waiting for host to start
+          <p className="text-amber-900/38 text-[9px] mt-0.5 font-cinzel tracking-widest uppercase">
+            Waiting for host
           </p>
         )}
       </div>
 
-      {/* Start button — host only */}
-      {isHost && (
+      {/* Start Game (host) or symmetry spacer */}
+      {isHost ? (
         <button
           onClick={onStartGame}
           disabled={!canStart}
-          className={`shrink-0 px-6 py-2 font-cinzel text-xs tracking-[0.2em] uppercase rounded border transition-all active:scale-95 ${
+          className={`shrink-0 px-6 py-2 font-cinzel text-xs tracking-[0.2em] uppercase rounded-lg border transition-all duration-200 active:scale-95 ${
             canStart
-              ? 'bg-red-800/80 border-red-500/70 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:bg-red-700/90 hover:shadow-[0_0_30px_rgba(220,38,38,0.7)]'
-              : 'bg-gray-900/40 border-gray-700/40 text-gray-500 cursor-not-allowed'
+              ? 'bg-red-900/60 border-red-600/50 text-white shadow-[0_0_22px_rgba(220,38,38,0.4)] hover:bg-red-800/70 hover:shadow-[0_0_32px_rgba(220,38,38,0.6)]'
+              : 'bg-stone-950/28 border-stone-800/28 text-stone-600/70 cursor-not-allowed'
           }`}
         >
           Start Game
         </button>
+      ) : (
+        <div className="shrink-0 w-[90px]" />
       )}
     </div>
   );

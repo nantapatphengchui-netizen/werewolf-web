@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import type { Player } from '@/types/game';
-import { DarkPanel } from '@/components/ui/DarkPanel';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const TEST_BOTS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_TEST_BOTS === 'true';
@@ -32,7 +31,7 @@ export function HostAdminPanel({
   onFillBots,
   onRemoveBots,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]             = useState(false);
   const [kickTarget, setKickTarget] = useState<Player | null>(null);
 
   const nonHostPlayers = players.filter(p => p.id !== hostId);
@@ -42,82 +41,92 @@ export function HostAdminPanel({
       {kickTarget && (
         <ConfirmDialog
           title="Kick Player"
-          description={`Remove ${kickTarget.name} from the room? They will be disconnected.`}
+          description={`Remove ${kickTarget.name} from the room?`}
           confirmLabel="Kick"
           onConfirm={() => { onKick(kickTarget.id); setKickTarget(null); }}
           onCancel={() => setKickTarget(null)}
         />
       )}
 
-      <DarkPanel className="overflow-hidden">
-        {/* Toggle header */}
+      <div className="bg-black/70 backdrop-blur-md border border-amber-900/18 rounded-xl overflow-hidden">
+
+        {/* Toggle header — small and unobtrusive */}
         <button
           onClick={() => setOpen(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-amber-950/10 transition-colors"
+          className="w-full flex items-center justify-between px-3 py-2 hover:bg-amber-950/8 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-amber-700 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="8" cy="5" r="3" />
-              <path strokeLinecap="round" d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+            {/* gear icon */}
+            <svg viewBox="0 0 20 20" className="w-3 h-3 text-amber-800/50 shrink-0" fill="currentColor">
+              <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
             </svg>
-            <span className="text-amber-700 text-[10px] uppercase tracking-widest">Host Controls</span>
+            <span className="text-amber-800/55 text-[9px] font-cinzel uppercase tracking-widest">Host Controls</span>
+            {isLocked && (
+              <span className="text-amber-700/40 text-[7px] border border-amber-900/25 rounded px-1 py-0.5 font-cinzel tracking-wider">Locked</span>
+            )}
           </div>
           <svg
-            viewBox="0 0 16 16"
-            className={`w-3 h-3 text-amber-800 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+            viewBox="0 0 12 12"
+            className={`w-2.5 h-2.5 text-amber-900/40 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
             fill="none" stroke="currentColor" strokeWidth="2"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6l4 4 4-4" />
+            <path d="M2 4l4 4 4-4" strokeLinecap="round" />
           </svg>
         </button>
 
-        {/* Collapsible content */}
         {open && (
-          <div className="px-4 pb-4 space-y-3 border-t border-amber-900/20 pt-3">
-            {/* Lock / Reset row */}
+          <div className="px-3 pb-3 pt-2 border-t border-amber-900/12 space-y-2.5">
+
+            {/* Lock + Reset Ready */}
             <div className="flex gap-2">
               <button
                 onClick={isLocked ? onUnlock : onLock}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-cinzel tracking-widest uppercase rounded border transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded-lg border transition-colors ${
                   isLocked
-                    ? 'bg-amber-950/40 border-amber-700/50 text-amber-300 hover:bg-amber-900/50'
-                    : 'bg-black/30 border-amber-900/30 text-amber-700 hover:border-amber-700/50 hover:text-amber-500'
+                    ? 'bg-amber-950/28 border-amber-700/40 text-amber-400 hover:bg-amber-950/40'
+                    : 'bg-black/18 border-amber-900/22 text-amber-700/65 hover:border-amber-800/38 hover:text-amber-500'
                 }`}
               >
-                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
-                  <path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4-2a1 1 0 0 1 2 0v2H7V5z" opacity={isLocked ? 1 : 0.5} />
+                <svg viewBox="0 0 14 16" className="w-2.5 h-3 shrink-0" fill="currentColor">
+                  <path
+                    opacity={isLocked ? 1 : 0.55}
+                    d="M11 7V5a4 4 0 0 0-8 0v2H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zM5 5a2 2 0 1 1 4 0v2H5V5z"
+                  />
                 </svg>
-                {isLocked ? 'Unlock Room' : 'Lock Room'}
+                {isLocked ? 'Unlock' : 'Lock Room'}
               </button>
 
               <button
                 onClick={onResetReady}
-                className="flex-1 py-2 text-xs font-cinzel tracking-widest uppercase rounded border border-amber-900/30 text-amber-800 hover:border-amber-700/50 hover:text-amber-600 bg-black/30 transition-colors"
+                className="flex-1 py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded-lg border border-amber-900/22 text-amber-800/65 hover:border-amber-800/38 hover:text-amber-600 bg-black/18 transition-colors"
               >
                 Reset Ready
               </button>
             </div>
 
             {isLocked && (
-              <p className="text-amber-700/60 text-[10px] text-center italic">Room is locked — no new players can join</p>
+              <p className="text-amber-700/45 text-[9px] text-center italic">No new players can join</p>
             )}
 
-            {/* Player kick list */}
+            {/* Player list with kick */}
             {nonHostPlayers.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-amber-800 text-[10px] uppercase tracking-widest">Players</p>
+              <div className="space-y-1">
+                <p className="text-amber-900/45 text-[8px] font-cinzel uppercase tracking-widest">Players</p>
                 {nonHostPlayers.map(player => (
                   <div
                     key={player.id}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-black/25 border border-amber-900/20"
+                    className="flex items-center gap-2 px-2 py-1 rounded-lg bg-black/18"
                   >
-                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${player.isConnected ? 'bg-green-500' : 'bg-gray-600'}`} />
-                    <span className={`flex-1 text-sm truncate ${player.isConnected ? 'text-amber-200' : 'text-gray-600'}`}>
+                    <div className={`w-1 h-1 rounded-full shrink-0 ${player.isConnected ? 'bg-green-500/80' : 'bg-stone-600/60'}`} />
+                    <span className={`flex-1 text-[10px] truncate ${player.isConnected ? 'text-amber-300/75' : 'text-stone-600/70'}`}>
                       {player.name}
                     </span>
+                    {player.isBot && (
+                      <span className="text-[7px] text-slate-600/70 font-cinzel uppercase shrink-0">Bot</span>
+                    )}
                     <button
                       onClick={() => setKickTarget(player)}
-                      className="px-2 py-0.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-red-900/40 text-red-800 hover:border-red-700/60 hover:text-red-500 transition-colors shrink-0"
+                      className="text-[8px] text-red-800/55 hover:text-red-500/80 font-cinzel uppercase tracking-wider transition-colors shrink-0 px-1.5 py-0.5 rounded border border-red-900/18 hover:border-red-800/35"
                     >
                       Kick
                     </button>
@@ -127,44 +136,45 @@ export function HostAdminPanel({
             )}
 
             {nonHostPlayers.length === 0 && (
-              <p className="text-amber-900/60 text-xs text-center italic">No other players in room</p>
+              <p className="text-amber-950/50 text-[9px] text-center italic">No other players in room</p>
             )}
 
-            {/* Test bot controls — only shown when NEXT_PUBLIC_ENABLE_TEST_BOTS=true */}
+            {/* Dev Bots — slate/dark, no purple */}
             {TEST_BOTS_ENABLED && (
-              <div className="border-t border-violet-900/25 pt-3 space-y-2">
+              <div className="border-t border-stone-800/25 pt-2 space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-violet-500/70 text-[9px] uppercase tracking-widest font-cinzel">Test Bots</span>
-                  <span className="text-[8px] text-violet-700/50 border border-violet-800/30 rounded px-1 py-0.5 font-mono">DEV</span>
+                  <span className="text-stone-600/65 text-[8px] font-cinzel uppercase tracking-widest">Dev Bots</span>
+                  <span className="text-[7px] text-stone-700/50 border border-stone-700/28 rounded px-1 font-mono">DEV</span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
+                <div className="grid grid-cols-3 gap-1">
                   <button
                     onClick={onAddBot}
-                    className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-violet-900/40 text-violet-600 hover:border-violet-700/60 hover:text-violet-400 bg-black/20 transition-colors"
+                    className="py-1.5 text-[9px] font-cinzel uppercase rounded-lg border border-stone-800/35 text-stone-500/80 hover:text-stone-400 hover:border-stone-700/45 bg-black/18 transition-colors"
                   >
-                    + Add Bot
+                    + Bot
                   </button>
                   <button
                     onClick={onRemoveBots}
-                    className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-violet-900/40 text-violet-800 hover:border-red-800/50 hover:text-red-600 bg-black/20 transition-colors"
+                    className="py-1.5 text-[9px] font-cinzel uppercase rounded-lg border border-stone-800/35 text-stone-600/70 hover:text-red-600/65 hover:border-red-900/28 bg-black/18 transition-colors"
                   >
-                    Remove Bots
+                    Remove
                   </button>
                   {([5, 8, 12] as const).map(n => (
                     <button
                       key={n}
                       onClick={() => onFillBots(n)}
-                      className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-violet-900/30 text-violet-700 hover:border-violet-700/50 hover:text-violet-400 bg-black/20 transition-colors"
+                      className="py-1.5 text-[9px] font-cinzel uppercase rounded-lg border border-stone-800/28 text-stone-600/65 hover:text-stone-400 hover:border-stone-700/40 bg-black/18 transition-colors"
                     >
-                      Fill to {n}
+                      → {n}
                     </button>
                   ))}
                 </div>
               </div>
             )}
+
           </div>
         )}
-      </DarkPanel>
+      </div>
     </>
   );
 }

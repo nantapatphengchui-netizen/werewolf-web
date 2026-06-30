@@ -128,18 +128,19 @@ export default function RoomPage() {
                 Desktop (lg): overflow-hidden + absolute HostAdminPanel overlay; no page scroll. ── */}
             <div className="flex-1 min-h-0 px-3 pb-1 flex flex-col overflow-y-auto lg:overflow-hidden relative">
 
-              {/* Lobby label */}
+              {/* Lobby label strip */}
               <div className="shrink-0 flex items-center gap-2 mb-2">
-                <h2 className="font-cinzel text-xs text-amber-600/50 tracking-[0.35em] uppercase">
-                  Lobby
-                </h2>
+                <span className="font-cinzel text-[9px] text-amber-900/35 tracking-[0.4em] uppercase">Lobby</span>
                 {room.isLocked && (
-                  <svg viewBox="0 0 16 16" className="w-3 h-3 text-amber-700/50" fill="currentColor">
-                    <path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4-2a1 1 0 0 1 2 0v2H7V5z" />
-                  </svg>
+                  <>
+                    <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 text-amber-800/35" fill="currentColor">
+                      <path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4-2a1 1 0 0 1 2 0v2H7V5z" />
+                    </svg>
+                    <span className="text-[9px] text-amber-900/30 font-cinzel uppercase tracking-widest">Locked</span>
+                  </>
                 )}
-                <span className="ml-auto text-amber-900/50 text-[10px] tracking-wide">
-                  {room.isLocked ? 'Room locked' : 'Waiting for players...'}
+                <span className="ml-auto text-amber-900/28 text-[9px] tracking-wide">
+                  {room.isLocked ? '' : 'Waiting for players...'}
                 </span>
               </div>
 
@@ -163,7 +164,7 @@ export default function RoomPage() {
                   Mobile — in normal document flow (parent scrolls to reveal it).
                   Desktop — absolute overlay at the bottom of the grid area, collapsed by default. */}
               {isHost && (
-                <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-1 lg:left-0 lg:right-0 z-10 lg:max-h-[62%] lg:overflow-y-auto">
+                <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-1 lg:left-0 lg:right-0 z-10">
                   <HostAdminPanel
                     players={room.players}
                     hostId={room.hostId}
@@ -181,7 +182,7 @@ export default function RoomPage() {
             </div>
 
             {/* ── Bottom action bar ── */}
-            <div className="shrink-0 pl-3 pr-44 pb-3 pt-1">
+            <div className="shrink-0 pl-3 pr-24 pb-3 pt-1">
               <HostControls
                 isHost={isHost}
                 canStart={canStart}

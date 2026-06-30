@@ -21,6 +21,7 @@ export default {
         'phase-in':   'phase-in 0.4s ease-out',
         'flicker':    'flicker 5s ease-in-out infinite',
         'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+        'card-enter': 'card-enter 0.3s ease-out both',
       },
       keyframes: {
         'phase-in': {

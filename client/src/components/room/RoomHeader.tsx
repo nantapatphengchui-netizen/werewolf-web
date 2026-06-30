@@ -13,60 +13,58 @@ interface Props {
   onLeave: () => void;
 }
 
-export function RoomHeader({
-  code,
-  playerCount,
-  maxPlayers,
-  minPlayers,
-  isConnected,
-  onLeave,
-}: Props) {
+export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnected, onLeave }: Props) {
+  const needed   = minPlayers - playerCount;
+  const hasEnough = playerCount >= minPlayers;
+
   return (
-    <DarkPanel className="flex items-center justify-between px-5 py-3 gap-4">
-      {/* Left: Room code */}
-      <div className="flex items-center gap-3">
-        <div>
-          <p className="text-amber-700 text-[10px] uppercase tracking-widest leading-none mb-1">
-            Room Code
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="font-mono font-bold text-xl text-amber-300 tracking-[0.35em]">
-              {code}
-            </span>
-            <CopyButton text={code} />
-          </div>
-        </div>
+    <DarkPanel className="flex items-center gap-3 px-4 py-2.5">
+
+      {/* Left: room code */}
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-amber-900/55 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">Room</span>
+        <span className="font-mono font-bold text-lg text-amber-300 tracking-[0.35em]">{code}</span>
+        <CopyButton text={code} />
       </div>
 
-      {/* Center: Player count */}
-      <div className="flex-1 flex justify-center">
-        <div className="text-center">
-          <p className="text-amber-700 text-[10px] uppercase tracking-widest leading-none mb-1">
-            Players
-          </p>
-          <p className="text-amber-200 font-bold text-lg leading-none font-cinzel">
-            {playerCount}
-            <span className="text-amber-800 font-normal text-sm">/{maxPlayers}</span>
-          </p>
-          {playerCount < minPlayers && (
-            <p className="text-amber-800 text-[10px] mt-0.5">
-              need {minPlayers - playerCount} more
-            </p>
-          )}
+      <div className="hidden sm:block w-px h-4 bg-amber-900/20 shrink-0" />
+
+      {/* Center: player pips + count */}
+      <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: maxPlayers }, (_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all duration-300 ${
+                i < playerCount
+                  ? 'w-2 h-2 bg-amber-500/80'
+                  : 'w-1.5 h-1.5 bg-amber-900/20'
+              }`}
+            />
+          ))}
         </div>
+        <span className="text-amber-400 font-cinzel font-semibold text-sm tabular-nums shrink-0">
+          {playerCount}
+          <span className="text-amber-900/60 font-normal text-xs">/{maxPlayers}</span>
+        </span>
+        <span className={`text-[10px] hidden md:inline shrink-0 ${hasEnough ? 'text-green-700/70' : 'text-amber-800/60'}`}>
+          {hasEnough ? 'Ready to start' : `Need ${needed} more`}
+        </span>
       </div>
 
-      {/* Right: Connection + Leave */}
-      <div className="flex items-center gap-3">
+      <div className="hidden sm:block w-px h-4 bg-amber-900/20 shrink-0" />
+
+      {/* Right: status + leave */}
+      <div className="flex items-center gap-3 shrink-0">
         <div className="flex items-center gap-1.5">
           <StatusDot connected={isConnected} />
-          <span className="text-amber-800 text-[10px] uppercase tracking-wider hidden sm:inline">
+          <span className="text-amber-900/50 text-[9px] uppercase tracking-wider hidden sm:inline">
             {isConnected ? 'Connected' : 'Offline'}
           </span>
         </div>
         <button
           onClick={onLeave}
-          className="px-3 py-1.5 border border-amber-900/40 hover:border-red-800/60 text-amber-700 hover:text-red-400 text-xs uppercase tracking-widest rounded transition-colors"
+          className="px-3 py-1.5 border border-amber-900/30 hover:border-red-800/60 text-amber-700/70 hover:text-red-400 text-[10px] font-cinzel uppercase tracking-widest rounded-lg transition-colors"
         >
           Leave
         </button>
