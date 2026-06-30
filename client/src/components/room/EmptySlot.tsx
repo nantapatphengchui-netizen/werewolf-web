@@ -18,7 +18,7 @@ export function EmptySlot({ index }: Props) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
       {/* Slot number */}
-      <span className="absolute top-1.5 left-2 text-[9px] text-amber-800/55 font-cinzel tabular-nums leading-none">
+      <span className="absolute top-1.5 left-2 text-[9px] text-amber-700/65 font-cinzel tabular-nums leading-none">
         {index + 1}
       </span>
 
@@ -31,7 +31,7 @@ export function EmptySlot({ index }: Props) {
 
       {/* "Waiting" label */}
       <div className="absolute bottom-2 left-0 right-0 text-center">
-        <span className="text-[8px] text-amber-900/30 font-cinzel uppercase tracking-[0.22em] leading-none">
+        <span className="text-[8px] text-amber-700/70 font-cinzel uppercase tracking-[0.22em] leading-none">
           Waiting
         </span>
       </div>
