@@ -25,7 +25,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
       {/* Left: room code */}
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-amber-600 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">Room</span>
+        <span className="text-amber-500 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">Room</span>
         <span
           className="font-mono font-bold text-lg tracking-[0.35em]"
           style={{ color: '#fbbf24', textShadow: '0 0 12px rgba(251,191,36,0.45)' }}
@@ -53,7 +53,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
         </div>
         <span className="font-cinzel font-semibold text-sm tabular-nums shrink-0" style={{ color: '#fbbf24' }}>
           {playerCount}
-          <span className="text-amber-600 font-normal text-xs">/{maxPlayers}</span>
+          <span className="text-amber-500 font-normal text-xs">/{maxPlayers}</span>
         </span>
         <span className={`text-[10px] font-cinzel hidden md:inline shrink-0 ${hasEnough ? 'text-green-400' : 'text-amber-500'}`}>
           {hasEnough ? 'Ready to start' : `Need ${needed} more`}

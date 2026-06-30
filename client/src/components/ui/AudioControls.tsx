@@ -31,8 +31,8 @@ export function AudioControls() {
         title={muted ? 'Enable music (click anywhere to start)' : 'Mute music'}
         className={`w-7 h-7 flex items-center justify-center rounded border transition-colors ${
           muted
-            ? 'border-amber-900/30 text-amber-900/50 hover:text-amber-700 hover:border-amber-800/40'
-            : 'border-amber-800/40 text-amber-600 hover:text-amber-300 hover:border-amber-600/60'
+            ? 'border-amber-700/50 text-amber-600 hover:text-amber-400 hover:border-amber-600/60'
+            : 'border-amber-700/50 text-amber-400 hover:text-amber-200 hover:border-amber-500/70'
         }`}
       >
         {muted ? <VolumeOffIcon /> : <VolumeOnIcon />}
@@ -46,8 +46,8 @@ export function AudioControls() {
         value={muted ? 0 : volume}
         disabled={muted}
         onChange={e => setVolume(parseFloat(e.target.value))}
-        className={`hidden sm:block w-14 cursor-pointer accent-amber-600 transition-opacity ${
-          muted ? 'opacity-20 cursor-not-allowed' : 'opacity-55 hover:opacity-85'
+        className={`hidden sm:block w-14 cursor-pointer accent-amber-500 transition-opacity ${
+          muted ? 'opacity-30 cursor-not-allowed' : 'opacity-80 hover:opacity-100'
         }`}
         style={{ height: '3px' }}
         title={muted ? 'Unmute to adjust volume' : `Music volume: ${Math.round(volume * 100)}%`}
