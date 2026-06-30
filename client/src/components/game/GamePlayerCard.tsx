@@ -2,15 +2,15 @@ import type { Player, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { RoleCardArt } from './RoleCardArt';
 
-function PlayerSilhouette({ isAlive }: { isAlive: boolean }) {
+function HoodedAvatar() {
   return (
-    <svg viewBox="0 0 80 104" className={`w-full h-full transition-opacity duration-300 ${isAlive ? '' : 'opacity-15'}`} fill="none">
-      <ellipse cx="40" cy="28" rx="18" ry="21" fill="#1c1409" stroke="#5c3d12" strokeWidth="1.2" />
-      <path d="M14 56 Q10 92 22 102 L58 102 Q70 92 66 56 Q54 47 40 43 Q26 47 14 56Z" fill="#1c1409" stroke="#5c3d12" strokeWidth="1.2" />
-      <ellipse cx="40" cy="30" rx="11" ry="13" fill="#0d0906" />
-      <ellipse cx="35.5" cy="28.5" rx="2.2" ry="1.6" fill="#92500a" opacity="0.55" />
-      <ellipse cx="44.5" cy="28.5" rx="2.2" ry="1.6" fill="#92500a" opacity="0.55" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/avatar-hooded.png"
+      alt=""
+      draggable={false}
+      className="absolute inset-0 w-full h-full object-cover object-[50%_18%]"
+    />
   );
 }
 
@@ -166,7 +166,7 @@ export function GamePlayerCard({
 
       {/* Avatar */}
       <div className={`relative w-full flex-1 min-h-0 mt-2 rounded-lg overflow-hidden bg-[#090805] border ${avatarBorderClass}`}>
-        {shownRole ? <RoleCardArt role={shownRole} /> : <PlayerSilhouette isAlive={alive} />}
+        {shownRole ? <RoleCardArt role={shownRole} /> : <HoodedAvatar />}
         {!alive && <DeadOverlay />}
         {offline && (
           <div className="absolute inset-0 bg-black/60 flex items-end justify-center pb-1.5">
