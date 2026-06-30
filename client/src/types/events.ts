@@ -23,6 +23,10 @@ export interface ClientToServerEvents {
   return_to_lobby: () => void;
   // Host admin actions
   host_kick_player: (payload: { targetId: string }) => void;
+  // Test bot controls
+  host_add_bot: () => void;
+  host_fill_bots: (payload: { target: number }) => void;
+  host_remove_bots: () => void;
   host_lock_room: () => void;
   host_unlock_room: () => void;
   host_reset_ready: () => void;
