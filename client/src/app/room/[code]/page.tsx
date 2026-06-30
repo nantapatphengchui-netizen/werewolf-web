@@ -45,6 +45,7 @@ export default function RoomPage() {
     hostKickPlayer, hostLockRoom, hostUnlockRoom, hostResetReady,
     hostPauseTimer, hostResumeTimer, hostExtendTimer, hostEndPhase,
     hostRestartGame, hostReturnToLobby,
+    hostAddBot, hostFillBots, hostRemoveBots,
   } = useRoom();
   const myRole      = useGameStore(s => s.myRole);
   const werewolfIds = useGameStore(s => s.werewolfIds);
@@ -162,6 +163,9 @@ export default function RoomPage() {
                     onLock={hostLockRoom}
                     onUnlock={hostUnlockRoom}
                     onResetReady={hostResetReady}
+                    onAddBot={hostAddBot}
+                    onFillBots={hostFillBots}
+                    onRemoveBots={hostRemoveBots}
                   />
                 </div>
               )}

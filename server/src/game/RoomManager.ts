@@ -215,7 +215,7 @@ export class RoomManager {
     const room = this.rooms.get(roomCode);
     if (!room) return null;
 
-    const newHost = room.players.find(p => p.isConnected && p.id !== room.hostId);
+    const newHost = room.players.find(p => p.isConnected && !p.isBot && p.id !== room.hostId);
     if (!newHost) return null;
 
     const oldHost = room.players.find(p => p.id === room.hostId);
@@ -649,6 +649,131 @@ export class RoomManager {
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only reset ready states in lobby.' };
     room.readyPlayers = [];
     return { ok: true, room };
+  }
+
+  // ── Test bot controls ────────────────────────────────────────────────────────
+
+  private readonly BOT_NAMES = [
+    'Aldric', 'Brennan', 'Caelan', 'Dorian', 'Emric', 'Fenris',
+    'Gareth', 'Hadwin', 'Isolde', 'Jorvyn', 'Kestrel', 'Lorian',
+    'Maren', 'Niven', 'Oswin', 'Percival', 'Quillon', 'Renwick',
+    'Sable', 'Thane', 'Urien', 'Vance', 'Wulfric', 'Xander',
+  ];
+
+  hasBots(roomCode: string): boolean {
+    return this.rooms.get(roomCode)?.players.some(p => p.isBot) ?? false;
+  }
+
+  addBot(hostPid: string): { ok: boolean; error?: string; room?: RoomState } {
+    const check = this.requireHost(hostPid);
+    if (!check.ok) return check;
+    const room = check.room;
+    if (room.phase !== 'lobby') return { ok: false, error: 'Can only add bots in lobby.' };
+    if (room.players.length >= room.maxPlayers) return { ok: false, error: 'Room is full.' };
+
+    const usedNames = new Set(room.players.map(p => p.name));
+    const available = this.BOT_NAMES.filter(n => !usedNames.has(n));
+    const name = available.length > 0
+      ? pickRandom(available)
+      : `Bot-${Math.floor(Math.random() * 1000)}`;
+
+    const botId = `bot_${Math.random().toString(36).slice(2, 10)}`;
+    const bot: Player = { id: botId, name, isHost: false, isConnected: true, isAlive: true, isBot: true };
+    room.players.push(bot);
+    room.readyPlayers.push(botId); // auto-ready
+    this.playerRoomMap.set(botId, room.code);
+
+    return { ok: true, room };
+  }
+
+  fillBots(hostPid: string, target: number): { ok: boolean; error?: string; room?: RoomState } {
+    const check = this.requireHost(hostPid);
+    if (!check.ok) return check;
+    const room = check.room;
+    if (room.phase !== 'lobby') return { ok: false, error: 'Can only add bots in lobby.' };
+
+    const clampedTarget = Math.min(target, room.maxPlayers);
+    while (room.players.length < clampedTarget) {
+      const res = this.addBot(hostPid);
+      if (!res.ok) break;
+    }
+
+    return { ok: true, room };
+  }
+
+  removeBots(hostPid: string): { ok: boolean; error?: string; room?: RoomState } {
+    const check = this.requireHost(hostPid);
+    if (!check.ok) return check;
+    const room = check.room;
+    if (room.phase !== 'lobby') return { ok: false, error: 'Can only remove bots in lobby.' };
+
+    const botIds = room.players.filter(p => p.isBot).map(p => p.id);
+    for (const botId of botIds) {
+      room.players = room.players.filter(p => p.id !== botId);
+      room.readyPlayers = room.readyPlayers.filter(id => id !== botId);
+      this.playerRoomMap.delete(botId);
+      this.roleMap.delete(botId);
+    }
+
+    return { ok: true, room };
+  }
+
+  // Auto-submit random night actions for alive bots; returns resolved=true if night ends
+  runBotNightActions(roomCode: string): { resolved: boolean; room?: RoomState; seerResult?: SeerResultData } {
+    const room = this.rooms.get(roomCode);
+    if (!room || room.phase !== 'night') return { resolved: false };
+
+    for (const bot of room.players.filter(p => p.isAlive && p.isBot)) {
+      const role = this.roleMap.get(bot.id);
+      if (!role) continue;
+
+      if (role === 'werewolf') {
+        if (!this.nightVotes.has(roomCode)) this.nightVotes.set(roomCode, new Map());
+        if (!this.nightVotes.get(roomCode)!.has(bot.id)) {
+          const targets = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) !== 'werewolf');
+          if (targets.length > 0) this.nightVotes.get(roomCode)!.set(bot.id, pickRandom(targets).id);
+        }
+      } else if (role === 'seer' && !this.seerChoices.has(roomCode)) {
+        const targets = room.players.filter(p => p.isAlive && p.id !== bot.id);
+        if (targets.length > 0) this.seerChoices.set(roomCode, pickRandom(targets).id);
+      } else if (role === 'doctor' && !this.doctorChoices.has(roomCode)) {
+        const targets = room.players.filter(p => p.isAlive);
+        if (targets.length > 0) this.doctorChoices.set(roomCode, pickRandom(targets).id);
+      }
+    }
+
+    if (this.isNightReady(room)) {
+      const seerResult = this.resolveNight(room);
+      return { resolved: true, room, ...seerResult };
+    }
+
+    return { resolved: false };
+  }
+
+  // Auto-submit random votes for alive bots; returns resolved=true if voting ends
+  runBotVotes(roomCode: string): { resolved: boolean; room?: RoomState } {
+    const room = this.rooms.get(roomCode);
+    if (!room || room.phase !== 'voting') return { resolved: false };
+
+    for (const bot of room.players.filter(p => p.isAlive && p.isBot)) {
+      if (room.publicVotes?.hasVoted.includes(bot.id)) continue;
+      const targets = room.players.filter(p => p.isAlive && p.id !== bot.id);
+      if (targets.length === 0) continue;
+      const target = pickRandom(targets);
+      if (!this.dayVotes.has(roomCode)) this.dayVotes.set(roomCode, new Map());
+      this.dayVotes.get(roomCode)!.set(bot.id, target.id);
+      if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {} };
+      room.publicVotes.hasVoted.push(bot.id);
+      room.publicVotes.tally[target.id] = (room.publicVotes.tally[target.id] ?? 0) + 1;
+    }
+
+    const alive = room.players.filter(p => p.isAlive);
+    if (alive.every(p => room.publicVotes!.hasVoted.includes(p.id))) {
+      this.resolveVoting(room);
+      return { resolved: true, room };
+    }
+
+    return { resolved: false, room };
   }
 
   pauseTimer(hostPid: string): { ok: boolean; error?: string; room?: RoomState } {

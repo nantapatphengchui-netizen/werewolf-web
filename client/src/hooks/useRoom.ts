@@ -116,6 +116,20 @@ export function useRoom() {
     socket?.emit('host_return_to_lobby');
   }, [socket]);
 
+  // ── Test bot controls ─────────────────────────────────────────────────────
+
+  const hostAddBot = useCallback(() => {
+    socket?.emit('host_add_bot');
+  }, [socket]);
+
+  const hostFillBots = useCallback((target: number) => {
+    socket?.emit('host_fill_bots', { target });
+  }, [socket]);
+
+  const hostRemoveBots = useCallback(() => {
+    socket?.emit('host_remove_bots');
+  }, [socket]);
+
   const clearError = useCallback(() => setError(null), [setError]);
 
   return {
@@ -143,6 +157,9 @@ export function useRoom() {
     hostEndPhase,
     hostRestartGame,
     hostReturnToLobby,
+    hostAddBot,
+    hostFillBots,
+    hostRemoveBots,
     clearError,
   };
 }

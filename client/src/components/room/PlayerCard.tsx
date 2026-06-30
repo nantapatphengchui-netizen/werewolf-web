@@ -65,6 +65,9 @@ export function PlayerCard({ player, index, isCurrentPlayer, isReady }: Props) {
           {isCurrentPlayer && !player.isHost && (
             <span className="text-[9px] text-amber-700/80 uppercase tracking-widest">You</span>
           )}
+          {player.isBot && (
+            <span className="text-[9px] text-violet-400/80 uppercase tracking-widest font-cinzel">Bot</span>
+          )}
         </div>
       </div>
     </div>

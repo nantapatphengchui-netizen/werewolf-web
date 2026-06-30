@@ -6,6 +6,7 @@ export interface Player {
   isHost: boolean;
   isConnected: boolean;
   isAlive: boolean;
+  isBot?: boolean;
   revealedRole?: Role;
 }
 

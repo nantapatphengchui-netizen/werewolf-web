@@ -5,6 +5,8 @@ import type { Player } from '@/types/game';
 import { DarkPanel } from '@/components/ui/DarkPanel';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
+const TEST_BOTS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_TEST_BOTS === 'true';
+
 interface Props {
   players: Player[];
   hostId: string;
@@ -13,6 +15,9 @@ interface Props {
   onLock: () => void;
   onUnlock: () => void;
   onResetReady: () => void;
+  onAddBot: () => void;
+  onFillBots: (target: number) => void;
+  onRemoveBots: () => void;
 }
 
 export function HostAdminPanel({
@@ -23,6 +28,9 @@ export function HostAdminPanel({
   onLock,
   onUnlock,
   onResetReady,
+  onAddBot,
+  onFillBots,
+  onRemoveBots,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [kickTarget, setKickTarget] = useState<Player | null>(null);
@@ -120,6 +128,39 @@ export function HostAdminPanel({
 
             {nonHostPlayers.length === 0 && (
               <p className="text-amber-900/60 text-xs text-center italic">No other players in room</p>
+            )}
+
+            {/* Test bot controls — only shown when NEXT_PUBLIC_ENABLE_TEST_BOTS=true */}
+            {TEST_BOTS_ENABLED && (
+              <div className="border-t border-violet-900/25 pt-3 space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-violet-500/70 text-[9px] uppercase tracking-widest font-cinzel">Test Bots</span>
+                  <span className="text-[8px] text-violet-700/50 border border-violet-800/30 rounded px-1 py-0.5 font-mono">DEV</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={onAddBot}
+                    className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-violet-900/40 text-violet-600 hover:border-violet-700/60 hover:text-violet-400 bg-black/20 transition-colors"
+                  >
+                    + Add Bot
+                  </button>
+                  <button
+                    onClick={onRemoveBots}
+                    className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-violet-900/40 text-violet-800 hover:border-red-800/50 hover:text-red-600 bg-black/20 transition-colors"
+                  >
+                    Remove Bots
+                  </button>
+                  {([5, 8, 12] as const).map(n => (
+                    <button
+                      key={n}
+                      onClick={() => onFillBots(n)}
+                      className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-violet-900/30 text-violet-700 hover:border-violet-700/50 hover:text-violet-400 bg-black/20 transition-colors"
+                    >
+                      Fill to {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}

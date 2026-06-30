@@ -11,6 +11,57 @@ import { RoomManager, PHASE_DURATIONS } from '../game/RoomManager';
 type IO = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 type Sock = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 
+const TEST_BOTS_ENABLED = process.env.ENABLE_TEST_BOTS === 'true';
+
+// ── Bot auto-action timers ────────────────────────────────────────────────────
+
+const botTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function clearBotTimer(roomCode: string): void {
+  const t = botTimers.get(roomCode);
+  if (t !== undefined) { clearTimeout(t); botTimers.delete(roomCode); }
+}
+
+function scheduleBotActions(roomCode: string, phase: GamePhase, io: IO, rooms: RoomManager): void {
+  clearBotTimer(roomCode);
+  if (!TEST_BOTS_ENABLED) return;
+  if (!rooms.hasBots(roomCode)) return;
+  if (phase !== 'night' && phase !== 'voting') return;
+
+  botTimers.set(roomCode, setTimeout(() => {
+    botTimers.delete(roomCode);
+
+    if (phase === 'night') {
+      const result = rooms.runBotNightActions(roomCode);
+      if (result.resolved && result.room) {
+        clearPhaseTimer(roomCode);
+        io.to(roomCode).emit('room_updated', { room: result.room });
+        if (result.seerResult) {
+          const { seerId, targetId: tid, targetName, role, round } = result.seerResult;
+          const seerPlayer = result.room.players.find(p => p.id === seerId);
+          if (!seerPlayer?.isBot) {
+            const seerSocket = rooms.getSocketId(seerId);
+            const sock = seerSocket ? io.sockets.sockets.get(seerSocket) : undefined;
+            sock?.emit('seer_result', { round, targetId: tid, targetName, role });
+          }
+        }
+        if (result.room.phaseEndAt) {
+          schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
+        }
+      }
+    } else if (phase === 'voting') {
+      const result = rooms.runBotVotes(roomCode);
+      if (result.room) {
+        if (result.resolved) clearPhaseTimer(roomCode);
+        io.to(roomCode).emit('room_updated', { room: result.room });
+        if (result.resolved && result.room.phaseEndAt) {
+          schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
+        }
+      }
+    }
+  }, 2000));
+}
+
 // ── Phase timers (module-level: survive across connections) ──────────────────
 
 const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -18,6 +69,8 @@ const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 function schedulePhaseTimer(roomCode: string, phase: GamePhase, endAt: number, io: IO, rooms: RoomManager): void {
   clearPhaseTimer(roomCode);
   if (phase === 'lobby' || phase === 'ended') return;
+
+  scheduleBotActions(roomCode, phase, io, rooms);
 
   const delay = Math.max(0, endAt - Date.now());
 
@@ -436,8 +489,35 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
       return;
     }
     clearPhaseTimer(result.code);
+    clearBotTimer(result.code);
     io.to(result.code).emit('room_updated', { room: result });
     console.log(`[host] force-returned ${result.code} to lobby`);
+  });
+
+  // ── Test bot handlers (guarded by ENABLE_TEST_BOTS) ─────────────────────────
+
+  socket.on('host_add_bot', () => {
+    if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
+    const pid = socket.data.playerId;
+    const result = rooms.addBot(pid);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
+  });
+
+  socket.on('host_fill_bots', ({ target }) => {
+    if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
+    const pid = socket.data.playerId;
+    const result = rooms.fillBots(pid, target);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
+  });
+
+  socket.on('host_remove_bots', () => {
+    if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
+    const pid = socket.data.playerId;
+    const result = rooms.removeBots(pid);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
   socket.on('disconnect', () => {
