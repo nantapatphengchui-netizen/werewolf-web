@@ -18,7 +18,7 @@ export function EmptySlot({ index }: Props) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
       {/* Slot number */}
-      <span className="absolute top-1.5 left-2 text-[9px] text-amber-900/30 font-cinzel tabular-nums leading-none">
+      <span className="absolute top-1.5 left-2 text-[9px] text-amber-800/55 font-cinzel tabular-nums leading-none">
         {index + 1}
       </span>
 

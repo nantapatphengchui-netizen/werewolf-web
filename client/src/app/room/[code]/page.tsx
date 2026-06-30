@@ -12,7 +12,7 @@ import { GameView } from '@/components/game/GameView';
 import { useAudioPhaseStore } from '@/store/audioPhaseStore';
 
 const PHASE_TINT: Record<string, string> = {
-  lobby:  'bg-black/55',
+  lobby:  'bg-black/38',
   night:  'bg-indigo-950/55',
   day:    'bg-amber-950/25',
   voting: 'bg-red-950/35',

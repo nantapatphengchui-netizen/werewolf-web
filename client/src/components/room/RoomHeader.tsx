@@ -23,12 +23,12 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
       {/* Left: room code */}
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-amber-900/55 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">Room</span>
-        <span className="font-mono font-bold text-lg text-amber-300 tracking-[0.35em]">{code}</span>
+        <span className="text-amber-700/80 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">Room</span>
+        <span className="font-mono font-bold text-lg text-amber-200 tracking-[0.35em] drop-shadow-[0_0_8px_rgba(251,191,36,0.35)]">{code}</span>
         <CopyButton text={code} />
       </div>
 
-      <div className="hidden sm:block w-px h-4 bg-amber-900/20 shrink-0" />
+      <div className="hidden sm:block w-px h-4 bg-amber-800/30 shrink-0" />
 
       {/* Center: player pips + count */}
       <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
@@ -38,28 +38,28 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
               key={i}
               className={`rounded-full transition-all duration-300 ${
                 i < playerCount
-                  ? 'w-[7px] h-[7px] bg-amber-500/85'
-                  : 'w-[5px] h-[5px] bg-amber-900/22'
+                  ? 'w-[7px] h-[7px] bg-amber-400'
+                  : 'w-[5px] h-[5px] bg-amber-900/35'
               }`}
             />
           ))}
         </div>
-        <span className="text-amber-400 font-cinzel font-semibold text-sm tabular-nums shrink-0">
+        <span className="text-amber-300 font-cinzel font-semibold text-sm tabular-nums shrink-0">
           {playerCount}
-          <span className="text-amber-900/60 font-normal text-xs">/{maxPlayers}</span>
+          <span className="text-amber-700/90 font-normal text-xs">/{maxPlayers}</span>
         </span>
-        <span className={`text-[10px] hidden md:inline shrink-0 ${hasEnough ? 'text-green-700/70' : 'text-amber-800/60'}`}>
+        <span className={`text-[10px] hidden md:inline shrink-0 ${hasEnough ? 'text-green-400/90' : 'text-amber-600/90'}`}>
           {hasEnough ? 'Ready to start' : `Need ${needed} more`}
         </span>
       </div>
 
-      <div className="hidden sm:block w-px h-4 bg-amber-900/20 shrink-0" />
+      <div className="hidden sm:block w-px h-4 bg-amber-800/30 shrink-0" />
 
       {/* Right: status + music + leave */}
       <div className="flex items-center gap-3 shrink-0">
         <div className="flex items-center gap-1.5">
           <StatusDot connected={isConnected} />
-          <span className="text-amber-900/50 text-[9px] uppercase tracking-wider hidden sm:inline">
+          <span className={`text-[9px] uppercase tracking-wider hidden sm:inline ${isConnected ? 'text-green-400/90' : 'text-red-400/80'}`}>
             {isConnected ? 'Connected' : 'Offline'}
           </span>
         </div>
@@ -72,7 +72,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
         <button
           onClick={onLeave}
-          className="px-3 py-1.5 border border-amber-900/30 hover:border-red-800/60 text-amber-700/70 hover:text-red-400 text-[10px] font-cinzel uppercase tracking-widest rounded-lg transition-colors"
+          className="px-3 py-1.5 border border-amber-800/50 hover:border-red-700/70 text-amber-500/90 hover:text-red-400 text-[10px] font-cinzel uppercase tracking-widest rounded-lg transition-colors"
         >
           Leave
         </button>

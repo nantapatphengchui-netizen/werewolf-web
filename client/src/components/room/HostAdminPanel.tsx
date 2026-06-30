@@ -36,11 +36,11 @@ function Modal({
         className="relative w-full max-w-xs bg-stone-950 border border-amber-900/25 rounded-2xl shadow-2xl overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-amber-900/15">
-          <span className="font-cinzel text-amber-600/75 text-[10px] uppercase tracking-widest">{title}</span>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-amber-900/25">
+          <span className="font-cinzel text-amber-400/90 text-[10px] uppercase tracking-widest">{title}</span>
           <button
             onClick={onClose}
-            className="text-amber-900/50 hover:text-amber-400 text-xl leading-none transition-colors w-6 h-6 flex items-center justify-center"
+            className="text-amber-700/70 hover:text-amber-300 text-xl leading-none transition-colors w-6 h-6 flex items-center justify-center"
           >
             ×
           </button>
@@ -90,17 +90,17 @@ export function HostAdminPanel({
         {isHost && (
           <button
             onClick={() => setHostOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-900/15 bg-black/20 hover:border-amber-800/28 hover:bg-black/30 transition-colors group"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-800/35 bg-black/40 hover:border-amber-700/55 hover:bg-black/50 transition-colors group"
           >
             {/* gear icon */}
-            <svg viewBox="0 0 20 20" className="w-3 h-3 text-amber-800/45 group-hover:text-amber-700/65 shrink-0 transition-colors" fill="currentColor">
+            <svg viewBox="0 0 20 20" className="w-3 h-3 text-amber-600/80 group-hover:text-amber-400 shrink-0 transition-colors" fill="currentColor">
               <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
             </svg>
-            <span className="text-[9px] font-cinzel uppercase tracking-widest text-amber-800/45 group-hover:text-amber-700/65 transition-colors">
+            <span className="text-[9px] font-cinzel uppercase tracking-widest text-amber-600/80 group-hover:text-amber-400 transition-colors">
               Host Tools
             </span>
             {isLocked && (
-              <span className="text-[7px] text-amber-700/35 font-cinzel uppercase tracking-wider border border-amber-900/15 rounded px-1">
+              <span className="text-[7px] text-amber-400/80 font-cinzel uppercase tracking-wider border border-amber-700/40 rounded px-1">
                 Locked
               </span>
             )}
@@ -110,13 +110,13 @@ export function HostAdminPanel({
         {TEST_BOTS_ENABLED && (
           <button
             onClick={() => setBotsOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-800/18 bg-black/20 hover:border-stone-700/28 hover:bg-black/30 transition-colors group"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-700/35 bg-black/40 hover:border-stone-600/55 hover:bg-black/50 transition-colors group"
           >
             {/* users/bots icon */}
-            <svg viewBox="0 0 20 20" className="w-3 h-3 text-stone-600/45 group-hover:text-stone-500/65 shrink-0 transition-colors" fill="currentColor">
+            <svg viewBox="0 0 20 20" className="w-3 h-3 text-stone-500/80 group-hover:text-stone-300 shrink-0 transition-colors" fill="currentColor">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
             </svg>
-            <span className="text-[9px] font-cinzel uppercase tracking-widest text-stone-600/45 group-hover:text-stone-500/65 transition-colors">
+            <span className="text-[9px] font-cinzel uppercase tracking-widest text-stone-500/80 group-hover:text-stone-300 transition-colors">
               Dev Bots
             </span>
           </button>
