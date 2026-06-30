@@ -23,25 +23,30 @@ export default function HomePage() {
     <main className="relative min-h-screen flex items-center justify-center px-4">
       {/* Full-bleed background */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        {/* Ken Burns — slow zoom + drift */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/bg.png"
           alt=""
           className="w-full h-full object-cover object-center"
           draggable={false}
-          style={{ animation: 'kenburns 30s ease-in-out infinite', transformOrigin: 'center center' }}
         />
-        {/* Dark base overlay */}
-        <div className="absolute inset-0 bg-black/40" />
-        {/* Fog drift layer */}
+        {/* Dark base */}
+        <div className="absolute inset-0 bg-black/45" />
+        {/* Heavy vignette — dark edges */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(0,0,0,0.82)_100%)]" />
+        {/* Fog layer 1 — bottom, slow drift */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_30%_60%,rgba(80,40,10,0.18)_0%,transparent_70%)]"
-          style={{ animation: 'fog-drift 18s ease-in-out infinite' }}
+          className="absolute inset-0 bg-[radial-gradient(ellipse_150%_60%_at_50%_100%,rgba(120,80,20,0.38)_0%,transparent_65%)]"
+          style={{ animation: 'fog-drift 20s ease-in-out infinite' }}
+        />
+        {/* Fog layer 2 — top-left, offset timing */}
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_100%_50%_at_15%_10%,rgba(60,30,8,0.32)_0%,transparent_60%)]"
+          style={{ animation: 'fog-drift 26s ease-in-out infinite reverse' }}
         />
         {/* Breathing vignette */}
         <div
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(0,0,0,0.65)_100%)]"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.55)_100%)]"
           style={{ animation: 'vignette-breathe 8s ease-in-out infinite' }}
         />
       </div>
