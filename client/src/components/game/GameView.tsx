@@ -9,7 +9,6 @@ import { StatusDot } from '@/components/ui/StatusDot';
 import { RolePanel } from './RolePanel';
 import { ActionPanel } from './ActionPanel';
 import { GamePlayerGrid } from './GamePlayerGrid';
-import { GameStatusPanel } from './GameStatusPanel';
 import { EventLog } from './EventLog';
 import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
@@ -27,7 +26,6 @@ interface Props {
   onAdvanceDay: () => void;
   onRestart: () => void;
   onReturnToLobby: () => void;
-  // Host admin
   onHostPauseTimer: () => void;
   onHostResumeTimer: () => void;
   onHostExtendTimer: (extraSeconds: number) => void;
@@ -115,13 +113,14 @@ export function GameView({
   onHostRestartGame,
   onHostReturnToLobby,
 }: Props) {
-  const [actionSubmitted, setActionSubmitted] = useState(false);
-  const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const [actionSubmitted, setActionSubmitted]     = useState(false);
+  const [selectedTarget, setSelectedTarget]       = useState<string | null>(null);
+  const [logOpen, setLogOpen]                     = useState(false);
+  const [hostControlsOpen, setHostControlsOpen]   = useState(false);
   const prevPhaseRef = useRef(room.phase);
   const isHost = room.hostId === playerId;
   const seerLog = useGameStore(s => s.seerLog);
 
-  // Build playerId → revealed role map for seer inspection results
   const seerRevealedMap = useMemo((): Record<string, Role> => {
     if (myRole !== 'seer') return {};
     return Object.fromEntries(seerLog.map(e => [e.targetId, e.role]));
@@ -132,23 +131,19 @@ export function GameView({
       prevPhaseRef.current = room.phase;
       setActionSubmitted(false);
       setSelectedTarget(null);
+      setHostControlsOpen(false);
     }
   }, [room.phase]);
 
-  const handleNightAction = (targetId: string) => {
-    onNightAction(targetId);
-    setActionSubmitted(true);
-  };
+  const handleNightAction = (targetId: string) => { onNightAction(targetId); setActionSubmitted(true); };
+  const handleCastVote    = (targetId: string) => { onCastVote(targetId);    setActionSubmitted(true); };
 
-  const handleCastVote = (targetId: string) => {
-    onCastVote(targetId);
-    setActionSubmitted(true);
-  };
-
-  const me = room.players.find(p => p.id === playerId);
-  const imAlive = me?.isAlive ?? false;
-  const hasVotedAlready = room.publicVotes?.hasVoted.includes(playerId) ?? false;
-  const isActionSubmitted = actionSubmitted || hasVotedAlready;
+  const me             = room.players.find(p => p.id === playerId);
+  const imAlive        = me?.isAlive ?? false;
+  const aliveCount     = room.players.filter(p => p.isAlive).length;
+  const deadCount      = room.players.length - aliveCount;
+  const hasVotedAlready    = room.publicVotes?.hasVoted.includes(playerId) ?? false;
+  const isActionSubmitted  = actionSubmitted || hasVotedAlready;
 
   const validTargetIds = useMemo(() => {
     if (isActionSubmitted || !imAlive) return [];
@@ -158,22 +153,19 @@ export function GameView({
       if (myRole === 'doctor')   return room.players.filter(p => p.isAlive).map(p => p.id);
       return [];
     }
-    if (room.phase === 'voting') {
-      return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
-    }
+    if (room.phase === 'voting') return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
     return [];
   }, [isActionSubmitted, imAlive, room.phase, room.players, myRole, werewolfIds, playerId]);
 
-  // Placeholder — action dispatch wired in next phase
   const onPlayerCardClick = (targetPlayerId: string) => {
     if (!validTargetIds.includes(targetPlayerId)) return;
     setSelectedTarget(prev => prev === targetPlayerId ? null : targetPlayerId);
   };
 
-  const instructionText = getInstructionText(room.phase, myRole, imAlive, isActionSubmitted);
-  const stripStyle = STRIP_STYLE[room.phase] ?? STRIP_STYLE.day;
+  const instructionText    = getInstructionText(room.phase, myRole, imAlive, isActionSubmitted);
+  const stripStyle         = STRIP_STYLE[room.phase] ?? STRIP_STYLE.day;
   const selectedPlayerName = selectedTarget ? room.players.find(p => p.id === selectedTarget)?.name : null;
-  const showTimer = !!(room.phaseEndAt || room.timerPaused);
+  const showTimer          = !!(room.phaseEndAt || room.timerPaused);
 
   return (
     <div className="relative z-10 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
@@ -189,27 +181,40 @@ export function GameView({
         />
       )}
 
-      {/* ── Compact top bar ─────────────────────────────────────────────── */}
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 pt-3 pb-2">
-        <DarkPanel className="flex items-center justify-between px-4 py-2 gap-4">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-amber-700 text-[10px] uppercase tracking-widest hidden sm:inline shrink-0">Room</span>
+        <DarkPanel className="flex items-center gap-3 px-4 py-2">
+
+          {/* Room code */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-amber-700 text-[10px] uppercase tracking-widest hidden sm:inline">Room</span>
             <span className="font-mono font-bold text-base text-amber-300 tracking-[0.3em]">{room.code}</span>
             <CopyButton text={room.code} />
           </div>
 
+          {/* Phase + round */}
           <div className="flex items-center gap-1.5 min-w-0">
             {PHASE_ICON[room.phase]}
             <span className={`font-cinzel text-xs tracking-widest uppercase truncate ${PHASE_COLOR[room.phase] ?? 'text-amber-300'}`}>
               {room.phase === 'ended' ? 'Ended' : `${room.phase} · R${room.round}`}
             </span>
             {room.timerPaused && (
-              <span className="text-[9px] text-amber-700 font-cinzel border border-amber-800/40 rounded px-1.5 py-0.5 ml-1 shrink-0">
-                ⏸
-              </span>
+              <span className="text-[9px] text-amber-700 border border-amber-800/40 rounded px-1.5 py-0.5 shrink-0">⏸</span>
             )}
           </div>
 
+          {/* Alive / Dead counts */}
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] shrink-0">
+            <span className="text-green-500 font-semibold">{aliveCount}</span>
+            <span className="text-stone-700 text-[10px]">alive</span>
+            <span className="text-stone-700 mx-0.5">·</span>
+            <span className="text-red-700 font-semibold">{deadCount}</span>
+            <span className="text-stone-700 text-[10px]">dead</span>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Connection + leave */}
           <div className="flex items-center gap-3 shrink-0">
             <StatusDot connected={isConnected} />
             <button
@@ -227,6 +232,13 @@ export function GameView({
 
         {/* ── Player grid area ─────────────────────────────────────────── */}
         <div className="flex flex-col gap-2 lg:flex-1 lg:min-h-0">
+
+          {/* Last announcement — compact strip above instruction */}
+          {room.lastAnnouncement && (
+            <div className="shrink-0 px-3 py-1.5 rounded-lg border border-amber-900/15 bg-amber-950/10 text-center">
+              <p className="text-amber-400/65 text-[11px] italic leading-snug">{room.lastAnnouncement}</p>
+            </div>
+          )}
 
           {/* Instruction strip */}
           {instructionText && (
@@ -257,10 +269,12 @@ export function GameView({
           </div>
         </div>
 
-        {/* ── Right sidebar ────────────────────────────────────────────── */}
-        <div className="w-full lg:w-56 xl:w-64 shrink-0 flex flex-col gap-3">
+        {/* ── Right sidebar — slim ─────────────────────────────────────── */}
+        <div className="w-full lg:w-48 xl:w-52 shrink-0 flex flex-col gap-2">
+
+          {/* Timer */}
           {showTimer && (
-            <DarkPanel className="px-4 py-3">
+            <DarkPanel className="px-3 py-2.5">
               <PhaseTimer
                 phase={room.phase}
                 phaseEndAt={room.phaseEndAt}
@@ -269,13 +283,16 @@ export function GameView({
               />
             </DarkPanel>
           )}
+
+          {/* Role */}
           <RolePanel
             myRole={myRole}
             werewolfIds={werewolfIds}
             players={room.players}
             playerId={playerId}
           />
-          <EventLog events={room.eventLog} />
+
+          {/* Primary action */}
           <ActionPanel
             room={room}
             playerId={playerId}
@@ -287,21 +304,81 @@ export function GameView({
             onCastVote={handleCastVote}
             onAdvanceDay={onAdvanceDay}
           />
-          <GameStatusPanel room={room} />
+
+          {/* Host controls — collapsible */}
           {isHost && (
-            <HostGameControls
-              phase={room.phase}
-              timerPaused={room.timerPaused}
-              onPauseTimer={onHostPauseTimer}
-              onResumeTimer={onHostResumeTimer}
-              onExtendTimer={onHostExtendTimer}
-              onEndPhase={onHostEndPhase}
-              onRestartGame={onHostRestartGame}
-              onReturnToLobby={onHostReturnToLobby}
-            />
+            <div className="flex flex-col">
+              <button
+                onClick={() => setHostControlsOpen(p => !p)}
+                className="flex items-center justify-between px-3 py-2 rounded-lg border border-amber-900/20 bg-black/20 hover:border-amber-800/35 transition-colors"
+              >
+                <span className="text-[10px] font-cinzel uppercase tracking-widest text-amber-800/70">Host Controls</span>
+                <svg
+                  viewBox="0 0 16 16"
+                  className={`w-3 h-3 text-amber-800/50 transition-transform duration-200 ${hostControlsOpen ? 'rotate-180' : ''}`}
+                  fill="none" stroke="currentColor" strokeWidth="2"
+                >
+                  <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {hostControlsOpen && (
+                <div className="mt-1">
+                  <HostGameControls
+                    phase={room.phase}
+                    timerPaused={room.timerPaused}
+                    onPauseTimer={onHostPauseTimer}
+                    onResumeTimer={onHostResumeTimer}
+                    onExtendTimer={onHostExtendTimer}
+                    onEndPhase={onHostEndPhase}
+                    onRestartGame={onHostRestartGame}
+                    onReturnToLobby={onHostReturnToLobby}
+                  />
+                </div>
+              )}
+            </div>
           )}
+
+          {/* Event log toggle */}
+          <button
+            onClick={() => setLogOpen(true)}
+            className="flex items-center justify-between px-3 py-2 rounded-lg border border-amber-900/15 bg-black/10 hover:border-amber-900/30 hover:bg-black/20 transition-colors group"
+          >
+            <span className="text-[10px] font-cinzel uppercase tracking-widest text-amber-900/50 group-hover:text-amber-800/70 transition-colors">
+              Event Log
+            </span>
+            <span className="text-[10px] text-amber-900/30 group-hover:text-amber-800/50 transition-colors">
+              {room.eventLog.length}
+            </span>
+          </button>
+
         </div>
       </div>
+
+      {/* ── Event log drawer ─────────────────────────────────────────────── */}
+      {logOpen && (
+        <div className="fixed inset-0 z-50 flex" onClick={() => setLogOpen(false)}>
+          {/* Backdrop */}
+          <div className="flex-1 bg-black/40 backdrop-blur-[1px]" />
+          {/* Panel */}
+          <div
+            className="relative w-72 bg-stone-950/98 border-l border-amber-900/25 flex flex-col shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-900/20 shrink-0">
+              <p className="font-cinzel text-amber-600/80 text-[10px] uppercase tracking-widest">Event Log</p>
+              <button
+                onClick={() => setLogOpen(false)}
+                className="text-amber-800/60 hover:text-amber-500 text-xl leading-none transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <EventLog events={room.eventLog} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
