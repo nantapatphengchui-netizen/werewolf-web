@@ -85,4 +85,5 @@ export interface RoomState {
   isLocked: boolean;
   timerPaused: boolean;
   pausedTimeRemaining: number | null;
+  suspicionMap: Record<string, string[]>;
 }

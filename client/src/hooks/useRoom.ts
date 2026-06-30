@@ -118,6 +118,14 @@ export function useRoom() {
 
   // ── Test bot controls ─────────────────────────────────────────────────────
 
+  const markSuspicion = useCallback((targetId: string) => {
+    socket?.emit('day_mark_suspicion', { targetId });
+  }, [socket]);
+
+  const dayReaction = useCallback((targetId: string) => {
+    socket?.emit('day_reaction', { targetId });
+  }, [socket]);
+
   const hostAddBot = useCallback(() => {
     socket?.emit('host_add_bot');
   }, [socket]);
@@ -157,6 +165,8 @@ export function useRoom() {
     hostEndPhase,
     hostRestartGame,
     hostReturnToLobby,
+    markSuspicion,
+    dayReaction,
     hostAddBot,
     hostFillBots,
     hostRemoveBots,

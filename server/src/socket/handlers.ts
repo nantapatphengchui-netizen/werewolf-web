@@ -496,6 +496,33 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
 
   // ── Test bot handlers (guarded by ENABLE_TEST_BOTS) ─────────────────────────
 
+  // ── Social deduction handlers ────────────────────────────────────────────────
+
+  socket.on('day_mark_suspicion', ({ targetId }) => {
+    const pid = socket.data.playerId;
+    const result = rooms.markSuspicion(pid, targetId);
+    if (!result.ok) {
+      socket.emit('error', { message: result.error! });
+      return;
+    }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
+  });
+
+  socket.on('day_reaction', ({ targetId }) => {
+    const pid = socket.data.playerId;
+    const room = rooms.getRoomByPlayer(pid);
+    if (!room || room.phase !== 'day') return;
+    const player = room.players.find(p => p.id === pid);
+    const target = room.players.find(p => p.id === targetId);
+    if (!player?.isAlive || !target?.isAlive) return;
+    io.to(room.code).emit('day_reaction_sent', {
+      fromId: pid,
+      fromName: player.name,
+      targetId,
+      targetName: target.name,
+    });
+  });
+
   socket.on('host_add_bot', () => {
     if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
     const pid = socket.data.playerId;

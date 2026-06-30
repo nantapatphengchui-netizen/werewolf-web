@@ -43,6 +43,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const setConnected = useGameStore((s) => s.setConnected);
   const clearGameState = useGameStore((s) => s.clearGameState);
   const clearRoom = useGameStore((s) => s.clearRoom);
+  const addDayReaction = useGameStore((s) => s.addDayReaction);
+  const clearDayReactions = useGameStore((s) => s.clearDayReactions);
 
   useEffect(() => {
     const serverUrl =
@@ -65,7 +67,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('room_joined', ({ room, playerId }) => setRoom(room, playerId));
     s.on('room_updated', ({ room }) => {
       if (room.phase === 'lobby') clearGameState();
+      if (room.phase !== 'day') clearDayReactions();
       updateRoom(room);
+    });
+    s.on('day_reaction_sent', ({ fromName, targetName }) => {
+      addDayReaction({ id: `${fromName}-${Date.now()}`, fromName, targetName });
     });
     s.on('game_started', ({ room }) => {
       clearGameState();

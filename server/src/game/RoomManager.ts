@@ -96,6 +96,7 @@ export class RoomManager {
       isLocked: false,
       timerPaused: false,
       pausedTimeRemaining: null,
+      suspicionMap: {},
     };
 
     this.rooms.set(code, room);
@@ -287,6 +288,7 @@ export class RoomManager {
     this.seerChoices.delete(room.code);
     this.doctorChoices.delete(room.code);
     this.dayVotes.delete(room.code);
+    room.suspicionMap = {};
 
     this.addEvent(room, 'The game has begun. Roles have been assigned.');
     this.addEvent(room, 'Night falls upon the village. All close their eyes.');
@@ -415,6 +417,7 @@ export class RoomManager {
     } else {
       room.phase   = 'day';
       room.phaseEndAt = Date.now() + PHASE_DURATIONS.day;
+      room.suspicionMap = {};
       room.lastAnnouncement = killed
         ? `Dawn breaks. ${killed.name} was found dead in the village square. Their role remains unknown.`
         : 'A quiet night passes. No one was found dead.';
@@ -450,6 +453,37 @@ export class RoomManager {
     room.pausedTimeRemaining = null;
     this.dayVotes.delete(room.code);
     this.addEvent(room, 'The village gathers to cast their votes.');
+    return { ok: true, room };
+  }
+
+  // ── Social deduction ─────────────────────────────────────────────────────────
+
+  markSuspicion(persistentId: string, targetId: string): { ok: boolean; error?: string; room?: RoomState } {
+    const room = this.getRoomByPlayer(persistentId);
+    if (!room) return { ok: false, error: 'Not in a room.' };
+    if (room.phase !== 'day') return { ok: false, error: 'Suspicion marks are only available during day phase.' };
+
+    const marker = room.players.find(p => p.id === persistentId);
+    if (!marker?.isAlive) return { ok: false, error: 'Only alive players can mark suspicion.' };
+
+    const target = room.players.find(p => p.id === targetId);
+    if (!target?.isAlive) return { ok: false, error: 'Cannot mark a dead player.' };
+    if (targetId === persistentId) return { ok: false, error: 'Cannot mark yourself as suspicious.' };
+
+    if (!room.suspicionMap) room.suspicionMap = {};
+    const markers = room.suspicionMap[targetId] ?? [];
+    const alreadyMarked = markers.includes(persistentId);
+
+    if (alreadyMarked) {
+      const updated = markers.filter(id => id !== persistentId);
+      if (updated.length === 0) delete room.suspicionMap[targetId];
+      else room.suspicionMap[targetId] = updated;
+    } else {
+      const myMarkCount = Object.values(room.suspicionMap).filter(arr => arr.includes(persistentId)).length;
+      if (myMarkCount >= 2) return { ok: false, error: 'You can only mark up to 2 players as suspicious.' };
+      room.suspicionMap[targetId] = [...markers, persistentId];
+    }
+
     return { ok: true, room };
   }
 
@@ -568,6 +602,7 @@ export class RoomManager {
     room.pausedTimeRemaining = null;
     room.eventLog = [];
 
+    room.suspicionMap = {};
     this.addEvent(room, 'A new game has begun. Roles have been reassigned.');
     this.addEvent(room, 'Night falls upon the village. All close their eyes.');
 
@@ -874,6 +909,7 @@ export class RoomManager {
     room.pausedTimeRemaining = null;
     room.eventLog = [];
 
+    room.suspicionMap = {};
     this.addEvent(room, 'The host has restarted the game. New roles assigned.');
     this.addEvent(room, 'Night falls upon the village. All close their eyes.');
 
@@ -912,6 +948,7 @@ export class RoomManager {
     room.phaseEndAt = null;
     room.timerPaused = false;
     room.pausedTimeRemaining = null;
+    room.suspicionMap = {};
   }
 
   private checkWin(room: RoomState): 'village' | 'werewolf' | null {

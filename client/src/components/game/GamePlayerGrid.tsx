@@ -12,6 +12,9 @@ interface Props {
   validTargetIds?: string[];
   selectedTargetId?: string | null;
   onPlayerCardClick?: (playerId: string) => void;
+  suspicionMap?: Record<string, string[]>;
+  canMarkSuspicion?: boolean;
+  onMarkSuspicion?: (targetId: string) => void;
 }
 
 export function GamePlayerGrid({
@@ -25,6 +28,9 @@ export function GamePlayerGrid({
   validTargetIds = [],
   selectedTargetId = null,
   onPlayerCardClick,
+  suspicionMap = {},
+  canMarkSuspicion = false,
+  onMarkSuspicion,
 }: Props) {
   const desktopRowCount = Math.ceil(players.length / 4);
   const rowClass = desktopRowCount <= 2
@@ -33,23 +39,32 @@ export function GamePlayerGrid({
 
   return (
     <div className={`w-full lg:h-full grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-2.5 ${rowClass}`}>
-      {players.map((player, index) => (
-        <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
-          <GamePlayerCard
-            player={player}
-            index={index}
-            isCurrentPlayer={player.id === currentPlayerId}
-            isWerewolfTeammate={werewolfIds.includes(player.id) && player.id !== currentPlayerId}
-            voteCount={publicVotes?.tally[player.id]}
-            actionSubmitted={player.id === currentPlayerId ? currentPlayerSubmitted : false}
-            myRole={player.id === currentPlayerId ? myRole : undefined}
-            seerRevealedRole={seerRevealedMap[player.id]}
-            isValidTarget={validTargetIds.includes(player.id)}
-            isSelected={player.id === selectedTargetId}
-            onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
-          />
-        </div>
-      ))}
+      {players.map((player, index) => {
+        const suspicionCount = (suspicionMap[player.id] ?? []).length;
+        const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
+        const showSuspectBtn = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
+        return (
+          <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
+            <GamePlayerCard
+              player={player}
+              index={index}
+              isCurrentPlayer={player.id === currentPlayerId}
+              isWerewolfTeammate={werewolfIds.includes(player.id) && player.id !== currentPlayerId}
+              voteCount={publicVotes?.tally[player.id]}
+              actionSubmitted={player.id === currentPlayerId ? currentPlayerSubmitted : false}
+              myRole={player.id === currentPlayerId ? myRole : undefined}
+              seerRevealedRole={seerRevealedMap[player.id]}
+              isValidTarget={validTargetIds.includes(player.id)}
+              isSelected={player.id === selectedTargetId}
+              onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
+              suspicionCount={suspicionCount}
+              isSuspectedByMe={isSuspectedByMe}
+              showSuspectBtn={showSuspectBtn}
+              onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

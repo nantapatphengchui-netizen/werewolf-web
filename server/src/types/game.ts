@@ -41,4 +41,5 @@ export interface RoomState {
   isLocked: boolean;                  // when true, new players cannot join
   timerPaused: boolean;               // when true, phase timer is paused
   pausedTimeRemaining: number | null; // ms remaining when timer was paused
+  suspicionMap: Record<string, string[]>; // targetId → array of marker playerIds
 }

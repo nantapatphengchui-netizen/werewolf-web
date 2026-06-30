@@ -33,7 +33,20 @@ interface Props {
   onHostEndPhase: () => void;
   onHostRestartGame: () => void;
   onHostReturnToLobby: () => void;
+  onMarkSuspicion: (targetId: string) => void;
+  onDayReaction: (targetId: string) => void;
 }
+
+const DISCUSSION_PROMPTS = [
+  'Who seemed most suspicious last round?',
+  'Who changed their story since dawn?',
+  'Has anyone been unusually quiet today?',
+  'Who do you trust least right now?',
+  'Which player deflected instead of answering?',
+  'Who was most eager to point fingers?',
+  'Did anyone defend a suspicious player without reason?',
+  'Who looked most relieved when the victim was named?',
+];
 
 function getInstructionText(
   phase: string,
@@ -113,6 +126,8 @@ export function GameView({
   onHostEndPhase,
   onHostRestartGame,
   onHostReturnToLobby,
+  onMarkSuspicion,
+  onDayReaction,
 }: Props) {
   const [actionSubmitted, setActionSubmitted]     = useState(false);
   const [selectedTarget, setSelectedTarget]       = useState<string | null>(null);
@@ -121,6 +136,7 @@ export function GameView({
   const prevPhaseRef = useRef(room.phase);
   const isHost = room.hostId === playerId;
   const seerLog = useGameStore(s => s.seerLog);
+  const dayReactions = useGameStore(s => s.dayReactions);
 
   const seerRevealedMap = useMemo((): Record<string, Role> => {
     if (myRole !== 'seer') return {};
@@ -237,10 +253,41 @@ export function GameView({
         {/* ── Player grid area ─────────────────────────────────────────── */}
         <div className="flex flex-col gap-2 lg:flex-1 lg:min-h-0">
 
-          {/* Last announcement — compact strip above instruction */}
+          {/* Last announcement */}
           {room.lastAnnouncement && (
             <div className="shrink-0 px-3 py-1.5 rounded-lg border border-amber-900/15 bg-amber-950/10 text-center">
               <p className="text-amber-400/65 text-[11px] italic leading-snug">{room.lastAnnouncement}</p>
+            </div>
+          )}
+
+          {/* Discussion prompt — day phase only */}
+          {room.phase === 'day' && (
+            <div className="shrink-0 flex items-start gap-2 px-3 py-1.5 rounded-lg border border-amber-800/20 bg-amber-950/10">
+              <svg viewBox="0 0 16 16" className="w-3 h-3 text-amber-600/60 shrink-0 mt-0.5" fill="currentColor">
+                <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
+              </svg>
+              <p className="text-amber-400/70 text-[10px] italic leading-snug flex-1">
+                {DISCUSSION_PROMPTS[(room.round - 1) % DISCUSSION_PROMPTS.length]}
+              </p>
+            </div>
+          )}
+
+          {/* Ask reactions strip */}
+          {dayReactions.length > 0 && room.phase === 'day' && (
+            <div className="shrink-0 flex flex-col gap-0.5">
+              {dayReactions.map(r => (
+                <div key={r.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-950/20 border border-violet-800/20">
+                  <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 text-violet-500/70 shrink-0" fill="currentColor">
+                    <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
+                  </svg>
+                  <p className="text-[10px] text-violet-300/65 truncate">
+                    <span className="text-violet-200/80">{r.fromName}</span>
+                    {' '}asks{' '}
+                    <span className="text-violet-200/80">{r.targetName}</span>
+                    {' '}to speak
+                  </p>
+                </div>
+              ))}
             </div>
           )}
 
@@ -253,6 +300,21 @@ export function GameView({
                   → {selectedPlayerName}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* Ask to speak chips — day phase, alive only */}
+          {room.phase === 'day' && imAlive && (
+            <div className="shrink-0 flex flex-wrap gap-1">
+              {room.players.filter(p => p.isAlive && p.id !== playerId).map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => onDayReaction(p.id)}
+                  className="px-2 py-0.5 rounded border border-violet-800/25 bg-violet-950/10 text-violet-400/60 hover:border-violet-600/45 hover:text-violet-300/85 text-[9px] font-cinzel uppercase tracking-wide transition-colors"
+                >
+                  Ask {p.name}
+                </button>
+              ))}
             </div>
           )}
 
@@ -269,6 +331,9 @@ export function GameView({
               validTargetIds={validTargetIds}
               selectedTargetId={selectedTarget}
               onPlayerCardClick={onPlayerCardClick}
+              suspicionMap={room.phase === 'day' || room.phase === 'voting' ? room.suspicionMap : {}}
+              canMarkSuspicion={room.phase === 'day' && imAlive}
+              onMarkSuspicion={onMarkSuspicion}
             />
           </div>
         </div>

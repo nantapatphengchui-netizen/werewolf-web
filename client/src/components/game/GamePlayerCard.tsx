@@ -83,6 +83,10 @@ interface Props {
   isValidTarget?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
+  suspicionCount?: number;
+  isSuspectedByMe?: boolean;
+  showSuspectBtn?: boolean;
+  onMarkSuspicion?: () => void;
 }
 
 export function GamePlayerCard({
@@ -97,6 +101,10 @@ export function GamePlayerCard({
   isValidTarget = false,
   isSelected = false,
   onClick,
+  suspicionCount = 0,
+  isSuspectedByMe = false,
+  showSuspectBtn = false,
+  onMarkSuspicion,
 }: Props) {
   const alive = player.isAlive;
   const offline = alive && !player.isConnected;
@@ -180,6 +188,14 @@ export function GamePlayerCard({
             <span className="text-red-200 text-[10px] font-bold leading-none">{voteCount}</span>
           </div>
         )}
+        {suspicionCount > 0 && !voteCount && (
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-10 flex items-center gap-0.5 h-[18px] bg-amber-950/95 border border-amber-600/60 rounded-full px-1.5">
+            <svg viewBox="0 0 12 12" className="w-2 h-2 text-amber-400" fill="currentColor">
+              <path d="M6 1L7.5 4.5H11L8.5 6.5L9.5 10L6 8L2.5 10L3.5 6.5L1 4.5H4.5Z"/>
+            </svg>
+            <span className="text-amber-300 text-[9px] font-bold leading-none">{suspicionCount}</span>
+          </div>
+        )}
       </div>
 
       {/* Name */}
@@ -216,6 +232,20 @@ export function GamePlayerCard({
         <p className="text-[9px] font-cinzel font-bold tracking-widest -mt-0.5" style={{ color: revealedInfo.accentColor }}>
           {revealedInfo.name.toUpperCase()}
         </p>
+      )}
+
+      {/* Suspect toggle — day phase only */}
+      {showSuspectBtn && (
+        <button
+          onClick={e => { e.stopPropagation(); onMarkSuspicion?.(); }}
+          className={`w-full mt-0.5 py-0.5 rounded text-[8px] font-cinzel uppercase tracking-widest transition-colors border ${
+            isSuspectedByMe
+              ? 'bg-amber-900/40 border-amber-600/60 text-amber-300'
+              : 'bg-black/20 border-amber-900/25 text-amber-800/60 hover:border-amber-700/50 hover:text-amber-600'
+          }`}
+        >
+          {isSuspectedByMe ? '★ Suspected' : '☆ Suspect'}
+        </button>
       )}
     </div>
   );
