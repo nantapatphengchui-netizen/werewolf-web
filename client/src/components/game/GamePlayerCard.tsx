@@ -1,5 +1,6 @@
-import type { Player } from '@/types/game';
+import type { Player, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { RoleCardArt } from './RoleCardArt';
 
 function PlayerSilhouette({ isAlive }: { isAlive: boolean }) {
   return (
@@ -62,6 +63,14 @@ function HostBadge() {
   );
 }
 
+/** Thin role-colored accent glow on the avatar border when role is known */
+const ROLE_BORDER: Record<Role, string> = {
+  werewolf: 'border-red-800/60',
+  seer:     'border-violet-700/60',
+  doctor:   'border-emerald-700/60',
+  villager: 'border-amber-800/40',
+};
+
 interface Props {
   player: Player;
   index: number;
@@ -69,6 +78,8 @@ interface Props {
   isWerewolfTeammate: boolean;
   voteCount?: number;
   actionSubmitted?: boolean;
+  myRole?: Role | null;
+  seerRevealedRole?: Role | null;
   isValidTarget?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
@@ -81,6 +92,8 @@ export function GamePlayerCard({
   isWerewolfTeammate,
   voteCount,
   actionSubmitted,
+  myRole,
+  seerRevealedRole,
   isValidTarget = false,
   isSelected = false,
   onClick,
@@ -88,9 +101,19 @@ export function GamePlayerCard({
   const alive = player.isAlive;
   const offline = alive && !player.isConnected;
   const revealedInfo = player.revealedRole ? ROLE_INFO[player.revealedRole] : null;
+
+  // Determine which role art to show (null = hooded silhouette)
+  const shownRole: Role | null =
+    player.revealedRole                        ? player.revealedRole  // dead / game-over reveal
+    : isCurrentPlayer && myRole                ? myRole               // your own card
+    : isWerewolfTeammate                       ? 'werewolf'           // wolf sees teammates
+    : seerRevealedRole                         ? seerRevealedRole     // seer inspection
+    : null;
+
   const targetingActive = onClick !== undefined;
   const isInvalidTarget = targetingActive && alive && !isValidTarget && !isCurrentPlayer;
 
+  // Card border / background
   let cardClass: string;
   if (!alive) {
     cardClass = 'border-stone-800/40 bg-stone-950/30 grayscale cursor-default';
@@ -103,7 +126,12 @@ export function GamePlayerCard({
   } else if (offline) {
     cardClass = 'border-stone-700/30 bg-black/30 opacity-50 cursor-default';
   } else if (isCurrentPlayer) {
-    cardClass = 'border-amber-500/70 bg-amber-950/20 shadow-[0_0_18px_rgba(217,119,6,0.18),inset_0_1px_0_rgba(251,191,36,0.06)] cursor-default';
+    // Own card — accent color based on role
+    const roleAccent = myRole === 'werewolf' ? 'border-red-600/70 bg-red-950/15 shadow-[0_0_18px_rgba(220,38,38,0.2)]'
+      : myRole === 'seer'    ? 'border-violet-600/70 bg-violet-950/15 shadow-[0_0_18px_rgba(124,58,237,0.2)]'
+      : myRole === 'doctor'  ? 'border-emerald-600/70 bg-emerald-950/15 shadow-[0_0_18px_rgba(5,150,105,0.2)]'
+      : 'border-amber-500/70 bg-amber-950/20 shadow-[0_0_18px_rgba(217,119,6,0.18)]';
+    cardClass = `${roleAccent} cursor-default`;
   } else if (isWerewolfTeammate) {
     cardClass = 'border-red-700/60 bg-red-950/15 shadow-[0_0_12px_rgba(185,28,28,0.22)] cursor-default';
   } else {
@@ -112,9 +140,10 @@ export function GamePlayerCard({
 
   const dotClass = alive && player.isConnected
     ? 'bg-green-400 shadow-[0_0_5px_rgba(74,222,128,0.65)]'
-    : alive
-    ? 'bg-stone-600'
-    : 'bg-red-900/70';
+    : alive ? 'bg-stone-600' : 'bg-red-900/70';
+
+  // Avatar inner border color — matches role when role is known
+  const avatarBorderClass = shownRole && alive ? ROLE_BORDER[shownRole] : 'border-amber-900/15';
 
   return (
     <div
@@ -123,7 +152,7 @@ export function GamePlayerCard({
     >
       {player.isHost && <HostBadge />}
 
-      {/* Number badge */}
+      {/* Slot number */}
       <div className="absolute top-2 left-2 w-[18px] h-[18px] rounded-full bg-amber-900/60 border border-amber-800/40 flex items-center justify-center z-10">
         <span className="text-amber-300 text-[8px] font-bold font-cinzel">{index + 1}</span>
       </div>
@@ -135,9 +164,9 @@ export function GamePlayerCard({
         <div className={`absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full z-10 ${dotClass}`} />
       )}
 
-      {/* Avatar — fills remaining height */}
-      <div className="relative w-full flex-1 min-h-0 mt-2 rounded-lg overflow-hidden bg-[#090805] border border-amber-900/15">
-        <PlayerSilhouette isAlive={alive} />
+      {/* Avatar */}
+      <div className={`relative w-full flex-1 min-h-0 mt-2 rounded-lg overflow-hidden bg-[#090805] border ${avatarBorderClass}`}>
+        {shownRole ? <RoleCardArt role={shownRole} /> : <PlayerSilhouette isAlive={alive} />}
         {!alive && <DeadOverlay />}
         {offline && (
           <div className="absolute inset-0 bg-black/60 flex items-end justify-center pb-1.5">
@@ -164,8 +193,21 @@ export function GamePlayerCard({
       </p>
 
       {/* Sub-label */}
-      {isCurrentPlayer && alive && (
-        <span className="text-[8px] text-amber-600/70 uppercase tracking-[0.22em] font-cinzel -mt-0.5">You</span>
+      {isCurrentPlayer && alive && myRole && (
+        <span
+          className="text-[8px] uppercase tracking-[0.2em] font-cinzel -mt-0.5"
+          style={{ color: ROLE_INFO[myRole].accentColor + 'bb' }}
+        >
+          {ROLE_INFO[myRole].name}
+        </span>
+      )}
+      {!isCurrentPlayer && seerRevealedRole && alive && (
+        <span
+          className="text-[8px] uppercase tracking-[0.2em] font-cinzel -mt-0.5"
+          style={{ color: ROLE_INFO[seerRevealedRole].accentColor + 'bb' }}
+        >
+          {ROLE_INFO[seerRevealedRole].name}
+        </span>
       )}
       {!alive && !revealedInfo && (
         <span className="text-[8px] text-red-900/80 uppercase tracking-[0.15em] font-cinzel -mt-0.5">Dead</span>

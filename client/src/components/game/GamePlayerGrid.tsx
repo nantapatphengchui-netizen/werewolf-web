@@ -1,4 +1,4 @@
-import type { Player, PublicVotes } from '@/types/game';
+import type { Player, PublicVotes, Role } from '@/types/game';
 import { GamePlayerCard } from './GamePlayerCard';
 
 interface Props {
@@ -7,6 +7,8 @@ interface Props {
   werewolfIds: string[];
   publicVotes: PublicVotes | null;
   currentPlayerSubmitted?: boolean;
+  myRole?: Role | null;
+  seerRevealedMap?: Record<string, Role>;
   validTargetIds?: string[];
   selectedTargetId?: string | null;
   onPlayerCardClick?: (playerId: string) => void;
@@ -18,11 +20,12 @@ export function GamePlayerGrid({
   werewolfIds,
   publicVotes,
   currentPlayerSubmitted = false,
+  myRole,
+  seerRevealedMap = {},
   validTargetIds = [],
   selectedTargetId = null,
   onPlayerCardClick,
 }: Props) {
-  // Compute desktop row count so the grid fills the container height.
   const desktopRowCount = Math.ceil(players.length / 4);
   const rowClass = desktopRowCount <= 2
     ? 'lg:[grid-template-rows:repeat(2,minmax(0,1fr))]'
@@ -39,6 +42,8 @@ export function GamePlayerGrid({
             isWerewolfTeammate={werewolfIds.includes(player.id) && player.id !== currentPlayerId}
             voteCount={publicVotes?.tally[player.id]}
             actionSubmitted={player.id === currentPlayerId ? currentPlayerSubmitted : false}
+            myRole={player.id === currentPlayerId ? myRole : undefined}
+            seerRevealedRole={seerRevealedMap[player.id]}
             isValidTarget={validTargetIds.includes(player.id)}
             isSelected={player.id === selectedTargetId}
             onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { RoomState, Role } from '@/types/game';
+import { useGameStore } from '@/store/gameStore';
 import { DarkPanel } from '@/components/ui/DarkPanel';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
@@ -118,6 +119,13 @@ export function GameView({
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const prevPhaseRef = useRef(room.phase);
   const isHost = room.hostId === playerId;
+  const seerLog = useGameStore(s => s.seerLog);
+
+  // Build playerId → revealed role map for seer inspection results
+  const seerRevealedMap = useMemo((): Record<string, Role> => {
+    if (myRole !== 'seer') return {};
+    return Object.fromEntries(seerLog.map(e => [e.targetId, e.role]));
+  }, [myRole, seerLog]);
 
   useEffect(() => {
     if (prevPhaseRef.current !== room.phase) {
@@ -240,6 +248,8 @@ export function GameView({
               werewolfIds={werewolfIds}
               publicVotes={room.publicVotes}
               currentPlayerSubmitted={actionSubmitted}
+              myRole={myRole}
+              seerRevealedMap={seerRevealedMap}
               validTargetIds={validTargetIds}
               selectedTargetId={selectedTarget}
               onPlayerCardClick={onPlayerCardClick}
