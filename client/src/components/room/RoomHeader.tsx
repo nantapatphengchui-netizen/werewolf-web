@@ -31,14 +31,14 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
       {/* Center: player pips + count */}
       <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-[3px]">
           {Array.from({ length: maxPlayers }, (_, i) => (
             <div
               key={i}
               className={`rounded-full transition-all duration-300 ${
                 i < playerCount
-                  ? 'w-2 h-2 bg-amber-500/80'
-                  : 'w-1.5 h-1.5 bg-amber-900/20'
+                  ? 'w-[7px] h-[7px] bg-amber-500/85'
+                  : 'w-[5px] h-[5px] bg-amber-900/22'
               }`}
             />
           ))}
