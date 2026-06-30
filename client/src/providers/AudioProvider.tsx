@@ -160,21 +160,43 @@ export function AudioProvider({ children }: Props) {
     };
   }, [clearFade]);
 
-  // ── Unlock autoplay on first user interaction ─────────────────────────────
+  // ── Try immediate autoplay; fall back to first click if browser blocks ───
 
   useEffect(() => {
+    if (!mutedRef.current) {
+      const p = phaseRef.current;
+      const audio = audioEl.current;
+      const src = TRACKS[p];
+      if (audio && src) {
+        loadedPhase.current = p;
+        audio.onerror = () => { audio.onerror = null; audio.src = ''; loadedPhase.current = ''; };
+        audio.src = src;
+        audio.loop = true;
+        audio.volume = 0;
+        const promise = audio.play();
+        if (promise !== undefined) {
+          promise
+            .then(() => { interacted.current = true; fadeTo(volumeRef.current, 1000); })
+            .catch(() => { /* autoplay blocked — will start on first click */ });
+        }
+      }
+    }
+
     const onFirstClick = () => {
+      if (interacted.current) return;
       interacted.current = true;
       if (!mutedRef.current) {
         const p = phaseRef.current;
-        loadedPhase.current = p;
-        startTrack(p);
+        if (!audioEl.current?.src || audioEl.current.paused) {
+          loadedPhase.current = p;
+          startTrack(p);
+        }
       }
     };
     document.addEventListener('click', onFirstClick, { once: true });
     return () => document.removeEventListener('click', onFirstClick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally empty — uses refs to stay current
+  }, [fadeTo, startTrack]);
 
   // ── Switch track when phase changes ──────────────────────────────────────
 
