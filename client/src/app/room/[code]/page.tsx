@@ -141,26 +141,25 @@ export default function RoomPage() {
               )}
             </div>
 
-            {/* ── Bottom action bar ──
-                HostAdminPanel floats above the bar on desktop (absolute bottom-full left-0).
-                On mobile it sits above HostControls in normal flow. ── */}
-            <div className="shrink-0 pl-3 pr-24 pb-3 pt-1 relative">
-              {isHost && (
-                <div className="mb-2 lg:mb-0 lg:absolute lg:left-0 lg:bottom-full lg:pb-1.5 lg:w-64">
-                  <HostAdminPanel
-                    players={room.players}
-                    hostId={room.hostId}
-                    isLocked={room.isLocked}
-                    onKick={hostKickPlayer}
-                    onLock={hostLockRoom}
-                    onUnlock={hostUnlockRoom}
-                    onResetReady={hostResetReady}
-                    onAddBot={hostAddBot}
-                    onFillBots={hostFillBots}
-                    onRemoveBots={hostRemoveBots}
-                  />
-                </div>
-              )}
+            {/* ── Utility row: Host Tools + Dev Bots (small trigger buttons only) ── */}
+            <div className="shrink-0 px-3 py-1">
+              <HostAdminPanel
+                isHost={isHost}
+                players={room.players}
+                hostId={room.hostId}
+                isLocked={room.isLocked}
+                onKick={hostKickPlayer}
+                onLock={hostLockRoom}
+                onUnlock={hostUnlockRoom}
+                onResetReady={hostResetReady}
+                onAddBot={hostAddBot}
+                onFillBots={hostFillBots}
+                onRemoveBots={hostRemoveBots}
+              />
+            </div>
+
+            {/* ── Bottom command bar: Ready · Status · Start ── */}
+            <div className="shrink-0 pl-3 pr-24 pb-3 pt-0">
               <HostControls
                 isHost={isHost}
                 canStart={canStart}
