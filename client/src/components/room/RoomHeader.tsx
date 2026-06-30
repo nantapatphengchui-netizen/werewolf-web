@@ -3,6 +3,7 @@
 import { DarkPanel } from '@/components/ui/DarkPanel';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
+import { AudioControls } from '@/components/ui/AudioControls';
 
 interface Props {
   code: string;
@@ -54,7 +55,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
       <div className="hidden sm:block w-px h-4 bg-amber-900/20 shrink-0" />
 
-      {/* Right: status + leave */}
+      {/* Right: status + music + leave */}
       <div className="flex items-center gap-3 shrink-0">
         <div className="flex items-center gap-1.5">
           <StatusDot connected={isConnected} />
@@ -62,6 +63,13 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
             {isConnected ? 'Connected' : 'Offline'}
           </span>
         </div>
+
+        <div className="h-4 w-px bg-amber-900/20 hidden sm:block" />
+
+        <AudioControls />
+
+        <div className="h-4 w-px bg-amber-900/20 hidden sm:block" />
+
         <button
           onClick={onLeave}
           className="px-3 py-1.5 border border-amber-900/30 hover:border-red-800/60 text-amber-700/70 hover:text-red-400 text-[10px] font-cinzel uppercase tracking-widest rounded-lg transition-colors"

@@ -46,8 +46,8 @@ export function AudioControls() {
         value={muted ? 0 : volume}
         disabled={muted}
         onChange={e => setVolume(parseFloat(e.target.value))}
-        className={`w-16 cursor-pointer accent-amber-600 transition-opacity ${
-          muted ? 'opacity-20 cursor-not-allowed' : 'opacity-60 hover:opacity-90'
+        className={`hidden sm:block w-14 cursor-pointer accent-amber-600 transition-opacity ${
+          muted ? 'opacity-20 cursor-not-allowed' : 'opacity-55 hover:opacity-85'
         }`}
         style={{ height: '3px' }}
         title={muted ? 'Unmute to adjust volume' : `Music volume: ${Math.round(volume * 100)}%`}

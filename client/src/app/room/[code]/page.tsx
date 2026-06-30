@@ -159,7 +159,7 @@ export default function RoomPage() {
             </div>
 
             {/* ── Bottom command bar: Ready · Status · Start ── */}
-            <div className="shrink-0 pl-3 pr-24 pb-3 pt-0">
+            <div className="shrink-0 px-3 pb-3 pt-0">
               <HostControls
                 isHost={isHost}
                 canStart={canStart}

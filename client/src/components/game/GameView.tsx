@@ -6,6 +6,7 @@ import { useGameStore } from '@/store/gameStore';
 import { DarkPanel } from '@/components/ui/DarkPanel';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
+import { AudioControls } from '@/components/ui/AudioControls';
 import { RolePanel } from './RolePanel';
 import { ActionPanel } from './ActionPanel';
 import { GamePlayerGrid } from './GamePlayerGrid';
@@ -214,9 +215,12 @@ export function GameView({
 
           <div className="flex-1" />
 
-          {/* Connection + leave */}
+          {/* Connection + music + leave */}
           <div className="flex items-center gap-3 shrink-0">
             <StatusDot connected={isConnected} />
+            <div className="h-4 w-px bg-amber-900/20 hidden sm:block" />
+            <AudioControls />
+            <div className="h-4 w-px bg-amber-900/20 hidden sm:block" />
             <button
               onClick={onLeave}
               className="px-3 py-1 border border-amber-900/40 hover:border-red-800/60 text-amber-700 hover:text-red-400 text-xs uppercase tracking-widest rounded transition-colors"
