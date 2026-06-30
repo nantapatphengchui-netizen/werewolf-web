@@ -27,7 +27,7 @@ export function CopyButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       title={copied ? 'Copied!' : 'Copy room code'}
-      className="text-amber-700 hover:text-amber-400 transition-colors"
+      className="text-amber-500 hover:text-amber-300 transition-colors"
     >
       {copied ? (
         <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

@@ -8,7 +8,8 @@ interface Props {
 export function DarkPanel({ children, className = '' }: Props) {
   return (
     <div
-      className={`bg-gradient-to-b from-black/82 to-black/72 backdrop-blur-md border border-amber-900/50 rounded-lg shadow-[inset_0_1px_0_rgba(251,191,36,0.06),0_4px_24px_rgba(0,0,0,0.55)] ${className}`}
+      style={{ backgroundColor: 'rgba(3,5,7,0.92)' }}
+      className={`border border-amber-800/55 rounded-lg shadow-[0_4px_28px_rgba(0,0,0,0.7)] ${className}`}
     >
       {children}
     </div>
