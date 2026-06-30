@@ -22,17 +22,28 @@ export default function HomePage() {
   return (
     <main className="relative min-h-screen flex items-center justify-center px-4">
       {/* Full-bleed background */}
-      <div className="fixed inset-0 -z-10">
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        {/* Ken Burns — slow zoom + drift */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/bg.png"
           alt=""
           className="w-full h-full object-cover object-center"
           draggable={false}
+          style={{ animation: 'kenburns 30s ease-in-out infinite', transformOrigin: 'center center' }}
         />
-        <div className="absolute inset-0 bg-black/45" />
-        {/* Subtle vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.5)_100%)]" />
+        {/* Dark base overlay */}
+        <div className="absolute inset-0 bg-black/40" />
+        {/* Fog drift layer */}
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_30%_60%,rgba(80,40,10,0.18)_0%,transparent_70%)]"
+          style={{ animation: 'fog-drift 18s ease-in-out infinite' }}
+        />
+        {/* Breathing vignette */}
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(0,0,0,0.65)_100%)]"
+          style={{ animation: 'vignette-breathe 8s ease-in-out infinite' }}
+        />
       </div>
 
       <CreateJoinForm
