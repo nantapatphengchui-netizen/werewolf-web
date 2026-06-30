@@ -9,6 +9,8 @@ import { PlayerGrid } from '@/components/room/PlayerGrid';
 import { HostControls } from '@/components/room/HostControls';
 import { HostAdminPanel } from '@/components/room/HostAdminPanel';
 import { GameView } from '@/components/game/GameView';
+import { AudioProvider } from '@/providers/AudioProvider';
+import { AudioControls } from '@/components/ui/AudioControls';
 
 const PHASE_TINT: Record<string, string> = {
   lobby:  'bg-black/55',
@@ -45,7 +47,7 @@ export default function RoomPage() {
     hostPauseTimer, hostResumeTimer, hostExtendTimer, hostEndPhase,
     hostRestartGame, hostReturnToLobby,
   } = useRoom();
-  const myRole = useGameStore(s => s.myRole);
+  const myRole     = useGameStore(s => s.myRole);
   const werewolfIds = useGameStore(s => s.werewolfIds);
 
   useEffect(() => {
@@ -63,106 +65,119 @@ export default function RoomPage() {
     router.replace('/');
   };
 
-  // ── Gameplay screen ──────────────────────────────────────────────────────
-  if (room.phase !== 'lobby') {
-    return (
-      <main className="relative min-h-screen flex flex-col">
-        <Background phase={room.phase} />
-        <GameView
-          room={room}
-          playerId={playerId ?? ''}
-          myRole={myRole}
-          werewolfIds={werewolfIds}
-          isConnected={isConnected}
-          onLeave={handleLeave}
-          onNightAction={nightAction}
-          onCastVote={castVote}
-          onAdvanceDay={advanceDay}
-          onRestart={restartGame}
-          onReturnToLobby={returnToLobby}
-          onHostPauseTimer={hostPauseTimer}
-          onHostResumeTimer={hostResumeTimer}
-          onHostExtendTimer={hostExtendTimer}
-          onHostEndPhase={hostEndPhase}
-          onHostRestartGame={hostRestartGame}
-          onHostReturnToLobby={hostReturnToLobby}
-        />
-      </main>
-    );
-  }
-
-  // ── Lobby screen ─────────────────────────────────────────────────────────
-  const isHost   = room.hostId === playerId;
+  const isLobby = room.phase === 'lobby';
+  const isHost  = room.hostId === playerId;
   const canStart = room.players.length >= room.minPlayers &&
                    room.readyPlayers.length === room.players.length;
   const isReady  = room.readyPlayers.includes(playerId ?? '');
 
   return (
-    <main className="relative min-h-screen flex flex-col">
-      <Background phase="lobby" />
-
-      <div className="relative z-10 flex flex-col min-h-screen p-4 gap-4">
-        <RoomHeader
-          code={code}
-          playerCount={room.players.length}
-          maxPlayers={room.maxPlayers}
-          minPlayers={room.minPlayers}
-          isConnected={isConnected}
-          onLeave={handleLeave}
-        />
-
-        <div className="text-center py-2">
-          <h2 className="font-cinzel text-2xl text-amber-500/70 tracking-[0.4em] uppercase flex items-center justify-center gap-3">
-            Lobby
-            {room.isLocked && (
-              <svg viewBox="0 0 16 16" className="w-4 h-4 text-amber-600/60" fill="currentColor">
-                <path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4-2a1 1 0 0 1 2 0v2H7V5z" />
-              </svg>
-            )}
-          </h2>
-          <p className="text-amber-800 text-xs mt-1 tracking-wide">
-            {room.isLocked ? 'Room is locked — no new players can join' : 'Waiting for players to join...'}
-          </p>
+    <AudioProvider phase={room.phase}>
+      {/* Fixed music widget — visible in both lobby and game, below modals */}
+      <div className="fixed bottom-4 right-4 z-[45] pointer-events-auto">
+        <div className="bg-black/65 backdrop-blur-sm border border-amber-900/30 rounded-lg px-3 py-2 flex items-center gap-2">
+          <span className="text-amber-900/50 text-[9px] uppercase tracking-widest font-cinzel hidden sm:inline">
+            Music
+          </span>
+          <AudioControls />
         </div>
-
-        <div className="flex-1">
-          <PlayerGrid
-            players={room.players}
-            maxPlayers={room.maxPlayers}
-            currentPlayerId={playerId ?? ''}
-            readyPlayers={room.readyPlayers}
-          />
-        </div>
-
-        {error && (
-          <div className="text-center text-red-400 text-sm bg-red-950/30 border border-red-900/40 rounded px-4 py-2.5">
-            {error}
-          </div>
-        )}
-
-        <HostControls
-          isHost={isHost}
-          canStart={canStart}
-          playerCount={room.players.length}
-          minPlayers={room.minPlayers}
-          readyCount={room.readyPlayers.length}
-          isReady={isReady}
-          onStartGame={startGame}
-          onReady={playerReady}
-        />
-
-        {isHost && (
-          <HostAdminPanel
-            players={room.players}
-            hostId={room.hostId}
-            isLocked={room.isLocked}
-            onKick={hostKickPlayer}
-            onLock={hostLockRoom}
-            onUnlock={hostUnlockRoom}
-            onResetReady={hostResetReady}
-          />
-        )}
       </div>
-    </main>
+
+      {/* ── Game screen ─────────────────────────────────────────────────────── */}
+      {!isLobby && (
+        <main className="relative min-h-screen flex flex-col">
+          <Background phase={room.phase} />
+          <GameView
+            room={room}
+            playerId={playerId ?? ''}
+            myRole={myRole}
+            werewolfIds={werewolfIds}
+            isConnected={isConnected}
+            onLeave={handleLeave}
+            onNightAction={nightAction}
+            onCastVote={castVote}
+            onAdvanceDay={advanceDay}
+            onRestart={restartGame}
+            onReturnToLobby={returnToLobby}
+            onHostPauseTimer={hostPauseTimer}
+            onHostResumeTimer={hostResumeTimer}
+            onHostExtendTimer={hostExtendTimer}
+            onHostEndPhase={hostEndPhase}
+            onHostRestartGame={hostRestartGame}
+            onHostReturnToLobby={hostReturnToLobby}
+          />
+        </main>
+      )}
+
+      {/* ── Lobby screen ─────────────────────────────────────────────────────── */}
+      {isLobby && (
+        <main className="relative min-h-screen flex flex-col">
+          <Background phase="lobby" />
+
+          <div className="relative z-10 flex flex-col min-h-screen p-4 gap-4">
+            <RoomHeader
+              code={code}
+              playerCount={room.players.length}
+              maxPlayers={room.maxPlayers}
+              minPlayers={room.minPlayers}
+              isConnected={isConnected}
+              onLeave={handleLeave}
+            />
+
+            <div className="text-center py-2">
+              <h2 className="font-cinzel text-2xl text-amber-500/70 tracking-[0.4em] uppercase flex items-center justify-center gap-3">
+                Lobby
+                {room.isLocked && (
+                  <svg viewBox="0 0 16 16" className="w-4 h-4 text-amber-600/60" fill="currentColor">
+                    <path d="M11 7V5a3 3 0 0 0-6 0v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-1zm-4-2a1 1 0 0 1 2 0v2H7V5z" />
+                  </svg>
+                )}
+              </h2>
+              <p className="text-amber-800 text-xs mt-1 tracking-wide">
+                {room.isLocked ? 'Room is locked — no new players can join' : 'Waiting for players to join...'}
+              </p>
+            </div>
+
+            <div className="flex-1">
+              <PlayerGrid
+                players={room.players}
+                maxPlayers={room.maxPlayers}
+                currentPlayerId={playerId ?? ''}
+                readyPlayers={room.readyPlayers}
+              />
+            </div>
+
+            {error && (
+              <div className="text-center text-red-400 text-sm bg-red-950/30 border border-red-900/40 rounded px-4 py-2.5">
+                {error}
+              </div>
+            )}
+
+            <HostControls
+              isHost={isHost}
+              canStart={canStart}
+              playerCount={room.players.length}
+              minPlayers={room.minPlayers}
+              readyCount={room.readyPlayers.length}
+              isReady={isReady}
+              onStartGame={startGame}
+              onReady={playerReady}
+            />
+
+            {isHost && (
+              <HostAdminPanel
+                players={room.players}
+                hostId={room.hostId}
+                isLocked={room.isLocked}
+                onKick={hostKickPlayer}
+                onLock={hostLockRoom}
+                onUnlock={hostUnlockRoom}
+                onResetReady={hostResetReady}
+              />
+            )}
+          </div>
+        </main>
+      )}
+    </AudioProvider>
   );
 }
