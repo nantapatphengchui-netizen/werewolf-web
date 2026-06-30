@@ -24,69 +24,73 @@ export function HostControls({
 
   return (
     <div
-      style={{ backgroundColor: 'rgba(3,5,7,0.96)' }}
-      className="flex items-center gap-3 px-4 py-2.5 border border-amber-700/55 rounded-xl shadow-[0_-2px_24px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(251,191,36,0.05)]"
+      style={{
+        backgroundColor: 'rgba(8,5,2,0.98)',
+        border: '1px solid rgba(146,64,14,0.35)',
+        borderRadius: '12px',
+        boxShadow: '0 -2px 20px rgba(0,0,0,0.6)',
+      }}
+      className="flex items-center gap-3 px-4 py-3"
     >
-
-      {/* Ready button */}
+      {/* ── Ready button ── */}
       <button
         onClick={onReady}
-        className={`shrink-0 px-5 py-2 font-cinzel text-xs tracking-[0.15em] uppercase rounded-lg border transition-all duration-200 active:scale-95 ${
-          isReady
-            ? 'border-green-500/80 text-green-100 shadow-[0_0_16px_rgba(74,222,128,0.3)] hover:shadow-[0_0_22px_rgba(74,222,128,0.45)]'
-            : 'border-amber-600/70 text-amber-200 hover:border-amber-500 hover:text-amber-100'
-        }`}
         style={{
-          backgroundColor: isReady ? 'rgba(20,83,45,0.90)' : 'rgba(92,45,5,0.70)',
+          backgroundColor: isReady ? 'rgb(20,83,45)'   : 'rgb(120,50,10)',
+          border:          isReady ? '1px solid rgba(74,222,128,0.65)' : '1px solid rgba(217,119,6,0.6)',
+          color:           isReady ? '#bbf7d0' : '#fde68a',
+          minWidth: '90px',
         }}
+        className="shrink-0 px-5 py-2.5 font-cinzel text-[11px] tracking-[0.2em] uppercase rounded-lg transition-all duration-150 hover:brightness-125 active:scale-95"
       >
         {isReady ? '✓ Ready' : 'Ready'}
       </button>
 
-      {/* Status text */}
-      <div className="flex-1 min-w-0 text-center">
+      {/* ── Status ── */}
+      <div className="flex-1 min-w-0 text-center space-y-0.5">
         {playerCount < minPlayers ? (
-          <p className="text-amber-400 text-[11px]">
-            Need{' '}
-            <span className="text-amber-200 font-semibold">{needed}</span>
-            {' '}more player{needed !== 1 ? 's' : ''}
-            <span className="text-amber-600 ml-1.5">({playerCount}/{minPlayers})</span>
+          <p className="font-cinzel text-[11px]">
+            <span style={{ color: '#fbbf24' }}>Need </span>
+            <span style={{ color: '#fde68a', fontWeight: 700 }}>{needed}</span>
+            <span style={{ color: '#fbbf24' }}> more player{needed !== 1 ? 's' : ''}</span>
+            <span style={{ color: '#78350f' }}> ({playerCount}/{minPlayers})</span>
           </p>
         ) : allReady ? (
-          <p className="text-green-400 text-[11px] font-cinzel tracking-wide">
+          <p className="font-cinzel text-[11px]" style={{ color: '#86efac' }}>
             All ready — host can start!
           </p>
         ) : (
-          <p className="text-amber-400 text-[11px]">
-            <span className="text-amber-200 font-semibold">{readyCount}</span>
-            <span className="text-amber-600"> / {playerCount} ready</span>
+          <p className="font-cinzel text-[11px]">
+            <span style={{ color: '#fde68a', fontWeight: 700 }}>{readyCount}</span>
+            <span style={{ color: '#92400e' }}> / {playerCount} ready</span>
           </p>
         )}
         {!isHost && (
-          <p className="text-amber-500 text-[9px] mt-0.5 font-cinzel tracking-widest uppercase">
+          <p className="font-cinzel text-[9px] tracking-widest uppercase" style={{ color: '#b45309' }}>
             Waiting for host
           </p>
         )}
       </div>
 
-      {/* Start Game (host) or symmetry spacer */}
+      {/* ── Start Game (host) or spacer ── */}
       {isHost ? (
         <button
           onClick={onStartGame}
           disabled={!canStart}
-          className={`shrink-0 px-6 py-2 font-cinzel text-xs tracking-[0.2em] uppercase rounded-lg border transition-all duration-200 active:scale-95 ${
-            canStart
-              ? 'border-red-500/80 text-white shadow-[0_0_24px_rgba(220,38,38,0.55)] hover:shadow-[0_0_36px_rgba(220,38,38,0.7)]'
-              : 'border-stone-600/55 text-stone-400 cursor-not-allowed'
-          }`}
           style={{
-            backgroundColor: canStart ? 'rgba(153,27,27,0.85)' : 'rgba(28,25,23,0.80)',
+            backgroundColor: canStart ? 'rgb(127,29,29)' : 'rgb(20,18,16)',
+            border:          canStart ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(87,83,78,0.45)',
+            color:           canStart ? '#ffffff'         : '#78716c',
+            minWidth: '110px',
           }}
+          className={`shrink-0 px-5 py-2.5 font-cinzel text-[11px] tracking-[0.2em] uppercase rounded-lg transition-all duration-150 ${
+            canStart ? 'hover:brightness-125 active:scale-95' : 'cursor-not-allowed'
+          }`}
         >
           Start Game
         </button>
       ) : (
-        <div className="shrink-0 w-[90px]" />
+        <div style={{ minWidth: '110px' }} />
       )}
     </div>
   );
