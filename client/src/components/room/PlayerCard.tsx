@@ -1,27 +1,6 @@
 import type { Player } from '@/types/game';
 import { StatusDot } from '@/components/ui/StatusDot';
 
-function PlayerSilhouette() {
-  return (
-    <svg viewBox="0 0 80 104" className="w-full h-full" fill="none">
-      {/* Hood */}
-      <ellipse cx="40" cy="28" rx="18" ry="21" fill="#1c1409" stroke="#5c3d12" strokeWidth="1.2" />
-      {/* Cloak body */}
-      <path
-        d="M14 56 Q10 92 22 102 L58 102 Q70 92 66 56 Q54 47 40 43 Q26 47 14 56Z"
-        fill="#1c1409"
-        stroke="#5c3d12"
-        strokeWidth="1.2"
-      />
-      {/* Face shadow */}
-      <ellipse cx="40" cy="30" rx="11" ry="13" fill="#0d0906" />
-      {/* Faint amber eyes */}
-      <ellipse cx="35.5" cy="28.5" rx="2.2" ry="1.6" fill="#92500a" opacity="0.55" />
-      <ellipse cx="44.5" cy="28.5" rx="2.2" ry="1.6" fill="#92500a" opacity="0.55" />
-    </svg>
-  );
-}
-
 interface Props {
   player: Player;
   index: number;
@@ -54,8 +33,22 @@ export function PlayerCard({ player, index, isCurrentPlayer, isReady }: Props) {
       </div>
 
       {/* Avatar */}
-      <div className="w-20 h-28 mt-1 rounded border border-amber-900/20 overflow-hidden bg-[#0d0a06]">
-        <PlayerSilhouette />
+      <div className={`w-20 h-28 mt-1 rounded overflow-hidden bg-[#0d0a06] border ${
+        isCurrentPlayer
+          ? 'border-amber-500/70 shadow-[0_0_8px_rgba(217,119,6,0.25)]'
+          : offline
+          ? 'border-amber-900/15'
+          : 'border-amber-700/45'
+      }`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/avatar-hooded.jpg"
+          alt=""
+          draggable={false}
+          className={`w-full h-full object-cover object-[50%_18%] transition-all duration-300 ${
+            offline ? 'grayscale opacity-40' : 'opacity-90'
+          }`}
+        />
       </div>
 
       {/* Name */}
