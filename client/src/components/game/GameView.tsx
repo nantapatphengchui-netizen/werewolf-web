@@ -272,6 +272,7 @@ export function GameView({
             myRole={myRole}
             isHost={isHost}
             werewolfIds={werewolfIds}
+            selectedTarget={selectedTarget}
             onNightAction={handleNightAction}
             onCastVote={handleCastVote}
             onAdvanceDay={onAdvanceDay}
