@@ -106,10 +106,10 @@ export default function RoomPage() {
 
       {/* ── Lobby screen ─────────────────────────────────────────────────────── */}
       {isLobby && (
-        <main className="relative flex flex-col" style={{ height: '100dvh' }}>
+        <main className="relative flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
           <Background phase="lobby" />
 
-          <div className="relative z-10 flex flex-col h-full overflow-hidden">
+          <div className="relative z-10 flex flex-col h-full">
 
             {/* ── Top bar ── */}
             <div className="shrink-0 px-3 pt-3 pb-2">
@@ -123,10 +123,13 @@ export default function RoomPage() {
               />
             </div>
 
-            {/* ── Scrollable player grid ── */}
-            <div className="flex-1 overflow-y-auto px-3 pb-2 min-h-0">
-              {/* Lobby label row */}
-              <div className="flex items-center gap-2 mb-3">
+            {/* ── Player grid area ──
+                Mobile: overflow-y-auto allows scroll; HostAdminPanel in normal flow.
+                Desktop (lg): overflow-hidden + absolute HostAdminPanel overlay; no page scroll. ── */}
+            <div className="flex-1 min-h-0 px-3 pb-1 flex flex-col overflow-y-auto lg:overflow-hidden relative">
+
+              {/* Lobby label */}
+              <div className="shrink-0 flex items-center gap-2 mb-2">
                 <h2 className="font-cinzel text-xs text-amber-600/50 tracking-[0.35em] uppercase">
                   Lobby
                 </h2>
@@ -140,21 +143,27 @@ export default function RoomPage() {
                 </span>
               </div>
 
-              <PlayerGrid
-                players={room.players}
-                maxPlayers={room.maxPlayers}
-                currentPlayerId={playerId ?? ''}
-                readyPlayers={room.readyPlayers}
-              />
+              {/* Grid — flex-1 so it fills remaining height on desktop */}
+              <div className="flex-1 min-h-0">
+                <PlayerGrid
+                  players={room.players}
+                  maxPlayers={room.maxPlayers}
+                  currentPlayerId={playerId ?? ''}
+                  readyPlayers={room.readyPlayers}
+                />
+              </div>
 
               {error && (
-                <div className="mt-3 text-center text-red-400 text-sm bg-red-950/30 border border-red-900/40 rounded px-4 py-2.5">
+                <div className="shrink-0 mt-2 text-center text-red-400 text-sm bg-red-950/30 border border-red-900/40 rounded px-4 py-2.5">
                   {error}
                 </div>
               )}
 
+              {/* HostAdminPanel:
+                  Mobile — in normal document flow (parent scrolls to reveal it).
+                  Desktop — absolute overlay at the bottom of the grid area, collapsed by default. */}
               {isHost && (
-                <div className="mt-3">
+                <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-1 lg:left-0 lg:right-0 z-10 lg:max-h-[62%] lg:overflow-y-auto">
                   <HostAdminPanel
                     players={room.players}
                     hostId={room.hostId}
@@ -171,7 +180,7 @@ export default function RoomPage() {
               )}
             </div>
 
-            {/* ── Sticky bottom action bar ── */}
+            {/* ── Bottom action bar ── */}
             <div className="shrink-0 pl-3 pr-44 pb-3 pt-1">
               <HostControls
                 isHost={isHost}
