@@ -644,30 +644,6 @@ export function GameView({
           </div>
         )}
 
-        {/* Phase banner */}
-        {instructionText && banner && (
-          <div
-            className="flex items-center gap-3 rounded-lg"
-            style={{ backgroundColor: banner.bg, borderLeft: `3px solid ${banner.borderColor}`, border: `1px solid ${banner.borderColor}44`, borderLeftWidth: '3px', padding: '10px 14px', boxShadow: `0 2px 16px rgba(0,0,0,0.45), inset 0 0 40px rgba(0,0,0,0.20)` }}
-          >
-            <div style={{ color: banner.textColor }} className="flex items-center gap-2 shrink-0">
-              <span className="w-5 h-5 flex items-center justify-center">
-                {PHASE_ICON[room.phase]}
-              </span>
-              <span className="font-cinzel text-[11px] uppercase tracking-widest font-bold hidden sm:inline">
-                {room.phase} · R{room.round}
-              </span>
-            </div>
-            <div className="w-px h-4 shrink-0 hidden sm:block" style={{ backgroundColor: banner.borderColor }} />
-            <p className="text-[11px] flex-1 leading-snug font-medium" style={{ color: banner.instrColor }}>{instructionText}</p>
-            {selectedPlayerName && (
-              <span className="shrink-0 text-[11px] font-cinzel uppercase tracking-wider font-bold" style={{ color: banner.textColor, textShadow: `0 0 10px ${banner.textColor}88` }}>
-                ▸ {selectedPlayerName}
-              </span>
-            )}
-          </div>
-        )}
-
         {/* Day reactions */}
         {dayReactions.length > 0 && room.phase === 'day' && (
           <div className="flex flex-col gap-0.5 overflow-hidden" style={{ maxHeight: '78px' }}>
