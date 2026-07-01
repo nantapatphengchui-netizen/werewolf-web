@@ -461,8 +461,8 @@ export function GamePlayerCard({
               onClick={e => { e.stopPropagation(); onCancelAction?.(); }}
               className="flex-1 flex items-center justify-center rounded transition-all duration-150 hover:brightness-125 active:scale-[0.93]"
               style={{
-                paddingTop: '3px',
-                paddingBottom: '3px',
+                paddingTop: '6px',
+                paddingBottom: '6px',
                 backgroundColor: 'rgba(0,0,0,0.70)',
                 border: '1px solid rgba(120,65,10,0.45)',
                 color: '#78716c',
@@ -473,10 +473,10 @@ export function GamePlayerCard({
             {/* Confirm */}
             <button
               onClick={e => { e.stopPropagation(); onConfirmAction(); }}
-              className="flex-1 rounded text-[8px] font-cinzel font-bold uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-[0.96]"
+              className="flex-1 rounded text-[9px] font-cinzel font-bold uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-[0.96]"
               style={{
-                paddingTop: '3px',
-                paddingBottom: '3px',
+                paddingTop: '6px',
+                paddingBottom: '6px',
                 backgroundColor: ac?.btnBg ?? 'rgba(120,53,0,0.90)',
                 border: `1px solid ${ac?.btnBorder ?? 'rgba(217,119,6,0.65)'}`,
                 color: ac?.btnText ?? '#fde68a',
