@@ -462,15 +462,15 @@ export function GamePlayerCard({
       {reaction && (
         <div
           key={reaction.key}
-          className="absolute inset-x-0 flex justify-center pointer-events-none"
-          style={{ top: '8%', zIndex: 28 }}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          style={{ zIndex: 28 }}
         >
           <span
             style={{
-              fontSize: '2rem',
+              fontSize: 'clamp(3.5rem, 18vw, 10rem)',
               lineHeight: 1,
-              animation: 'reaction-float 2.5s ease-out forwards',
-              filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.70))',
+              animation: 'reaction-float 2.6s ease-out forwards',
+              filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.80))',
               display: 'block',
             }}
           >
