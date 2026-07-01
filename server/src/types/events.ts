@@ -9,6 +9,8 @@ export interface ServerToClientEvents {
   error:              (payload: { message: string }) => void;
   kicked:             () => void;
   day_reaction_sent:  (payload: { fromId: string; fromName: string; targetId: string; targetName: string }) => void;
+  /** Emoji reaction broadcast — sender + emoji */
+  reaction:           (payload: { playerId: string; emoji: string }) => void;
   /** Sent privately to the Hunter when their death triggers a final shot */
   hunter_shot_pending:(payload: { hunterId: string; availableTargetIds: string[] }) => void;
   /** Sent privately to the Witch after all other night actions resolve */
@@ -53,6 +55,7 @@ export interface ClientToServerEvents {
   day_mark_suspicion:  (payload: { targetId: string }) => void;
   day_mark_trust:      (payload: { targetId: string }) => void;
   day_reaction:        (payload: { targetId: string }) => void;
+  send_reaction:       (payload: { emoji: string }) => void;
   // Host guided day
   host_toggle_guided_day: () => void;
 }

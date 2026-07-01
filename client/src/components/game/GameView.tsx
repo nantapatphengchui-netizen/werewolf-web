@@ -435,6 +435,9 @@ export function GameView({
   const [roleOpen, setRoleOpen]   = useState(false);
   const [hostOpen, setHostOpen]   = useState(false);
   const [showRoleReveal, setShowRoleReveal] = useState(false);
+  const [phaseTransition, setPhaseTransition] = useState<'night' | 'day' | 'voting' | null>(null);
+  const phaseTransTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [reactionsMap, setReactionsMap] = useState<Record<string, { emoji: string; key: number }>>({});
   // Witch panel state
   const witchNightInfo      = useGameStore(s => s.witchNightInfo);
   const witchActionSubmitted = useGameStore(s => s.witchActionSubmitted);
@@ -460,8 +463,31 @@ export function GameView({
       setSelectedTarget(null);
       setHostOpen(false);
       setWitchPoisonMode(false);
+      if (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') {
+        setPhaseTransition(room.phase);
+        if (phaseTransTimerRef.current) clearTimeout(phaseTransTimerRef.current);
+        phaseTransTimerRef.current = setTimeout(() => setPhaseTransition(null), 2500);
+      }
     }
   }, [room.phase]);
+
+  // Emoji reaction socket listener
+  useEffect(() => {
+    if (!socket) return;
+    const handleReaction = ({ playerId, emoji }: { playerId: string; emoji: string }) => {
+      const key = Date.now();
+      setReactionsMap(prev => ({ ...prev, [playerId]: { emoji, key } }));
+      setTimeout(() => {
+        setReactionsMap(prev => {
+          const next = { ...prev };
+          if (next[playerId]?.key === key) delete next[playerId];
+          return next;
+        });
+      }, 2800);
+    };
+    socket.on('reaction', handleReaction);
+    return () => { socket.off('reaction', handleReaction); };
+  }, [socket]);
 
   useEffect(() => {
     if (prevRoleRef.current === null && myRole !== null) {
@@ -560,6 +586,68 @@ export function GameView({
       {/* ── Game over overlay ── */}
       {room.phase === 'ended' && (
         <GameOverScreen room={room} playerId={playerId} onLeave={onLeave} onRestart={onRestart} onReturnToLobby={onReturnToLobby} />
+      )}
+
+      {/* ── Phase transition overlay ── */}
+      {phaseTransition && (
+        <div className="fixed inset-0 pointer-events-none flex flex-col items-center justify-center gap-5" style={{ zIndex: 100 }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: phaseTransition === 'night'
+                ? 'radial-gradient(ellipse at 50% 40%, rgba(25,8,55,0.96) 0%, rgba(4,2,14,0.98) 100%)'
+                : phaseTransition === 'day'
+                ? 'radial-gradient(ellipse at 50% 40%, rgba(55,25,0,0.94) 0%, rgba(18,8,0,0.96) 100%)'
+                : 'radial-gradient(ellipse at 50% 40%, rgba(40,5,5,0.94) 0%, rgba(14,2,2,0.97) 100%)',
+              animation: 'phase-overlay-fade 2.5s ease-in-out forwards',
+            }}
+          />
+          <div className="relative z-10" style={{ animation: 'phase-text-appear 2.5s ease-in-out forwards' }}>
+            {phaseTransition === 'night' && (
+              <svg viewBox="0 0 64 64" style={{ width: 80, height: 80 }} fill="none">
+                <path d="M52 33A20 20 0 1 1 28 11a16 16 0 1 0 24 22z" fill="#c4b5fd" fillOpacity="0.88"/>
+                <circle cx="40" cy="14" r="2" fill="#e9d5ff" opacity="0.7"/>
+                <circle cx="16" cy="24" r="1.5" fill="#ddd6fe" opacity="0.55"/>
+                <circle cx="52" cy="46" r="1.2" fill="#ddd6fe" opacity="0.45"/>
+                <circle cx="48" cy="22" r="0.9" fill="#f5f3ff" opacity="0.40"/>
+              </svg>
+            )}
+            {phaseTransition === 'day' && (
+              <svg viewBox="0 0 64 64" style={{ width: 80, height: 80 }} fill="none" strokeLinecap="round">
+                <circle cx="32" cy="32" r="14" fill="#fbbf24" fillOpacity="0.90"/>
+                <path d="M32 6v8M32 50v8M6 32h8M50 32h8M13.4 13.4l5.7 5.7M44.9 44.9l5.7 5.7M44.9 19.1l5.7-5.7M13.4 50.6l5.7-5.7" stroke="#fbbf24" strokeWidth="2.5"/>
+              </svg>
+            )}
+            {phaseTransition === 'voting' && (
+              <svg viewBox="0 0 64 64" style={{ width: 80, height: 80 }} fill="none">
+                <path d="M12 24l20-6 20 6M32 18v38M18 24l-6 22h12l-6-22zM46 24l-6 22h12l-6-22z" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 54h40" stroke="#f87171" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            )}
+          </div>
+          <div className="relative z-10 text-center" style={{ animation: 'phase-text-appear 2.5s ease-in-out forwards' }}>
+            <p
+              className="font-cinzel font-bold text-3xl uppercase tracking-[0.28em]"
+              style={{
+                color: phaseTransition === 'night' ? '#c4b5fd' : phaseTransition === 'day' ? '#fbbf24' : '#f87171',
+                textShadow: phaseTransition === 'night'
+                  ? '0 0 28px rgba(139,92,246,0.85), 0 0 55px rgba(109,40,217,0.55)'
+                  : phaseTransition === 'day'
+                  ? '0 0 28px rgba(251,191,36,0.85), 0 0 55px rgba(217,119,6,0.55)'
+                  : '0 0 28px rgba(239,68,68,0.85), 0 0 55px rgba(185,28,28,0.55)',
+              }}
+            >
+              {T(`phase.${phaseTransition}`)}
+            </p>
+            <p className="font-cinzel text-sm tracking-widest mt-2" style={{
+              color: phaseTransition === 'night' ? 'rgba(196,181,253,0.55)'
+                : phaseTransition === 'day' ? 'rgba(251,191,36,0.55)'
+                : 'rgba(248,113,113,0.55)',
+            }}>
+              Round {room.round}
+            </p>
+          </div>
+        </div>
       )}
 
       {/* ── Top HUD ──────────────────────────────────────────────────────── */}
@@ -814,6 +902,7 @@ export function GameView({
           onCancelAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : () => setSelectedTarget(null)}
           showAskBtns={room.phase === 'day' && imAlive}
           onAsk={onDayReaction}
+          reactionsMap={reactionsMap}
         />
       </div>
 
@@ -924,6 +1013,22 @@ export function GameView({
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Emoji reaction buttons ── */}
+      {(room.phase === 'day' || room.phase === 'voting') && imAlive && (
+        <div className="shrink-0 px-3 pb-1 relative z-10 flex justify-center gap-2">
+          {['😱','🐺','👀','🔪','🙏','😂'].map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => socket?.emit('send_reaction', { emoji })}
+              className="text-lg w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88]"
+              style={{ backgroundColor: 'rgba(0,0,0,0.55)', border: '1px solid rgba(120,65,10,0.30)' }}
+            >
+              {emoji}
+            </button>
+          ))}
         </div>
       )}
 

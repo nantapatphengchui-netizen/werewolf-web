@@ -24,6 +24,7 @@ interface Props {
   onCancelAction?: () => void;
   showAskBtns?: boolean;
   onAsk?: (targetId: string) => void;
+  reactionsMap?: Record<string, { emoji: string; key: number }>;
 }
 
 export function GamePlayerGrid({
@@ -48,6 +49,7 @@ export function GamePlayerGrid({
   onCancelAction,
   showAskBtns = false,
   onAsk,
+  reactionsMap = {},
 }: Props) {
   const n = players.length;
 
@@ -113,6 +115,7 @@ export function GamePlayerGrid({
           onCancelAction={onCancelAction}
           showAskBtn={showAskBtn}
           onAsk={showAskBtn && onAsk ? () => onAsk(player.id) : undefined}
+          reaction={reactionsMap[player.id]}
         />
       </div>
     );

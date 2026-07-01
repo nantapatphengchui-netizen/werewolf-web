@@ -63,12 +63,23 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
     }
     if (secsLeft === null) return null;
     const pct      = Math.max(0, Math.min(100, (secsLeft / total) * 100));
-    const isUrgent = secsLeft <= 10;
+    const isUrgent  = secsLeft <= 10;
+    const isCritical = secsLeft <= 5;
+    const glowDur   = isCritical ? '0.45s' : '0.85s';
     return (
-      <div className="flex items-center gap-1.5">
+      <div
+        className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-all duration-300"
+        style={isUrgent ? {
+          border: `1px solid ${c.urgent}55`,
+          animation: `timer-urgent-glow ${glowDur} ease-in-out infinite`,
+        } : undefined}
+      >
         <span
           className={`font-mono text-[12px] font-semibold tabular-nums${isUrgent ? ' animate-pulse' : ''}`}
-          style={{ color: isUrgent ? c.urgentText : c.text }}
+          style={{
+            color: isUrgent ? c.urgentText : c.text,
+            fontSize: isCritical ? '14px' : undefined,
+          }}
         >
           {formatSecs(secsLeft)}
         </span>

@@ -82,6 +82,53 @@
   to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
 
+/* ── Phase transition overlay ───────────────────────────────────────────────── */
+
+@keyframes phase-overlay-fade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes phase-text-appear {
+  0%   { opacity: 0; transform: scale(0.86) translateY(14px); }
+  18%  { opacity: 1; transform: scale(1.00) translateY(0px); }
+  72%  { opacity: 1; transform: scale(1.00) translateY(0px); }
+  100% { opacity: 0; transform: scale(1.05) translateY(-10px); }
+}
+
+/* ── Timer urgent glow ──────────────────────────────────────────────────────── */
+
+@keyframes timer-urgent-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+  50%       { box-shadow: 0 0 10px 3px rgba(220,38,38,0.55); }
+}
+
+/* ── Event log slide-in ─────────────────────────────────────────────────────── */
+
+@keyframes log-entry-slide {
+  from { opacity: 0; transform: translateX(14px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Card ambient shimmer ────────────────────────────────────────────────────── */
+
+@keyframes card-shimmer {
+  0%, 44%  { transform: translateX(-180%); }
+  55%      { transform: translateX(180%); }
+  100%     { transform: translateX(180%); }
+}
+
+/* ── Emoji reaction float ────────────────────────────────────────────────────── */
+
+@keyframes reaction-float {
+  0%   { opacity: 0; transform: translateY(0) scale(0.55); }
+  14%  { opacity: 1; transform: translateY(-8px) scale(1.25); }
+  70%  { opacity: 1; transform: translateY(-50px) scale(1.00); }
+  100% { opacity: 0; transform: translateY(-72px) scale(0.90); }
+}
+
 /* ── Card selection action effects ─────────────────────────────────────────── */
 
 @keyframes card-select-breathe {

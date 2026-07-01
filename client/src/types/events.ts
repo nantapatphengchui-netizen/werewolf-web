@@ -9,6 +9,7 @@ export interface ServerToClientEvents {
   error:                (payload: { message: string }) => void;
   kicked:               () => void;
   day_reaction_sent:    (payload: { fromId: string; fromName: string; targetId: string; targetName: string }) => void;
+  reaction:             (payload: { playerId: string; emoji: string }) => void;
   hunter_shot_pending:  (payload: { hunterId: string; availableTargetIds: string[] }) => void;
   witch_night_info:     (payload: {
     attackedPlayerId:   string | null;
@@ -50,4 +51,5 @@ export interface ClientToServerEvents {
   day_mark_trust:          (payload: { targetId: string }) => void;
   day_reaction:            (payload: { targetId: string }) => void;
   host_toggle_guided_day:  () => void;
+  send_reaction:           (payload: { emoji: string }) => void;
 }

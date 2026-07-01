@@ -200,6 +200,7 @@ interface Props {
   onCancelAction?: () => void;
   showAskBtn?: boolean;
   onAsk?: () => void;
+  reaction?: { emoji: string; key: number };
 }
 
 // ── Corner ornaments ──────────────────────────────────────────────────────────
@@ -232,7 +233,7 @@ export function GamePlayerCard({
   isValidTarget = false, isSelected = false, onClick,
   suspicionCount = 0, isSuspectedByMe = false, showSuspectBtn = false, onMarkSuspicion,
   trustCount = 0, isTrustedByMe = false, showTrustBtn = false, onMarkTrust,
-  actionType = null, onConfirmAction, onCancelAction, showAskBtn = false, onAsk,
+  actionType = null, onConfirmAction, onCancelAction, showAskBtn = false, onAsk, reaction,
 }: Props) {
   const T = useT();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -402,6 +403,19 @@ export function GamePlayerCard({
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.62) 38%, rgba(0,0,0,0.10) 65%, transparent 100%)' }}
       />
 
+      {/* ── Ambient shimmer (alive cards only) ── */}
+      {alive && !burning && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl" style={{ zIndex: 4 }}>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(105deg, transparent 35%, rgba(255,235,180,0.055) 50%, transparent 65%)',
+              animation: `card-shimmer 6s ${(index % 8) * 0.65}s ease-in-out infinite`,
+            }}
+          />
+        </div>
+      )}
+
       {/* ── Burn death effect ── */}
       {burning && (
         <>
@@ -442,6 +456,27 @@ export function GamePlayerCard({
             />
           ))}
         </>
+      )}
+
+      {/* ── Emoji reaction float ── */}
+      {reaction && (
+        <div
+          key={reaction.key}
+          className="absolute inset-x-0 flex justify-center pointer-events-none"
+          style={{ top: '8%', zIndex: 28 }}
+        >
+          <span
+            style={{
+              fontSize: '2rem',
+              lineHeight: 1,
+              animation: 'reaction-float 2.5s ease-out forwards',
+              filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.70))',
+              display: 'block',
+            }}
+          >
+            {reaction.emoji}
+          </span>
+        </div>
       )}
 
       {/* ── Role action icon overlay ── */}

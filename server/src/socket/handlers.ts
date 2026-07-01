@@ -524,6 +524,15 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     io.to(room.code).emit('day_reaction_sent', { fromId: pid, fromName: player.name, targetId, targetName: target.name });
   });
 
+  socket.on('send_reaction', ({ emoji }) => {
+    const pid  = socket.data.playerId;
+    const room = rooms.getRoomByPlayer(pid);
+    if (!room) return;
+    const ALLOWED = ['😱','🐺','👀','🔪','🙏','😂'];
+    if (!ALLOWED.includes(emoji)) return;
+    io.to(room.code).emit('reaction', { playerId: pid, emoji });
+  });
+
   // ── Test bot handlers ────────────────────────────────────────────────────────
 
   socket.on('host_add_bot', () => {
