@@ -2,6 +2,7 @@
 
 import type { RoomState } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { useT } from '@/i18n';
 
 interface Props {
   room: RoomState;
@@ -33,6 +34,7 @@ function WolfWinIcon() {
 }
 
 export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToLobby }: Props) {
+  const T = useT();
   const isVillageWin = room.winner === 'village';
   const isHost = room.hostId === playerId;
 
@@ -50,12 +52,10 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
             className="font-cinzel text-3xl font-bold tracking-[0.2em] drop-shadow-[0_0_20px_currentColor]"
             style={{ color: isVillageWin ? '#d97706' : '#dc2626' }}
           >
-            {isVillageWin ? 'VILLAGE WINS' : 'WOLVES WIN'}
+            {isVillageWin ? T('gameover.villageWins') : T('gameover.wolvesWin')}
           </h2>
           <p className="text-amber-700 text-sm mt-1">
-            {isVillageWin
-              ? 'The villagers have driven out the evil.'
-              : 'The werewolves have claimed the village.'}
+            {isVillageWin ? T('gameover.villageDesc') : T('gameover.wolvesDesc')}
           </p>
 
           {room.lastAnnouncement && (
@@ -68,7 +68,7 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
         {/* Role reveals */}
         <div className="px-6 py-4 border-t border-amber-900/30">
           <p className="text-amber-700 text-[10px] uppercase tracking-widest text-center mb-3">
-            The truth revealed
+            {T('gameover.truthRevealed')}
           </p>
 
           <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -92,15 +92,15 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
                   >
                     {player.name}
                   </span>
-                  {info ? (
+                  {info && role ? (
                     <span
                       className="text-[11px] font-cinzel font-bold tracking-wider flex-shrink-0"
                       style={{ color: info.accentColor }}
                     >
-                      {info.name.toUpperCase()}
+                      {T(`role.${role}.name`).toUpperCase()}
                     </span>
                   ) : (
-                    <span className="text-[11px] text-amber-800 flex-shrink-0">Unknown</span>
+                    <span className="text-[11px] text-amber-800 flex-shrink-0">{T('gameover.unknown')}</span>
                   )}
                 </div>
               );
@@ -116,13 +116,13 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
                 onClick={onRestart}
                 className="w-full py-2.5 bg-amber-900/50 border border-amber-700/60 text-amber-200 font-cinzel text-sm tracking-[0.15em] uppercase rounded hover:bg-amber-900/70 transition-colors"
               >
-                Play Again
+                {T('gameover.playAgain')}
               </button>
               <button
                 onClick={onReturnToLobby}
                 className="w-full py-2.5 bg-black/30 border border-amber-900/40 text-amber-500 font-cinzel text-sm tracking-[0.15em] uppercase rounded hover:bg-black/50 hover:border-amber-700/50 transition-colors"
               >
-                Return to Lobby
+                {T('gameover.toLobby')}
               </button>
             </>
           )}
@@ -130,7 +130,7 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
             onClick={onLeave}
             className="w-full py-2.5 bg-transparent border border-red-900/40 text-red-700 font-cinzel text-sm tracking-[0.15em] uppercase rounded hover:border-red-700/60 hover:text-red-500 transition-colors"
           >
-            Leave Room
+            {T('gameover.leave')}
           </button>
         </div>
       </div>

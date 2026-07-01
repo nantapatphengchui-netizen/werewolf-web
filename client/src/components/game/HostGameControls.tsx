@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { GamePhase } from '@/types/game';
 import { DarkPanel } from '@/components/ui/DarkPanel';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useT } from '@/i18n';
 
 interface Props {
   phase: GamePhase;
@@ -19,10 +20,6 @@ interface Props {
 }
 
 type ConfirmAction = 'restart' | 'lobby' | 'endPhase' | null;
-
-const PHASE_LABEL: Partial<Record<GamePhase, string>> = {
-  night: 'Night', day: 'Day', voting: 'Vote',
-};
 
 function HostBtn({
   onClick,
@@ -56,10 +53,13 @@ export function HostGameControls({
   phase, timerPaused, guidedDayEnabled,
   onPauseTimer, onResumeTimer, onExtendTimer, onEndPhase, onToggleGuidedDay, onRestartGame, onReturnToLobby,
 }: Props) {
+  const T = useT();
   const [confirming, setConfirming] = useState<ConfirmAction>(null);
 
   const hasTimer = phase === 'night' || phase === 'day' || phase === 'voting';
   if (!hasTimer) return null;
+
+  const phaseLabel = T(`phase.${phase}`);
 
   const handleConfirm = () => {
     if (confirming === 'restart')  onRestartGame();
@@ -73,18 +73,22 @@ export function HostGameControls({
       {confirming && (
         <ConfirmDialog
           title={
-            confirming === 'restart'  ? 'Restart Game' :
-            confirming === 'lobby'    ? 'Return to Lobby' :
-            `End ${PHASE_LABEL[phase] ?? 'Phase'} Early`
+            confirming === 'restart'  ? T('confirm.restart.title') :
+            confirming === 'lobby'    ? T('confirm.lobby.title') :
+            T('confirm.endPhase.title', { phase: phaseLabel })
           }
           description={
             confirming === 'restart'
-              ? 'All players will keep their spots but get new roles. The current game state will be lost.'
+              ? T('confirm.restart.desc')
               : confirming === 'lobby'
-              ? 'The game will end immediately and everyone will return to the lobby. Progress will be lost.'
-              : `End the ${PHASE_LABEL[phase]?.toLowerCase() ?? 'current'} phase immediately and auto-resolve it.`
+              ? T('confirm.lobby.desc')
+              : T('confirm.endPhase.desc', { phase: phaseLabel.toLowerCase() })
           }
-          confirmLabel={confirming === 'endPhase' ? 'End Phase' : confirming === 'restart' ? 'Restart' : 'Return'}
+          confirmLabel={
+            confirming === 'endPhase' ? T('confirm.endPhase.btn') :
+            confirming === 'restart'  ? T('confirm.restart.btn') :
+            T('confirm.lobby.btn')
+          }
           onConfirm={handleConfirm}
           onCancel={() => setConfirming(null)}
         />
@@ -102,10 +106,10 @@ export function HostGameControls({
 
         {/* Timer section */}
         <div className="space-y-2">
-          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>Phase Timer</p>
+          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>{T('host.timer')}</p>
 
           <HostBtn onClick={timerPaused ? onResumeTimer : onPauseTimer} active={timerPaused}>
-            {timerPaused ? '▶ Resume Timer' : '⏸ Pause Timer'}
+            {timerPaused ? T('host.resumeTimer') : T('host.pauseTimer')}
           </HostBtn>
 
           <div className="flex gap-1.5">
@@ -122,7 +126,7 @@ export function HostGameControls({
           </div>
 
           <HostBtn onClick={() => setConfirming('endPhase')}>
-            End {PHASE_LABEL[phase] ?? 'Phase'} Early
+            {T('host.endPhase', { phase: phaseLabel })}
           </HostBtn>
         </div>
 
@@ -131,12 +135,12 @@ export function HostGameControls({
 
         {/* Day mode section */}
         <div className="space-y-2">
-          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>Day Mode</p>
+          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>{T('host.dayMode')}</p>
           <HostBtn onClick={onToggleGuidedDay} active={guidedDayEnabled}>
-            {guidedDayEnabled ? '◆ Guided Day: ON' : '◇ Guided Day: OFF'}
+            {guidedDayEnabled ? T('host.guidedDayOn') : T('host.guidedDayOff')}
           </HostBtn>
           <p className="text-[9px] leading-snug" style={{ color: '#78716c' }}>
-            Shows Hot Seat banner for top suspects and structures the day discussion.
+            {T('host.guidedDayDesc')}
           </p>
         </div>
 
@@ -145,9 +149,9 @@ export function HostGameControls({
 
         {/* Game section */}
         <div className="space-y-2">
-          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>Game</p>
-          <HostBtn onClick={() => setConfirming('lobby')} danger>Return to Lobby</HostBtn>
-          <HostBtn onClick={() => setConfirming('restart')}>Restart Game</HostBtn>
+          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>{T('host.game')}</p>
+          <HostBtn onClick={() => setConfirming('lobby')} danger>{T('host.toLobby')}</HostBtn>
+          <HostBtn onClick={() => setConfirming('restart')}>{T('host.restart')}</HostBtn>
         </div>
       </DarkPanel>
     </>

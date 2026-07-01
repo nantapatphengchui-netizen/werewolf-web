@@ -8,6 +8,8 @@ import { useSocket } from '@/providers/SocketProvider';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
+import { LangToggle } from '@/components/ui/LangToggle';
+import { useT } from '@/i18n';
 import { RolePanel } from './RolePanel';
 import { RoleRevealOverlay } from './RoleRevealOverlay';
 import { GamePlayerGrid } from './GamePlayerGrid';
@@ -282,13 +284,14 @@ interface ActionBarProps {
   votedCount: number;
   totalAlive: number;
   onAdvanceDay: () => void;
+  T: (key: string, params?: Record<string, string | number>) => string;
 }
 
 function ActionBar({
   phase, imAlive, isHost, isActionSubmitted,
   selectedTarget, selectedPlayerName, nc,
   votedCount, totalAlive,
-  onAdvanceDay,
+  onAdvanceDay, T,
 }: ActionBarProps) {
 
   // ── Night ──
@@ -298,7 +301,7 @@ function ActionBar({
         <div style={barStyle(phase)}>
           <CheckIcon color="#4ade80" />
           <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>
-            Action submitted — awaiting all night actions…
+            {T('bar.night.submitted')}
           </p>
         </div>
       );
@@ -307,7 +310,7 @@ function ActionBar({
       return (
         <div style={barStyle(phase)}>
           <p className="text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>
-            You have perished. Watch the night from the shadows.
+            {T('bar.night.perished')}
           </p>
         </div>
       );
@@ -317,7 +320,7 @@ function ActionBar({
       return (
         <div style={barStyle(phase)}>
           <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-            Night falls. You close your eyes and wait for dawn.
+            {T('bar.night.sleep')}
           </p>
         </div>
       );
@@ -331,12 +334,12 @@ function ActionBar({
               {selectedPlayerName}
             </span>
             <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: `${nc.selText}70` }}>
-              Confirm on card ↑
+              {T('bar.night.confirmHint')}
             </span>
           </>
         ) : (
           <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-            Select a player card above…
+            {T('bar.night.select')}
           </span>
         )}
       </div>
@@ -348,10 +351,10 @@ function ActionBar({
     return (
       <div style={barStyle(phase)}>
         {!imAlive ? (
-          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>You have perished.</p>
+          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>{T('bar.day.perished')}</p>
         ) : (
           <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a16207' }}>
-            Discuss with the village. Use card buttons to Suspect or Ask players.
+            {T('bar.day.discuss')}
           </p>
         )}
         {isHost ? (
@@ -360,10 +363,10 @@ function ActionBar({
             style={{ backgroundColor: 'rgba(120,53,0,0.85)', border: '1px solid rgba(217,119,6,0.60)', color: '#fde68a' }}
             className="shrink-0 px-4 py-2 text-[11px] font-cinzel tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
           >
-            Call to Vote →
+            {T('bar.day.callVote')}
           </button>
         ) : (
-          <p className="shrink-0 text-[10px] font-cinzel italic" style={{ color: '#a16207' }}>Waiting for host…</p>
+          <p className="shrink-0 text-[10px] font-cinzel italic" style={{ color: '#a16207' }}>{T('bar.day.waitHost')}</p>
         )}
       </div>
     );
@@ -375,7 +378,7 @@ function ActionBar({
       return (
         <div style={barStyle(phase)}>
           <p className="text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>
-            You are eliminated. Watch the vote unfold.
+            {T('bar.voting.perished')}
           </p>
         </div>
       );
@@ -385,7 +388,7 @@ function ActionBar({
         <div style={barStyle(phase)}>
           <CheckIcon color="#4ade80" />
           <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>
-            Vote cast · {votedCount} / {totalAlive} voted
+            {T('bar.voting.submitted', { voted: votedCount, total: totalAlive })}
           </p>
         </div>
       );
@@ -399,12 +402,12 @@ function ActionBar({
               {selectedPlayerName}
             </span>
             <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: 'rgba(251,191,36,0.55)' }}>
-              Confirm on card ↑
+              {T('bar.voting.confirmHint')}
             </span>
           </>
         ) : (
           <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-            Select a player to exile…
+            {T('bar.voting.select')}
           </span>
         )}
       </div>
@@ -424,6 +427,7 @@ export function GameView({
   onHostRestartGame, onHostReturnToLobby,
   onMarkSuspicion, onMarkTrust, onDayReaction, onToggleGuidedDay,
 }: Props) {
+  const T = useT();
   const socket = useSocket();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
@@ -566,7 +570,7 @@ export function GameView({
         >
           {/* Room code */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline" style={{ color: '#a16207' }}>Room</span>
+            <span className="text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline" style={{ color: '#a16207' }}>{T('lobby.room')}</span>
             <span className="font-mono font-bold text-base tracking-[0.35em]" style={{ color: '#fbbf24', textShadow: '0 0 12px rgba(251,191,36,0.45)' }}>
               {room.code}
             </span>
@@ -579,7 +583,7 @@ export function GameView({
           <div className="flex items-center gap-1.5 shrink-0" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
             {PHASE_ICON[room.phase]}
             <span className="font-cinzel text-xs tracking-widest uppercase font-semibold">
-              {room.phase === 'ended' ? 'Game Over' : `${room.phase} · R${room.round}`}
+              {room.phase === 'ended' ? T('hud.gameOver') : `${T(`phase.${room.phase}`)} · R${room.round}`}
             </span>
           </div>
 
@@ -622,10 +626,10 @@ export function GameView({
               </div>
               <div className="flex flex-col items-start leading-tight hidden sm:flex">
                 <span className="text-[7px] font-cinzel uppercase tracking-[0.18em]" style={{ color: `${roleInfo.accentColor}99` }}>
-                  Your Role
+                  {T('hud.yourRole')}
                 </span>
                 <span className="text-[12px] font-cinzel font-bold uppercase tracking-wide" style={{ color: roleInfo.accentColor, textShadow: `0 0 8px ${roleInfo.accentColor}66` }}>
-                  {roleInfo.name}
+                  {T(`role.${myRole}.name`)}
                 </span>
               </div>
             </button>
@@ -643,10 +647,11 @@ export function GameView({
 
           <div className="w-px h-4 shrink-0" style={{ backgroundColor: 'rgba(146,64,14,0.30)' }} />
 
-          {/* Connection + Audio */}
+          {/* Connection + Audio + Lang */}
           <div className="flex items-center gap-2 shrink-0">
             <StatusDot connected={isConnected} />
             <AudioControls />
+            <LangToggle />
           </div>
 
           {/* Host controls icon — host only */}
@@ -692,7 +697,7 @@ export function GameView({
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
             onMouseLeave={e => (e.currentTarget.style.color = '#d97706')}
           >
-            Leave
+            {T('hud.leave')}
           </button>
         </div>
       </div>
@@ -723,7 +728,7 @@ export function GameView({
               <path d="M5 13V8L3 5.5h4L8 2l1 3.5h4L11 8v5" strokeLinejoin="round" strokeLinecap="round"/>
             </svg>
             <p className="text-[11px] font-cinzel leading-snug flex-1" style={{ color: '#fed7aa' }}>
-              The Hunter's Final Shot — choose a target to take down with you, or skip.
+              {T('hunter.myShot')}
             </p>
           </div>
         )}
@@ -738,7 +743,7 @@ export function GameView({
               <circle cx="10" cy="10" r="8"/>
             </svg>
             <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fdba74' }}>
-              The Hunter is choosing their final shot…
+              {T('hunter.otherPending')}
             </p>
           </div>
         )}
@@ -762,8 +767,7 @@ export function GameView({
                 <path d="M8 1L9.5 5.5H14L10.5 8.5L11.5 13L8 10.5L4.5 13L5.5 8.5L2 5.5H6.5Z"/>
               </svg>
               <p className="text-[11px] font-cinzel leading-snug flex-1" style={{ color: '#fca5a5' }}>
-                <span style={{ color: '#f87171', fontStyle: 'normal' }}>Hot Seat: </span>
-                {names.join(' & ')} — let them speak before the vote.
+                {T('hotSeat.banner', { names: names.join(' & ') })}
               </p>
             </div>
           );
@@ -778,10 +782,7 @@ export function GameView({
                   <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
                 </svg>
                 <p className="text-[10px] truncate" style={{ color: '#a78bfa' }}>
-                  <span style={{ color: '#c4b5fd' }}>{r.fromName}</span>
-                  {' '}asks{' '}
-                  <span style={{ color: '#c4b5fd' }}>{r.targetName}</span>
-                  {' '}to speak
+                  {T('reaction.askToSpeak', { from: r.fromName, to: r.targetName })}
                 </p>
               </div>
             ))}
@@ -828,11 +829,11 @@ export function GameView({
               padding: '10px 14px',
             }}
           >
-            <p className="text-[9px] font-cinzel uppercase tracking-widest mb-2" style={{ color: 'rgba(147,51,234,0.80)' }}>Witch's Choice</p>
+            <p className="text-[9px] font-cinzel uppercase tracking-widest mb-2" style={{ color: 'rgba(147,51,234,0.80)' }}>{T('witch.title')}</p>
             <p className="text-[11px] font-cinzel italic mb-3" style={{ color: '#ddd6fe' }}>
               {witchNightInfo.attackedPlayerId
-                ? <>Tonight's target: <span style={{ color: '#f0abfc', fontStyle: 'normal' }}>{witchNightInfo.attackedPlayerName}</span></>
-                : 'No one was attacked tonight.'}
+                ? T('witch.attacked', { name: witchNightInfo.attackedPlayerName ?? '' })
+                : T('witch.noAttack')}
             </p>
             <div className="flex gap-2 flex-wrap">
               {!witchNightInfo.savePotionUsed && witchNightInfo.attackedPlayerId !== null && (
@@ -841,7 +842,7 @@ export function GameView({
                   className="px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-wide rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
                   style={{ backgroundColor: 'rgba(6,78,59,0.85)', border: '1px solid rgba(52,211,153,0.60)', color: '#a7f3d0' }}
                 >
-                  Save {witchNightInfo.attackedPlayerName}
+                  {T('witch.saveName', { name: witchNightInfo.attackedPlayerName ?? '' })}
                 </button>
               )}
               {!witchNightInfo.poisonPotionUsed && (
@@ -850,7 +851,7 @@ export function GameView({
                   className="px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-wide rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
                   style={{ backgroundColor: 'rgba(88,28,135,0.85)', border: '1px solid rgba(147,51,234,0.60)', color: '#e9d5ff' }}
                 >
-                  Poison Someone
+                  {T('witch.poisonBtn')}
                 </button>
               )}
               <button
@@ -858,7 +859,7 @@ export function GameView({
                 className="px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-wide rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
                 style={{ backgroundColor: 'rgba(20,14,40,0.85)', border: '1px solid rgba(109,40,217,0.35)', color: '#a78bfa' }}
               >
-                Do Nothing
+                {T('witch.doNothing')}
               </button>
             </div>
           </div>
@@ -870,14 +871,14 @@ export function GameView({
         <div className="shrink-0 px-3 pb-1 relative z-10">
           <div style={{ backgroundColor: 'rgba(3,5,7,0.96)', border: '1px solid rgba(147,51,234,0.50)', borderTop: '2px solid rgba(147,51,234,0.60)', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', minHeight: '46px' }}>
             <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#c4b5fd' }}>
-              Choose a player to poison…
+              {T('witch.poisonMode')}
             </p>
             <button
               onClick={() => { setWitchPoisonMode(false); setSelectedTarget(null); }}
               className="shrink-0 px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-wide rounded-lg"
               style={{ backgroundColor: 'rgba(20,14,40,0.85)', border: '1px solid rgba(109,40,217,0.35)', color: '#7c3aed' }}
             >
-              Cancel
+              {T('witch.cancel')}
             </button>
           </div>
         </div>
@@ -898,27 +899,27 @@ export function GameView({
                   className="shrink-0 px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-widest rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
                   style={{ backgroundColor: 'rgba(124,45,18,0.90)', border: '1px solid rgba(251,146,60,0.65)', color: '#fed7aa' }}
                 >
-                  Shoot
+                  {T('hunter.shoot')}
                 </button>
                 <button
                   onClick={() => handleHunterShoot(null)}
                   className="shrink-0 px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg"
                   style={{ border: '1px solid rgba(120,65,10,0.40)', color: '#78350f' }}
                 >
-                  Skip
+                  {T('hunter.skip')}
                 </button>
               </>
             ) : (
               <>
                 <span className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#92400e' }}>
-                  Select your final target…
+                  {T('hunter.selectTarget')}
                 </span>
                 <button
                   onClick={() => handleHunterShoot(null)}
                   className="shrink-0 px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg"
                   style={{ border: '1px solid rgba(120,65,10,0.40)', color: '#78350f' }}
                 >
-                  Skip Shot
+                  {T('hunter.skipShot')}
                 </button>
               </>
             )}
@@ -940,6 +941,7 @@ export function GameView({
             votedCount={votedCount}
             totalAlive={aliveCount}
             onAdvanceDay={onAdvanceDay}
+            T={T}
           />
         </div>
       )}
@@ -947,19 +949,19 @@ export function GameView({
       {/* ── Drawers ──────────────────────────────────────────────────────── */}
 
       {/* Event Log */}
-      <Drawer open={logOpen} onClose={() => setLogOpen(false)} title="Event Log">
+      <Drawer open={logOpen} onClose={() => setLogOpen(false)} title={T('hud.eventLog')}>
         <EventLog events={room.eventLog} />
       </Drawer>
 
       {/* Role Details */}
-      <Drawer open={roleOpen} onClose={() => setRoleOpen(false)} title="Your Role">
+      <Drawer open={roleOpen} onClose={() => setRoleOpen(false)} title={T('hud.yourRole')}>
         <div className="p-3 flex flex-col gap-3">
           <RolePanel myRole={myRole} werewolfIds={werewolfIds} players={room.players} playerId={playerId} />
 
           {/* Seer inspection log */}
           {myRole === 'seer' && seerLog.length > 0 && (
             <div className="space-y-1.5 pt-1" style={{ borderTop: '1px solid rgba(109,40,217,0.25)' }}>
-              <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#7c3aed' }}>Inspection Log</p>
+              <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#7c3aed' }}>{T('rolepanel.inspectionLog')}</p>
               {[...seerLog].reverse().map((entry, i) => {
                 const info = ROLE_INFO[entry.role];
                 return (
@@ -967,7 +969,7 @@ export function GameView({
                     <span className="font-cinzel shrink-0 text-[9px]" style={{ color: '#7c3aed' }}>R{entry.round}</span>
                     <span className="flex-1 truncate" style={{ color: '#fde68a' }}>{entry.targetName}</span>
                     <span className="font-cinzel font-bold text-[10px] shrink-0 tracking-wider" style={{ color: info.accentColor }}>
-                      {info.name.toUpperCase()}
+                      {T(`role.${entry.role}.name`).toUpperCase()}
                     </span>
                   </div>
                 );
@@ -978,7 +980,7 @@ export function GameView({
       </Drawer>
 
       {/* Host Controls */}
-      <Drawer open={hostOpen} onClose={() => setHostOpen(false)} title="Host Controls">
+      <Drawer open={hostOpen} onClose={() => setHostOpen(false)} title={T('hud.hostControls')}>
         <div className="p-3">
           <HostGameControls
             phase={room.phase}

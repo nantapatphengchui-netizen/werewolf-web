@@ -1,0 +1,200 @@
+export const th: Record<string, string> = {
+  // ── Phases ─────────────────────────────────────────────────────────────────
+  'phase.lobby':  'ห้องรอ',
+  'phase.night':  'กลางคืน',
+  'phase.day':    'กลางวัน',
+  'phase.voting': 'โหวต',
+  'phase.ended':  'จบเกม',
+
+  // ── Role names ─────────────────────────────────────────────────────────────
+  'role.werewolf.name':   'หมาป่า',
+  'role.villager.name':   'ชาวบ้าน',
+  'role.seer.name':       'ผู้หยั่งรู้',
+  'role.doctor.name':     'หมอ',
+  'role.hunter.name':     'นักล่า',
+  'role.witch.name':      'แม่มด',
+  'role.bodyguard.name':  'ผู้คุ้มกัน',
+
+  // ── Role descriptions ──────────────────────────────────────────────────────
+  'role.werewolf.description':  'คุณคือหมาป่า ฆ่าชาวบ้านในแต่ละคืนและอย่าให้ใครจับได้ในเวลากลางวัน',
+  'role.villager.description':  'คุณคือชาวบ้าน ใช้เหตุผลและไหวพริบค้นหาหมาป่าออกมา',
+  'role.seer.description':      'คุณคือผู้หยั่งรู้ ทุกคืนสามารถสืบค้นตัวตนที่แท้จริงของผู้เล่นคนหนึ่งได้',
+  'role.doctor.description':    'คุณคือหมอ ทุกคืนสามารถปกป้องผู้เล่นคนหนึ่งจากหมาป่าได้',
+  'role.hunter.description':    'คุณคือนักล่า หากโดนกำจัด — ไม่ว่าจากโหวตหรือกลางคืน — คุณสามารถพาผู้เล่นคนหนึ่งลงไปด้วย',
+  'role.witch.description':     'คุณคือแม่มด มียาช่วยชีวิตและยาพิษอย่างละหนึ่งขวด ใช้ได้ขวดละครั้งตลอดเกม',
+  'role.bodyguard.description': 'คุณคือผู้คุ้มกัน ทุกคืนคุ้มกันผู้เล่นคนหนึ่งได้ แต่คุ้มกันคนเดิมสองคืนติดต่อกันไม่ได้',
+
+  // ── Role night actions ─────────────────────────────────────────────────────
+  'role.werewolf.nightAction':  'เลือกชาวบ้านที่จะกำจัดในคืนนี้',
+  'role.seer.nightAction':      'สืบค้นผู้เล่นเพื่อเปิดเผยตัวตนที่แท้จริง',
+  'role.doctor.nightAction':    'เลือกผู้เล่นที่จะปกป้องจากหมาป่าคืนนี้',
+  'role.witch.nightAction':     'รอให้หมาป่าโจมตีก่อน แล้วจึงตัดสินใจว่าจะทำอะไร',
+  'role.bodyguard.nightAction': 'เลือกผู้เล่นที่จะคุ้มกันคืนนี้',
+
+  // ── Alignment ──────────────────────────────────────────────────────────────
+  'alignment.village':   'ฝ่ายหมู่บ้าน',
+  'alignment.werewolf':  'ฝ่ายหมาป่า',
+
+  // ── Action labels (confirm buttons) ───────────────────────────────────────
+  'action.kill':     'จู่โจม',
+  'action.inspect':  'สืบ',
+  'action.protect':  'ปกป้อง',
+  'action.guard':    'คุ้มกัน',
+  'action.shoot':    'ยิง',
+  'action.vote':     'โหวต',
+  'action.confirm':  'ยืนยัน',
+  'action.cancel':   'ยกเลิก',
+  'action.skip':     'ข้าม',
+  'action.doNothing':'ผ่าน',
+  'action.save':     'ช่วยชีวิต',
+  'action.poison':   'วางยา',
+
+  // ── Social actions (card buttons) ─────────────────────────────────────────
+  'social.suspect':  'สงสัย',
+  'social.trust':    'ไว้ใจ',
+  'social.ask':      'ขอพูด',
+
+  // ── Action bar — night ─────────────────────────────────────────────────────
+  'bar.night.submitted': 'ส่งคำสั่งแล้ว — รอผู้อื่น…',
+  'bar.night.perished':  'คุณสิ้นชีวิตแล้ว ดูต่อจากเงามืด',
+  'bar.night.sleep':     'กลางคืนมาถึง คุณหลับตารอรุ่งเช้า',
+  'bar.night.select':    'เลือกการ์ดผู้เล่นด้านบน…',
+  'bar.night.confirmHint': 'ยืนยันที่การ์ด ↑',
+
+  // ── Action bar — day ──────────────────────────────────────────────────────
+  'bar.day.discuss':    'พูดคุยกันในหมู่บ้าน',
+  'bar.day.callVote':   'เริ่มโหวต →',
+  'bar.day.waitHost':   'รอโฮสต์…',
+  'bar.day.perished':   'คุณสิ้นชีวิตแล้ว',
+
+  // ── Action bar — voting ───────────────────────────────────────────────────
+  'bar.voting.submitted': 'โหวตแล้ว · {{voted}} / {{total}} คน',
+  'bar.voting.perished':  'คุณถูกกำจัดแล้ว ดูการโหวต',
+  'bar.voting.select':    'เลือกผู้เล่นที่จะเนรเทศ…',
+  'bar.voting.confirmHint': 'ยืนยันที่การ์ด ↑',
+
+  // ── Instruction text ───────────────────────────────────────────────────────
+  'instr.night.werewolf':  'คลิกการ์ดผู้เล่นเพื่อกำจัดในคืนนี้',
+  'instr.night.seer':      'คลิกการ์ดผู้เล่นเพื่อสืบค้นตัวตน',
+  'instr.night.doctor':    'คลิกการ์ดผู้เล่นเพื่อปกป้องในคืนนี้',
+  'instr.night.bodyguard': 'คลิกการ์ดผู้เล่นเพื่อคุ้มกันในคืนนี้',
+  'instr.night.witch':     'รอให้หมาป่าโจมตีก่อน — คุณจะตัดสินใจทีหลัง',
+  'instr.night.villager':  'กลางคืนมาถึง หมู่บ้านนอนหลับ',
+  'instr.night.perished':  'คุณสิ้นชีวิตแล้ว ดูต่อจากเงามืด',
+  'instr.night.submitted': 'ส่งคำสั่งแล้ว — รอคำสั่งกลางคืนอื่น…',
+  'instr.day.discuss':     'พูดคุยและค้นหาหมาป่าในหมู่คุณ',
+  'instr.voting.select':   'คลิกการ์ดผู้เล่นเพื่อโหวตเนรเทศ',
+  'instr.voting.perished': 'คุณถูกกำจัดแล้ว ดูการโหวต',
+  'instr.voting.submitted':'โหวตแล้ว — รออยู่…',
+
+  // ── Witch panel ────────────────────────────────────────────────────────────
+  'witch.title':      'ตัวเลือกของแม่มด',
+  'witch.attacked':   'เป้าหมายคืนนี้: {{name}}',
+  'witch.noAttack':   'ไม่มีใครถูกโจมตีคืนนี้',
+  'witch.saveName':   'ช่วย {{name}}',
+  'witch.poisonBtn':  'วางยาใครบางคน',
+  'witch.doNothing':  'ผ่าน',
+  'witch.poisonMode': 'เลือกผู้เล่นที่จะวางยา…',
+  'witch.cancel':     'ยกเลิก',
+
+  // ── Hunter ─────────────────────────────────────────────────────────────────
+  'hunter.myShot':      'ยิงสุดท้ายของนักล่า — เลือกเป้าหมายหรือข้าม',
+  'hunter.otherPending':'นักล่ากำลังเลือกเป้าหมายสุดท้าย…',
+  'hunter.selectTarget': 'เลือกเป้าหมายสุดท้าย…',
+  'hunter.shoot':        'ยิง',
+  'hunter.skipShot':     'ข้ามการยิง',
+  'hunter.skip':         'ข้าม',
+
+  // ── Hot seat ───────────────────────────────────────────────────────────────
+  'hotSeat.banner': 'Hot Seat: {{names}} — ให้พวกเขาพูดก่อนโหวต',
+
+  // ── Reactions / day ────────────────────────────────────────────────────────
+  'reaction.askToSpeak': '{{from}} ขอให้ {{to}} พูด',
+
+  // ── Game over ──────────────────────────────────────────────────────────────
+  'gameover.villageWins':   'หมู่บ้านชนะ',
+  'gameover.wolvesWin':     'หมาป่าชนะ',
+  'gameover.villageDesc':   'ชาวบ้านกำจัดความชั่วร้ายได้สำเร็จ',
+  'gameover.wolvesDesc':    'หมาป่าเข้าครอบครองหมู่บ้าน',
+  'gameover.truthRevealed': 'เปิดเผยความจริง',
+  'gameover.unknown':       'ไม่ทราบ',
+  'gameover.playAgain':     'เล่นอีกรอบ',
+  'gameover.toLobby':       'กลับห้องรอ',
+  'gameover.leave':         'ออกจากห้อง',
+
+  // ── Lobby ──────────────────────────────────────────────────────────────────
+  'lobby.room':         'ห้อง',
+  'lobby.readyToStart': 'พร้อมเริ่มเกม',
+  'lobby.needMore':     'ต้องการอีก {{n}} คน',
+  'lobby.connected':    'เชื่อมต่อแล้ว',
+  'lobby.offline':      'ออฟไลน์',
+  'lobby.leave':        'ออก',
+  'lobby.ready':        '✓ พร้อม',
+  'lobby.notReady':     'พร้อม',
+  'lobby.startGame':    'เริ่มเกม',
+  'lobby.needPlayers':  'ต้องการอีก {{n}} คน ({{cur}}/{{min}})',
+  'lobby.allReady':     'ทุกคนพร้อมแล้ว — โฮสต์เริ่มได้!',
+  'lobby.readyCount':   '{{ready}} / {{total}} พร้อม',
+  'lobby.waitHost':     'รอโฮสต์',
+
+  // ── Host controls ──────────────────────────────────────────────────────────
+  'host.timer':         'ตัวจับเวลา',
+  'host.pauseTimer':    '⏸ หยุดชั่วคราว',
+  'host.resumeTimer':   '▶ เล่นต่อ',
+  'host.endPhase':      'จบ{{phase}}ก่อนเวลา',
+  'host.guidedDayOn':   '◆ กลางวันชี้แนะ: เปิด',
+  'host.guidedDayOff':  '◇ กลางวันชี้แนะ: ปิด',
+  'host.guidedDayDesc': 'แสดง Hot Seat สำหรับผู้ต้องสงสัยมากที่สุด',
+  'host.dayMode':       'โหมดกลางวัน',
+  'host.game':          'เกม',
+  'host.toLobby':       'กลับห้องรอ',
+  'host.restart':       'เริ่มเกมใหม่',
+
+  // ── Role panel ─────────────────────────────────────────────────────────────
+  'rolepanel.yourRole':     'บทบาทของคุณ',
+  'rolepanel.roleTab':      'บทบาท',
+  'rolepanel.infoTab':      'ข้อมูล',
+  'rolepanel.wolfPack':     'ฝ่ายหมาป่า',
+  'rolepanel.soloWolf':     'คุณล่าคนเดียว',
+  'rolepanel.allies':       'พันธมิตร',
+  'rolepanel.alliesDesc':   'ฝ่ายหมู่บ้าน — แต่คุณไม่รู้ว่าใครเป็นใคร',
+  'rolepanel.nightAction':  'การกระทำกลางคืน',
+  'rolepanel.noNightAction':'ไม่มีการกระทำกลางคืน นอนหลับได้',
+  'rolepanel.noRole':       'ยังไม่ได้รับบทบาท — กำลังเชื่อมต่อใหม่…',
+  'rolepanel.inspectionLog':'บันทึกการตรวจสอบ',
+
+  // ── Role reveal overlay ────────────────────────────────────────────────────
+  'reveal.destiny':    '✦ โชคชะตาถูกกำหนดแล้ว ✦',
+  'reveal.decided':    'บทบาทของคุณถูกกำหนดแล้ว',
+  'reveal.youAre':     'คุณคือ',
+  'reveal.enterGame':  'เข้าสู่เกม ✦',
+
+  // ── HUD ────────────────────────────────────────────────────────────────────
+  'hud.gameOver': 'จบเกม',
+  'hud.round':    'รอบ {{n}}',
+  'hud.leave':    'ออก',
+  'hud.yourRole': 'บทบาทของคุณ',
+
+  // ── Confirm dialogs ────────────────────────────────────────────────────────
+  'confirm.restart.title':  'เริ่มเกมใหม่',
+  'confirm.restart.desc':   'ผู้เล่นทั้งหมดจะคงที่นั่งแต่ได้บทบาทใหม่ สถานะปัจจุบันจะหายไป',
+  'confirm.restart.btn':    'เริ่มใหม่',
+  'confirm.lobby.title':    'กลับห้องรอ',
+  'confirm.lobby.desc':     'เกมจะจบทันทีและทุกคนจะกลับห้องรอ ความคืบหน้าจะหายไป',
+  'confirm.lobby.btn':      'กลับ',
+  'confirm.endPhase.title': 'จบ{{phase}}ก่อนเวลา',
+  'confirm.endPhase.desc':  'จบช่วง{{phase}}ทันทีและแก้ไขอัตโนมัติ',
+  'confirm.endPhase.btn':   'จบเลย',
+  'confirm.yes':   'ยืนยัน',
+  'confirm.cancel':'ยกเลิก',
+
+  // ── HUD extras ────────────────────────────────────────────────────────────
+  'hud.hostControls':  'ควบคุมโฮสต์',
+  'hud.eventLog':      'บันทึกเหตุการณ์',
+
+  // ── Card ──────────────────────────────────────────────────────────────────
+  'card.youBanner':   '◆ คุณ ◆',
+  'card.eliminated':  'ถูกกำจัด',
+  'card.away':        'ไม่อยู่',
+  'card.youRole':     'คุณ · {{role}}',
+};

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { useT } from '@/i18n';
 
 const ROLE_IMAGE: Record<Role, string> = {
   werewolf:  '/role-werewolf.png',
@@ -70,11 +71,12 @@ function CardBack() {
 
 function CardFace({ role }: { role: Role }) {
   const info = ROLE_INFO[role];
+  const T = useT();
   return (
     <div className="w-full h-full rounded-xl overflow-hidden relative">
       <img
         src={ROLE_IMAGE[role]}
-        alt={info.name}
+        alt={T(`role.${role}.name`)}
         className="absolute inset-0 w-full h-full object-cover object-top"
       />
       <div
@@ -86,7 +88,7 @@ function CardFace({ role }: { role: Role }) {
           className="font-cinzel text-[10px] sm:text-[13px] font-bold uppercase tracking-widest"
           style={{ color: info.accentColor, textShadow: `0 0 14px ${info.accentColor}90` }}
         >
-          {info.name}
+          {T(`role.${role}.name`)}
         </p>
       </div>
     </div>
@@ -99,6 +101,7 @@ interface Props {
 }
 
 export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
+  const T = useT();
   const [phase, setPhase]     = useState<Phase>('enter');
   const [yourIdx]             = useState(() => Math.floor(Math.random() * 4));
   const roleInfo              = ROLE_INFO[myRole];
@@ -114,11 +117,11 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
     return () => ts.forEach(clearTimeout);
   }, []);
 
-  const isSpread   = phase !== 'enter';
+  const isSpread    = phase !== 'enter';
   const isShuffling = phase === 'shuffle';
-  const isPick     = phase === 'pick' || phase === 'flip' || phase === 'revealed';
-  const isFlipped  = phase === 'flip' || phase === 'revealed';
-  const isRevealed = phase === 'revealed';
+  const isPick      = phase === 'pick' || phase === 'flip' || phase === 'revealed';
+  const isFlipped   = phase === 'flip' || phase === 'revealed';
+  const isRevealed  = phase === 'revealed';
 
   return (
     <div
@@ -140,13 +143,13 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
           className="text-[9px] sm:text-[10px] font-cinzel uppercase tracking-[0.4em] mb-1"
           style={{ color: 'rgba(167,139,250,0.55)' }}
         >
-          ✦ Destiny is Written ✦
+          {T('reveal.destiny')}
         </p>
         <h2
           className="font-cinzel text-lg sm:text-2xl font-bold uppercase tracking-widest"
           style={{ color: '#e2d9f3', textShadow: '0 0 24px rgba(139,92,246,0.38)' }}
         >
-          Your Role Has Been Decided
+          {T('reveal.decided')}
         </h2>
       </div>
 
@@ -184,7 +187,6 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
 
           return (
             <div key={i} style={cardStyle}>
-              {/* Glow pulse ring on "pick" */}
               {isPick && isYours && !isFlipped && (
                 <div
                   className="absolute -inset-2 rounded-2xl pointer-events-none"
@@ -195,7 +197,6 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
                 />
               )}
 
-              {/* 3-D flip wrapper */}
               <div style={{ perspective: '700px', width: '100%', height: '100%' }}>
                 <div
                   style={{
@@ -206,7 +207,6 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
                     position: 'relative',
                   }}
                 >
-                  {/* Back face */}
                   <div
                     style={{
                       position: 'absolute', inset: 0,
@@ -220,7 +220,6 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
                     <CardBack />
                   </div>
 
-                  {/* Front face (role image) */}
                   <div
                     style={{
                       position: 'absolute', inset: 0,
@@ -253,26 +252,26 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
           className="text-[8px] sm:text-[9px] font-cinzel uppercase tracking-[0.32em] mb-1"
           style={{ color: `${roleInfo.accentColor}80` }}
         >
-          You Are
+          {T('reveal.youAre')}
         </p>
         <h3
           className="font-cinzel text-2xl sm:text-4xl font-bold uppercase tracking-widest mb-2"
           style={{ color: roleInfo.accentColor, textShadow: `0 0 28px ${roleInfo.accentColor}70` }}
         >
-          {roleInfo.name}
+          {T(`role.${myRole}.name`)}
         </h3>
         <p
           className="text-[10px] sm:text-[11px] max-w-xs sm:max-w-sm leading-relaxed mb-1"
           style={{ color: 'rgba(255,255,255,0.50)' }}
         >
-          {roleInfo.description}
+          {T(`role.${myRole}.description`)}
         </p>
         {roleInfo.nightAction && (
           <p
             className="text-[9px] sm:text-[10px] max-w-xs sm:max-w-sm leading-relaxed mb-5 italic"
             style={{ color: `${roleInfo.accentColor}70` }}
           >
-            ✦ {roleInfo.nightAction}
+            ✦ {T(`role.${myRole}.nightAction`)}
           </p>
         )}
         <button
@@ -285,7 +284,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
             boxShadow: `0 0 22px ${roleInfo.accentColor}25`,
           }}
         >
-          Enter the Game ✦
+          {T('reveal.enterGame')}
         </button>
       </div>
     </div>

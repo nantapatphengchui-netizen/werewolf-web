@@ -3,6 +3,8 @@
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
+import { LangToggle } from '@/components/ui/LangToggle';
+import { useT } from '@/i18n';
 
 interface Props {
   code: string;
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnected, onLeave }: Props) {
+  const T = useT();
   const needed    = minPlayers - playerCount;
   const hasEnough = playerCount >= minPlayers;
 
@@ -25,7 +28,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
       {/* Left: room code */}
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-amber-500 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">Room</span>
+        <span className="text-amber-500 text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline">{T('lobby.room')}</span>
         <span
           className="font-mono font-bold text-lg tracking-[0.35em]"
           style={{ color: '#fbbf24', textShadow: '0 0 12px rgba(251,191,36,0.45)' }}
@@ -56,18 +59,18 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
           <span className="text-amber-500 font-normal text-xs">/{maxPlayers}</span>
         </span>
         <span className={`text-[10px] font-cinzel hidden md:inline shrink-0 ${hasEnough ? 'text-green-400' : 'text-amber-500'}`}>
-          {hasEnough ? 'Ready to start' : `Need ${needed} more`}
+          {hasEnough ? T('lobby.readyToStart') : T('lobby.needMore', { n: needed })}
         </span>
       </div>
 
       <div className="hidden sm:block w-px h-4 bg-amber-700/40 shrink-0" />
 
-      {/* Right: status + music + leave */}
+      {/* Right: status + music + lang + leave */}
       <div className="flex items-center gap-3 shrink-0">
         <div className="flex items-center gap-1.5">
           <StatusDot connected={isConnected} />
           <span className={`text-[9px] font-cinzel uppercase tracking-wider hidden sm:inline ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
-            {isConnected ? 'Connected' : 'Offline'}
+            {isConnected ? T('lobby.connected') : T('lobby.offline')}
           </span>
         </div>
 
@@ -75,13 +78,15 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
         <AudioControls />
 
+        <LangToggle />
+
         <div className="h-4 w-px bg-amber-800/40 hidden sm:block" />
 
         <button
           onClick={onLeave}
           className="px-3 py-1.5 border border-amber-700/55 hover:border-red-600/70 text-amber-400 hover:text-red-400 text-[10px] font-cinzel uppercase tracking-widest rounded-lg transition-colors"
         >
-          Leave
+          {T('lobby.leave')}
         </button>
       </div>
     </div>

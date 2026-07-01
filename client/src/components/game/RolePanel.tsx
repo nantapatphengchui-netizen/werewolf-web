@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { DarkPanel } from '@/components/ui/DarkPanel';
+import { useT } from '@/i18n';
 
 function WerewolfIcon({ color }: { color: string }) {
   return (
@@ -94,12 +95,13 @@ interface Props {
 type Tab = 'role' | 'info';
 
 export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
+  const T = useT();
   const [tab, setTab] = useState<Tab>('role');
 
   if (!myRole) {
     return (
       <DarkPanel className="flex items-center justify-center p-5 min-h-[100px]">
-        <p className="text-xs animate-pulse" style={{ color: '#a16207' }}>Role not loaded — reconnecting…</p>
+        <p className="text-xs animate-pulse" style={{ color: '#a16207' }}>{T('rolepanel.noRole')}</p>
       </DarkPanel>
     );
   }
@@ -110,11 +112,16 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
     ? players.filter(p => werewolfIds.includes(p.id) && p.id !== playerId)
     : [];
 
+  const TAB_LABELS: Record<Tab, string> = {
+    role: T('rolepanel.roleTab'),
+    info: T('rolepanel.infoTab'),
+  };
+
   return (
     <DarkPanel className="flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2" style={{ borderBottom: '1px solid rgba(120,65,10,0.28)' }}>
-        <p className="text-[9px] uppercase tracking-[0.3em] font-cinzel" style={{ color: '#a16207' }}>Your Role</p>
+        <p className="text-[9px] uppercase tracking-[0.3em] font-cinzel" style={{ color: '#a16207' }}>{T('rolepanel.yourRole')}</p>
         <div className="flex gap-0.5">
           {(['role', 'info'] as Tab[]).map(t => (
             <button
@@ -126,7 +133,7 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
               }
               className="text-[9px] font-cinzel tracking-[0.2em] uppercase transition-all duration-150 hover:brightness-125"
             >
-              {t}
+              {TAB_LABELS[t]}
             </button>
           ))}
         </div>
@@ -143,13 +150,13 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-cinzel text-sm font-bold tracking-wider leading-tight" style={{ color: info.accentColor }}>
-              {info.name.toUpperCase()}
+              {T(`role.${myRole}.name`).toUpperCase()}
             </p>
             <p className="text-[10px] uppercase tracking-widest mt-0.5 mb-1.5 font-cinzel" style={{ color: info.accentColor + '99' }}>
-              {info.alignment === 'werewolf' ? 'Wolf Pack' : 'Village'}
+              {T(info.alignment === 'werewolf' ? 'alignment.werewolf' : 'alignment.village')}
             </p>
             <p className="text-[11px] leading-snug" style={{ color: '#ca8a04' }}>
-              {info.description}
+              {T(`role.${myRole}.description`)}
             </p>
           </div>
         </div>
@@ -160,7 +167,7 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
         <div className="p-4 space-y-3">
           {myRole === 'werewolf' && (
             <div>
-              <p className="text-[9px] uppercase tracking-widest mb-1.5 font-cinzel" style={{ color: '#a16207' }}>Wolf Pack</p>
+              <p className="text-[9px] uppercase tracking-widest mb-1.5 font-cinzel" style={{ color: '#a16207' }}>{T('rolepanel.wolfPack')}</p>
               {teammates.length > 0 ? (
                 <div className="space-y-1">
                   {teammates.map(t => (
@@ -171,20 +178,20 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs" style={{ color: '#a16207' }}>You hunt alone.</p>
+                <p className="text-xs" style={{ color: '#a16207' }}>{T('rolepanel.soloWolf')}</p>
               )}
             </div>
           )}
           {myRole !== 'werewolf' && (
             <div>
-              <p className="text-[9px] uppercase tracking-widest mb-1 font-cinzel" style={{ color: '#a16207' }}>Allies</p>
-              <p className="text-xs leading-snug" style={{ color: '#ca8a04' }}>Village — but you don't know who is who.</p>
+              <p className="text-[9px] uppercase tracking-widest mb-1 font-cinzel" style={{ color: '#a16207' }}>{T('rolepanel.allies')}</p>
+              <p className="text-xs leading-snug" style={{ color: '#ca8a04' }}>{T('rolepanel.alliesDesc')}</p>
             </div>
           )}
           <div>
-            <p className="text-[9px] uppercase tracking-widest mb-1 font-cinzel" style={{ color: '#a16207' }}>Night Action</p>
+            <p className="text-[9px] uppercase tracking-widest mb-1 font-cinzel" style={{ color: '#a16207' }}>{T('rolepanel.nightAction')}</p>
             <p className="text-xs leading-snug" style={{ color: '#ca8a04' }}>
-              {info.nightAction ?? 'No night action. Sleep soundly — or try to.'}
+              {info.nightAction ? T(`role.${myRole}.nightAction`) : T('rolepanel.noNightAction')}
             </p>
           </div>
         </div>

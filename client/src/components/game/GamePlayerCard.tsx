@@ -1,6 +1,9 @@
+'use client';
+
 import { useRef } from 'react';
 import type { Player, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { useT } from '@/i18n';
 
 const ROLE_IMAGE: Record<Role, string> = {
   werewolf:  '/role-werewolf.png',
@@ -56,10 +59,6 @@ const ACTION_COLORS: Record<CardActionType, ActionColorConfig> = {
     btnBg: 'rgba(6,78,59,0.90)', btnBorder: 'rgba(52,211,153,0.65)', btnText: '#a7f3d0',
     checkColor: '#6ee7b7',
   },
-};
-
-const CONFIRM_LABEL: Record<CardActionType, string> = {
-  vote: 'Cast Vote', kill: 'Kill', inspect: 'Inspect', protect: 'Protect',
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -123,6 +122,7 @@ export function GamePlayerCard({
   trustCount = 0, isTrustedByMe = false, showTrustBtn = false, onMarkTrust,
   actionType = null, onConfirmAction, onCancelAction, showAskBtn = false, onAsk,
 }: Props) {
+  const T = useT();
   const cardRef = useRef<HTMLDivElement>(null);
 
   const alive        = player.isAlive;
@@ -139,10 +139,8 @@ export function GamePlayerCard({
   const targetingActive = onClick !== undefined;
   const isInvalidTarget = targetingActive && alive && !isValidTarget && !isCurrentPlayer;
 
-  // ── Action color lookup ───────────────────────────────────────────────────────
   const ac = actionType ? ACTION_COLORS[actionType] : null;
 
-  // ── Role RGB for current player (used in border + YOU banner) ───────────────────
   const myRoleRgb = myRole === 'werewolf'  ? '220,38,38'
     : myRole === 'seer'      ? '124,58,237'
     : myRole === 'doctor'    ? '16,185,129'
@@ -151,7 +149,6 @@ export function GamePlayerCard({
     : myRole === 'bodyguard' ? '37,99,235'
     : '217,119,6';
 
-  // ── Border / shadow per state ─────────────────────────────────────────────────
   let border    = '1px solid rgba(120,65,10,0.35)';
   let boxShadow: string | undefined;
 
@@ -173,7 +170,6 @@ export function GamePlayerCard({
     boxShadow = '0 0 10px rgba(185,28,28,0.18)';
   }
 
-  // ── Hover: role-specific glow via direct DOM (no re-render) ──────────────────
   const handleMouseEnter = () => {
     if (cardRef.current && isValidTarget && !isSelected && ac) {
       cardRef.current.style.boxShadow = ac.hoverGlow;
@@ -185,7 +181,6 @@ export function GamePlayerCard({
     }
   };
 
-  // ── Image filter ──────────────────────────────────────────────────────────────
   const imgFilter = !alive  ? 'grayscale(1) brightness(0.38)'
     : offline               ? 'grayscale(1) brightness(0.50)'
     : undefined;
@@ -194,23 +189,25 @@ export function GamePlayerCard({
     : isInvalidTarget                         ? 'cursor-not-allowed'
     : 'cursor-default';
 
-  // ── Sub-label ─────────────────────────────────────────────────────────────────
+  // Sub-label with translated strings
   let subLabel: { text: string; color: string } | null = null;
   if (isCurrentPlayer && alive && myRole) {
-    subLabel = { text: `You · ${ROLE_INFO[myRole].name}`, color: ROLE_INFO[myRole].accentColor };
+    subLabel = {
+      text: T('card.youRole', { role: T(`role.${myRole}.name`) }),
+      color: ROLE_INFO[myRole].accentColor,
+    };
   } else if (!isCurrentPlayer && seerRevealedRole && alive) {
-    subLabel = { text: ROLE_INFO[seerRevealedRole].name, color: ROLE_INFO[seerRevealedRole].accentColor };
-  } else if (revealedInfo) {
-    subLabel = { text: revealedInfo.name, color: revealedInfo.accentColor };
+    subLabel = { text: T(`role.${seerRevealedRole}.name`), color: ROLE_INFO[seerRevealedRole].accentColor };
+  } else if (revealedInfo && player.revealedRole) {
+    subLabel = { text: T(`role.${player.revealedRole}.name`), color: revealedInfo.accentColor };
   } else if (!alive) {
-    subLabel = { text: 'Eliminated', color: '#7f1d1d' };
+    subLabel = { text: T('card.eliminated'), color: '#7f1d1d' };
   } else if (offline) {
-    subLabel = { text: 'Away', color: '#57534e' };
+    subLabel = { text: T('card.away'), color: '#57534e' };
   }
 
-  const checkColor     = ac?.checkColor ?? '#fbbf24';
+  const checkColor = ac?.checkColor ?? '#fbbf24';
 
-  // ── Corner ornament color ─────────────────────────────────────────────────────
   let cornerColor   = 'rgba(161,98,7,0.80)';
   let cornerOpacity = 0.55;
   if (!alive) {
@@ -311,7 +308,7 @@ export function GamePlayerCard({
             className="text-[7px] font-cinzel font-bold tracking-[0.30em] uppercase"
             style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.95)' }}
           >
-            ◆ YOU ◆
+            {T('card.youBanner')}
           </span>
         </div>
       )}
@@ -472,7 +469,7 @@ export function GamePlayerCard({
                   color: isTrustedByMe ? '#86efac' : '#57534e',
                 }}
               >
-                {isTrustedByMe ? '✓' : '✓'}
+                ✓
               </button>
             )}
             {showAskBtn && (
@@ -486,7 +483,7 @@ export function GamePlayerCard({
                   color: '#7c3aed',
                 }}
               >
-                Ask
+                {T('social.ask')}
               </button>
             )}
           </div>
@@ -522,7 +519,7 @@ export function GamePlayerCard({
                 boxShadow: ac ? `0 0 8px ${ac.btnBorder}55` : undefined,
               }}
             >
-              ✓ {actionType ? CONFIRM_LABEL[actionType] : 'Confirm'}
+              ✓ {actionType ? T(`action.${actionType}`) : T('action.confirm')}
             </button>
           </div>
         )}
