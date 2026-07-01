@@ -668,18 +668,6 @@ export function GameView({
           </div>
         )}
 
-        {/* Discussion prompt — day only */}
-        {room.phase === 'day' && (
-          <div className="flex items-start gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(20,12,2,0.75)', border: '1px solid rgba(120,65,10,0.28)' }}>
-            <svg viewBox="0 0 16 16" className="w-3 h-3 shrink-0 mt-0.5" fill="#92400e">
-              <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
-            </svg>
-            <p className="text-[10px] italic leading-snug flex-1" style={{ color: '#ca8a04' }}>
-              {DISCUSSION_PROMPTS[(room.round - 1) % DISCUSSION_PROMPTS.length]}
-            </p>
-          </div>
-        )}
-
         {/* Day reactions */}
         {dayReactions.length > 0 && room.phase === 'day' && (
           <div className="flex flex-col gap-0.5 overflow-hidden" style={{ maxHeight: '78px' }}>
