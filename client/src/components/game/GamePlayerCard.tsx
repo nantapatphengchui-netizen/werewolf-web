@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import type { Player, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { useT } from '@/i18n';
@@ -60,6 +60,17 @@ const ACTION_COLORS: Record<CardActionType, ActionColorConfig> = {
     checkColor: '#6ee7b7',
   },
 };
+
+// ── Ember particles config ────────────────────────────────────────────────────
+
+const EMBERS = [
+  { left: '22%', top: '58%', color: '#fb923c', delay: '0.10s', dur: '0.82s', anim: 'ember-0' },
+  { left: '48%', top: '66%', color: '#ef4444', delay: '0.18s', dur: '0.76s', anim: 'ember-1' },
+  { left: '68%', top: '46%', color: '#fbbf24', delay: '0.13s', dur: '0.90s', anim: 'ember-2' },
+  { left: '32%', top: '42%', color: '#fb923c', delay: '0.26s', dur: '0.74s', anim: 'ember-3' },
+  { left: '78%', top: '62%', color: '#fcd34d', delay: '0.07s', dur: '0.84s', anim: 'ember-4' },
+  { left: '14%', top: '50%', color: '#ef4444', delay: '0.22s', dur: '0.68s', anim: 'ember-5' },
+] as const;
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -125,6 +136,20 @@ export function GamePlayerCard({
   const T = useT();
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // ── Burn-on-death effect ──────────────────────────────────────────────────
+  const prevAliveRef = useRef(player.isAlive);
+  const [burning, setBurning] = useState(false);
+
+  useEffect(() => {
+    if (prevAliveRef.current && !player.isAlive) {
+      setBurning(true);
+      const t = setTimeout(() => setBurning(false), 2000);
+      prevAliveRef.current = false;
+      return () => clearTimeout(t);
+    }
+    prevAliveRef.current = player.isAlive;
+  }, [player.isAlive]);
+
   const alive        = player.isAlive;
   const offline      = alive && !player.isConnected;
   const revealedInfo = player.revealedRole ? ROLE_INFO[player.revealedRole] : null;
@@ -151,8 +176,12 @@ export function GamePlayerCard({
 
   let border    = '1px solid rgba(120,65,10,0.35)';
   let boxShadow: string | undefined;
+  let cardAnimation: string | undefined;
 
-  if (!alive) {
+  if (burning) {
+    border = '1px solid rgba(251,146,60,0.55)';
+    cardAnimation = 'card-burn-glow 2.0s ease-out forwards';
+  } else if (!alive) {
     border = '1px solid rgba(68,64,60,0.35)';
   } else if (isSelected) {
     border    = `2px solid ${ac?.selBorder ?? 'rgba(251,191,36,0.92)'}`;
@@ -181,9 +210,11 @@ export function GamePlayerCard({
     }
   };
 
-  const imgFilter = !alive  ? 'grayscale(1) brightness(0.38)'
+  const imgFilter = burning  ? undefined
+    : !alive                ? 'grayscale(1) brightness(0.38)'
     : offline               ? 'grayscale(1) brightness(0.50)'
     : undefined;
+  const imgAnimation = burning ? 'card-burn-image 1.85s ease-in forwards' : undefined;
 
   const cursor = isValidTarget || isSelected ? 'cursor-pointer'
     : isInvalidTarget                         ? 'cursor-not-allowed'
@@ -239,7 +270,7 @@ export function GamePlayerCard({
       onClick={isValidTarget || isSelected ? onClick : undefined}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ border, boxShadow }}
+      style={{ border, boxShadow, animation: cardAnimation }}
       className={`relative w-full h-full overflow-hidden rounded-xl select-none transition-all duration-200 ${cursor}`}
     >
       {/* ── Corner ornaments ── */}
@@ -251,7 +282,7 @@ export function GamePlayerCard({
           src={ROLE_IMAGE[shownRole]}
           alt=""
           draggable={false}
-          style={{ filter: imgFilter }}
+          style={{ filter: imgFilter, animation: imgAnimation }}
           className="absolute inset-0 w-full h-full object-cover object-top transition-all duration-300"
         />
       ) : (
@@ -259,7 +290,7 @@ export function GamePlayerCard({
           src="/avatar-hooded.png"
           alt=""
           draggable={false}
-          style={{ filter: imgFilter }}
+          style={{ filter: imgFilter, animation: imgAnimation }}
           className="absolute inset-0 w-full h-full object-cover object-[50%_18%] transition-all duration-300"
         />
       )}
@@ -269,6 +300,48 @@ export function GamePlayerCard({
         className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.62) 38%, rgba(0,0,0,0.10) 65%, transparent 100%)' }}
       />
+
+      {/* ── Burn death effect ── */}
+      {burning && (
+        <>
+          {/* Initial flash burst */}
+          <div
+            className="absolute inset-0 pointer-events-none rounded-xl"
+            style={{
+              backgroundColor: 'rgba(255,190,80,0.50)',
+              zIndex: 22,
+              animation: 'card-burn-flash 0.32s ease-out forwards',
+            }}
+          />
+          {/* Fire gradient sweeping up */}
+          <div
+            className="absolute inset-0 pointer-events-none rounded-xl"
+            style={{
+              background: 'linear-gradient(to top, rgba(255,110,0,0.94) 0%, rgba(239,50,0,0.80) 18%, rgba(200,20,0,0.60) 34%, rgba(140,10,0,0.35) 52%, rgba(80,5,0,0.12) 66%, transparent 78%)',
+              transformOrigin: 'bottom center',
+              zIndex: 18,
+              animation: 'card-burn-fire 1.85s ease-in-out forwards',
+            }}
+          />
+          {/* Ember particles */}
+          {EMBERS.map((e, i) => (
+            <div
+              key={i}
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                left: e.left,
+                top: e.top,
+                width: '3px',
+                height: '3px',
+                backgroundColor: e.color,
+                boxShadow: `0 0 5px 1px ${e.color}`,
+                zIndex: 26,
+                animation: `${e.anim} ${e.dur} ${e.delay} ease-out forwards`,
+              }}
+            />
+          ))}
+        </>
+      )}
 
       {/* ── State overlays ── */}
       {isInvalidTarget && (
