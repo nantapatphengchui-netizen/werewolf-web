@@ -459,9 +459,8 @@ export function GamePlayerCard({
             {/* Cancel */}
             <button
               onClick={e => { e.stopPropagation(); onCancelAction?.(); }}
-              className="shrink-0 flex items-center justify-center rounded transition-all duration-150 hover:brightness-125 active:scale-[0.93]"
+              className="flex-1 flex items-center justify-center rounded transition-all duration-150 hover:brightness-125 active:scale-[0.93]"
               style={{
-                width: '28px',
                 paddingTop: '3px',
                 paddingBottom: '3px',
                 backgroundColor: 'rgba(0,0,0,0.70)',
