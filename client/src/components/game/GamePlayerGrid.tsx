@@ -18,6 +18,7 @@ interface Props {
   onMarkSuspicion?: (targetId: string) => void;
   actionType?: CardActionType | null;
   onConfirmAction?: (playerId: string) => void;
+  onCancelAction?: () => void;
   showAskBtns?: boolean;
   onAsk?: (targetId: string) => void;
 }
@@ -38,6 +39,7 @@ export function GamePlayerGrid({
   onMarkSuspicion,
   actionType = null,
   onConfirmAction,
+  onCancelAction,
   showAskBtns = false,
   onAsk,
 }: Props) {
@@ -95,6 +97,7 @@ export function GamePlayerGrid({
           onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
           actionType={actionType}
           onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
+          onCancelAction={onCancelAction}
           showAskBtn={showAskBtn}
           onAsk={showAskBtn && onAsk ? () => onAsk(player.id) : undefined}
         />

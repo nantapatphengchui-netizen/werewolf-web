@@ -246,8 +246,6 @@ interface ActionBarProps {
   nc: NightCfg | null;
   votedCount: number;
   totalAlive: number;
-  onConfirmNight: () => void;
-  onConfirmVote: () => void;
   onAdvanceDay: () => void;
 }
 
@@ -255,7 +253,7 @@ function ActionBar({
   phase, imAlive, isHost, isActionSubmitted,
   selectedTarget, selectedPlayerName, nc,
   votedCount, totalAlive,
-  onConfirmNight, onConfirmVote, onAdvanceDay,
+  onAdvanceDay,
 }: ActionBarProps) {
 
   // ── Night ──
@@ -290,37 +288,21 @@ function ActionBar({
     }
     return (
       <div style={barStyle(phase)}>
-        <div
-          className="flex-1 flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all duration-200"
-          style={selectedTarget
-            ? { backgroundColor: nc.selBg, border: `1px solid ${nc.selBorder}` }
-            : { border: '1px solid transparent' }
-          }
-        >
-          {selectedTarget ? (
-            <>
-              <CheckIcon color={nc.selText} />
-              <span className="text-[12px] font-cinzel uppercase tracking-wide" style={{ color: nc.selText }}>
-                {selectedPlayerName}
-              </span>
-            </>
-          ) : (
-            <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-              Select a player card above…
+        {selectedTarget ? (
+          <>
+            <CheckIcon color={nc.selText} />
+            <span className="flex-1 text-[12px] font-cinzel uppercase tracking-wide" style={{ color: nc.selText }}>
+              {selectedPlayerName}
             </span>
-          )}
-        </div>
-        <button
-          onClick={onConfirmNight}
-          disabled={!selectedTarget}
-          style={selectedTarget
-            ? { backgroundColor: nc.btnBg, border: `1px solid ${nc.btnBorder}`, color: nc.btnText }
-            : { backgroundColor: 'rgba(12,10,8,0.70)', border: '1px solid rgba(68,64,60,0.35)', color: '#57534e' }
-          }
-          className="shrink-0 px-4 py-2 text-[11px] font-cinzel uppercase tracking-widest rounded-lg transition-all duration-150 disabled:cursor-not-allowed hover:enabled:brightness-110 active:enabled:scale-[0.98]"
-        >
-          {nc.confirmLabel}
-        </button>
+            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: `${nc.selText}70` }}>
+              Confirm on card ↑
+            </span>
+          </>
+        ) : (
+          <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
+            Select a player card above…
+          </span>
+        )}
       </div>
     );
   }
@@ -374,37 +356,21 @@ function ActionBar({
     }
     return (
       <div style={barStyle(phase)}>
-        <div
-          className="flex-1 flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all duration-200"
-          style={selectedTarget
-            ? { backgroundColor: 'rgba(69,35,5,0.55)', border: '1px solid rgba(180,83,9,0.55)' }
-            : { border: '1px solid transparent' }
-          }
-        >
-          {selectedTarget ? (
-            <>
-              <CheckIcon color="#fde68a" />
-              <span className="text-[12px] font-cinzel uppercase tracking-wide" style={{ color: '#fde68a' }}>
-                {selectedPlayerName}
-              </span>
-            </>
-          ) : (
-            <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-              Select a player to exile…
+        {selectedTarget ? (
+          <>
+            <CheckIcon color="#fde68a" />
+            <span className="flex-1 text-[12px] font-cinzel uppercase tracking-wide" style={{ color: '#fde68a' }}>
+              {selectedPlayerName}
             </span>
-          )}
-        </div>
-        <button
-          onClick={onConfirmVote}
-          disabled={!selectedTarget}
-          style={selectedTarget
-            ? { backgroundColor: 'rgba(120,53,0,0.90)', border: '1px solid rgba(217,119,6,0.65)', color: '#fde68a' }
-            : { backgroundColor: 'rgba(12,10,8,0.70)', border: '1px solid rgba(68,64,60,0.35)', color: '#57534e' }
-          }
-          className="shrink-0 px-4 py-2 text-[11px] font-cinzel uppercase tracking-widest rounded-lg transition-all duration-150 disabled:cursor-not-allowed hover:enabled:brightness-110 active:enabled:scale-[0.98]"
-        >
-          Cast Vote
-        </button>
+            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: 'rgba(251,191,36,0.55)' }}>
+              Confirm on card ↑
+            </span>
+          </>
+        ) : (
+          <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
+            Select a player to exile…
+          </span>
+        )}
       </div>
     );
   }
@@ -742,6 +708,7 @@ export function GameView({
           onMarkSuspicion={onMarkSuspicion}
           actionType={actionType}
           onConfirmAction={isActionSubmitted ? undefined : handleCardConfirm}
+          onCancelAction={isActionSubmitted ? undefined : () => setSelectedTarget(null)}
           showAskBtns={room.phase === 'day' && imAlive}
           onAsk={onDayReaction}
         />
@@ -759,8 +726,6 @@ export function GameView({
           nc={nc}
           votedCount={votedCount}
           totalAlive={aliveCount}
-          onConfirmNight={() => { if (selectedTarget) handleNightAction(selectedTarget); }}
-          onConfirmVote={() => { if (selectedTarget) handleCastVote(selectedTarget); }}
           onAdvanceDay={onAdvanceDay}
         />
       </div>
