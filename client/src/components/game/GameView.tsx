@@ -184,7 +184,6 @@ const BAR_BASE: React.CSSProperties = {
 
 interface ActionBarProps {
   phase: string;
-  myRole: Role | null;
   imAlive: boolean;
   isHost: boolean;
   isActionSubmitted: boolean;
@@ -193,18 +192,16 @@ interface ActionBarProps {
   nc: NightCfg | null;
   votedCount: number;
   totalAlive: number;
-  alivePeers: { id: string; name: string }[];
   onConfirmNight: () => void;
   onConfirmVote: () => void;
   onAdvanceDay: () => void;
-  onDayReaction: (targetId: string) => void;
 }
 
 function ActionBar({
   phase, imAlive, isHost, isActionSubmitted,
   selectedTarget, selectedPlayerName, nc,
-  votedCount, totalAlive, alivePeers,
-  onConfirmNight, onConfirmVote, onAdvanceDay, onDayReaction,
+  votedCount, totalAlive,
+  onConfirmNight, onConfirmVote, onAdvanceDay,
 }: ActionBarProps) {
 
   // ── Night ──
@@ -278,27 +275,12 @@ function ActionBar({
   if (phase === 'day') {
     return (
       <div style={BAR_BASE}>
-        {imAlive && alivePeers.length > 0 && (
-          <div className="flex-1 flex gap-1.5 overflow-x-auto min-w-0" style={{ scrollbarWidth: 'none' }}>
-            {alivePeers.map(p => (
-              <button
-                key={p.id}
-                onClick={() => onDayReaction(p.id)}
-                style={{
-                  backgroundColor: 'rgba(46,16,101,0.25)',
-                  border: '1px solid rgba(109,40,217,0.35)',
-                  color: '#8b5cf6',
-                  whiteSpace: 'nowrap',
-                }}
-                className="px-2.5 py-1 rounded-lg text-[9px] font-cinzel uppercase tracking-wide shrink-0 transition-all duration-150 hover:brightness-125"
-              >
-                Ask {p.name}
-              </button>
-            ))}
-          </div>
-        )}
-        {!imAlive && (
+        {!imAlive ? (
           <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>You have perished.</p>
+        ) : (
+          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a16207' }}>
+            Discuss with the village. Use card buttons to Suspect or Ask players.
+          </p>
         )}
         {isHost ? (
           <button
@@ -438,16 +420,29 @@ export function GameView({
     setSelectedTarget(prev => prev === targetId ? null : targetId);
   };
 
+  const handleCardConfirm = (targetId: string) => {
+    if (isActionSubmitted) return;
+    if (room.phase === 'night')  handleNightAction(targetId);
+    if (room.phase === 'voting') handleCastVote(targetId);
+  };
+
+  const actionType = (() => {
+    if (!imAlive) return null;
+    if (room.phase === 'voting') return 'vote' as const;
+    if (room.phase === 'night') {
+      if (myRole === 'werewolf') return 'kill'    as const;
+      if (myRole === 'seer')     return 'inspect' as const;
+      if (myRole === 'doctor')   return 'protect' as const;
+    }
+    return null;
+  })();
+
   const instructionText    = getInstructionText(room.phase, myRole, imAlive, isActionSubmitted);
   const banner             = PHASE_BANNER_CFG[room.phase];
   const selectedPlayerName = selectedTarget ? (room.players.find(p => p.id === selectedTarget)?.name ?? null) : null;
   const phaseHudColor      = PHASE_HUD_COLOR[room.phase] ?? '#fbbf24';
   const roleInfo           = myRole ? ROLE_INFO[myRole] : null;
-  const nc                 = myRole ? (NIGHT_CFG[myRole] ?? null) : null;
-  const alivePeers         = useMemo(
-    () => room.players.filter(p => p.isAlive && p.id !== playerId),
-    [room.players, playerId],
-  );
+  const nc         = myRole ? (NIGHT_CFG[myRole] ?? null) : null;
   const votedCount = room.publicVotes?.hasVoted.length ?? 0;
 
   return (
@@ -658,10 +653,14 @@ export function GameView({
           seerRevealedMap={seerRevealedMap}
           validTargetIds={validTargetIds}
           selectedTargetId={selectedTarget}
-          onPlayerCardClick={onPlayerCardClick}
+          onPlayerCardClick={isActionSubmitted ? undefined : onPlayerCardClick}
           suspicionMap={room.phase === 'day' || room.phase === 'voting' ? room.suspicionMap : {}}
           canMarkSuspicion={room.phase === 'day' && imAlive}
           onMarkSuspicion={onMarkSuspicion}
+          actionType={actionType}
+          onConfirmAction={isActionSubmitted ? undefined : handleCardConfirm}
+          showAskBtns={room.phase === 'day' && imAlive}
+          onAsk={onDayReaction}
         />
       </div>
 
@@ -669,7 +668,6 @@ export function GameView({
       <div className="shrink-0 px-3 pb-3 pt-2">
         <ActionBar
           phase={room.phase}
-          myRole={myRole}
           imAlive={imAlive}
           isHost={isHost}
           isActionSubmitted={isActionSubmitted}
@@ -678,11 +676,9 @@ export function GameView({
           nc={nc}
           votedCount={votedCount}
           totalAlive={aliveCount}
-          alivePeers={alivePeers}
           onConfirmNight={() => { if (selectedTarget) handleNightAction(selectedTarget); }}
           onConfirmVote={() => { if (selectedTarget) handleCastVote(selectedTarget); }}
           onAdvanceDay={onAdvanceDay}
-          onDayReaction={onDayReaction}
         />
       </div>
 

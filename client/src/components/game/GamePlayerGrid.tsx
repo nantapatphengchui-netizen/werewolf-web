@@ -1,5 +1,6 @@
 import type { Player, PublicVotes, Role } from '@/types/game';
 import { GamePlayerCard } from './GamePlayerCard';
+import type { CardActionType } from './GamePlayerCard';
 
 interface Props {
   players: Player[];
@@ -15,6 +16,10 @@ interface Props {
   suspicionMap?: Record<string, string[]>;
   canMarkSuspicion?: boolean;
   onMarkSuspicion?: (targetId: string) => void;
+  actionType?: CardActionType | null;
+  onConfirmAction?: (playerId: string) => void;
+  showAskBtns?: boolean;
+  onAsk?: (targetId: string) => void;
 }
 
 export function GamePlayerGrid({
@@ -31,14 +36,21 @@ export function GamePlayerGrid({
   suspicionMap = {},
   canMarkSuspicion = false,
   onMarkSuspicion,
+  actionType = null,
+  onConfirmAction,
+  showAskBtns = false,
+  onAsk,
 }: Props) {
   const n = players.length;
 
-  // Responsive column counts
-  const lgCols = n >= 7 ? 4 : 3;
+  const lgCols = n >= 9 ? 5 : n >= 5 ? 4 : 3;
   const lgRows = Math.ceil(n / lgCols);
 
-  const lgColClass = lgCols === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3';
+  const lgColClass =
+    lgCols === 5 ? 'lg:grid-cols-5' :
+    lgCols === 4 ? 'lg:grid-cols-4' :
+                   'lg:grid-cols-3';
+
   const lgRowClass =
     lgRows <= 2 ? 'lg:[grid-template-rows:repeat(2,minmax(0,1fr))]' :
     lgRows <= 3 ? 'lg:[grid-template-rows:repeat(3,minmax(0,1fr))]' :
@@ -50,6 +62,9 @@ export function GamePlayerGrid({
         const suspicionCount  = (suspicionMap[player.id] ?? []).length;
         const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
         const showSuspectBtn  = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
+        const showAskBtn      = showAskBtns && player.isAlive && player.id !== currentPlayerId;
+        const isSelected      = player.id === selectedTargetId;
+
         return (
           <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
             <GamePlayerCard
@@ -62,12 +77,16 @@ export function GamePlayerGrid({
               myRole={player.id === currentPlayerId ? myRole : undefined}
               seerRevealedRole={seerRevealedMap[player.id]}
               isValidTarget={validTargetIds.includes(player.id)}
-              isSelected={player.id === selectedTargetId}
+              isSelected={isSelected}
               onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
               suspicionCount={suspicionCount}
               isSuspectedByMe={isSuspectedByMe}
               showSuspectBtn={showSuspectBtn}
               onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
+              actionType={actionType}
+              onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
+              showAskBtn={showAskBtn}
+              onAsk={showAskBtn && onAsk ? () => onAsk(player.id) : undefined}
             />
           </div>
         );
