@@ -8,6 +8,7 @@ import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
 import { RolePanel } from './RolePanel';
+import { RoleRevealOverlay } from './RoleRevealOverlay';
 import { GamePlayerGrid } from './GamePlayerGrid';
 import { EventLog } from './EventLog';
 import { GameOverScreen } from './GameOverScreen';
@@ -390,10 +391,12 @@ export function GameView({
 }: Props) {
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
-  const [logOpen, setLogOpen]   = useState(false);
-  const [roleOpen, setRoleOpen] = useState(false);
-  const [hostOpen, setHostOpen] = useState(false);
+  const [logOpen, setLogOpen]     = useState(false);
+  const [roleOpen, setRoleOpen]   = useState(false);
+  const [hostOpen, setHostOpen]   = useState(false);
+  const [showRoleReveal, setShowRoleReveal] = useState(false);
   const prevPhaseRef = useRef(room.phase);
+  const prevRoleRef  = useRef<Role | null>(myRole);
   const isHost       = room.hostId === playerId;
   const seerLog      = useGameStore(s => s.seerLog);
   const dayReactions = useGameStore(s => s.dayReactions);
@@ -411,6 +414,13 @@ export function GameView({
       setHostOpen(false);
     }
   }, [room.phase]);
+
+  useEffect(() => {
+    if (prevRoleRef.current === null && myRole !== null) {
+      setShowRoleReveal(true);
+    }
+    prevRoleRef.current = myRole;
+  }, [myRole]);
 
   const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); };
   const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); };
@@ -778,6 +788,14 @@ export function GameView({
           />
         </div>
       </Drawer>
+
+      {/* Role reveal animation overlay */}
+      {showRoleReveal && myRole && (
+        <RoleRevealOverlay
+          myRole={myRole}
+          onDismiss={() => setShowRoleReveal(false)}
+        />
+      )}
     </div>
   );
 }
