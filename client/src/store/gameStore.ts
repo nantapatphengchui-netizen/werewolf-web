@@ -50,7 +50,10 @@ export const useGameStore = create<GameStore>((set) => ({
   updateRoom: (room) => set({ room }),
   setMyRole: (myRole, werewolfIds) => set({ myRole, werewolfIds }),
   addSeerResult: (entry) => set(s => ({ seerLog: [...s.seerLog, entry] })),
-  addDayReaction: (r) => set(s => ({ dayReactions: [...s.dayReactions.slice(-4), r] })),
+  addDayReaction: (r) => set(s => {
+    const deduped = s.dayReactions.filter(x => !(x.fromName === r.fromName && x.targetName === r.targetName));
+    return { dayReactions: [...deduped.slice(-2), r] };
+  }),
   clearDayReactions: () => set({ dayReactions: [] }),
   setError: (error) => set({ error }),
   setConnected: (isConnected) => set({ isConnected }),

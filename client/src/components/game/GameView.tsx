@@ -706,7 +706,7 @@ export function GameView({
 
         {/* Day reactions */}
         {dayReactions.length > 0 && room.phase === 'day' && (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0.5 overflow-hidden" style={{ maxHeight: '78px' }}>
             {dayReactions.map(r => (
               <div key={r.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md" style={{ backgroundColor: 'rgba(46,16,101,0.30)', border: '1px solid rgba(109,40,217,0.28)' }}>
                 <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 shrink-0" fill="#7c3aed">
