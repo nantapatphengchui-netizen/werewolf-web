@@ -56,27 +56,12 @@ const SPREAD_ROTATIONS = [-7, -2, 2, 7];
 
 function CardBack() {
   return (
-    <div
-      className="w-full h-full rounded-xl flex flex-col items-center justify-center gap-3"
-      style={{
-        background: 'linear-gradient(160deg, rgba(18,8,40,0.99) 0%, rgba(8,3,20,0.99) 100%)',
-      }}
-    >
-      <svg viewBox="0 0 56 56" className="w-9 h-9 sm:w-12 sm:h-12">
-        <circle cx="28" cy="28" r="25" stroke="rgba(109,40,217,0.30)" strokeWidth="0.8" fill="none"/>
-        <circle cx="28" cy="28" r="17" stroke="rgba(109,40,217,0.22)" strokeWidth="0.6" fill="none"/>
-        <polygon
-          points="28,5 32.5,18.8 47,18.8 35.5,27.7 39.5,41.5 28,33.2 16.5,41.5 20.5,27.7 9,18.8 23.5,18.8"
-          stroke="rgba(139,92,246,0.48)" strokeWidth="1" fill="rgba(109,40,217,0.05)"
-        />
-        <circle cx="28" cy="28" r="2.5" fill="rgba(167,139,250,0.30)" />
-      </svg>
-      <div className="flex gap-1">
-        {[0, 1, 2].map(i => (
-          <div key={i} className="w-1 h-1 rounded-full" style={{ backgroundColor: 'rgba(139,92,246,0.30)' }} />
-        ))}
-      </div>
-    </div>
+    <img
+      src="/card-back.png"
+      alt=""
+      draggable={false}
+      className="w-full h-full rounded-xl object-cover"
+    />
   );
 }
 
