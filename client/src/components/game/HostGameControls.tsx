@@ -8,10 +8,12 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 interface Props {
   phase: GamePhase;
   timerPaused: boolean;
+  guidedDayEnabled: boolean;
   onPauseTimer: () => void;
   onResumeTimer: () => void;
   onExtendTimer: (extraSeconds: number) => void;
   onEndPhase: () => void;
+  onToggleGuidedDay: () => void;
   onRestartGame: () => void;
   onReturnToLobby: () => void;
 }
@@ -51,8 +53,8 @@ function HostBtn({
 }
 
 export function HostGameControls({
-  phase, timerPaused,
-  onPauseTimer, onResumeTimer, onExtendTimer, onEndPhase, onRestartGame, onReturnToLobby,
+  phase, timerPaused, guidedDayEnabled,
+  onPauseTimer, onResumeTimer, onExtendTimer, onEndPhase, onToggleGuidedDay, onRestartGame, onReturnToLobby,
 }: Props) {
   const [confirming, setConfirming] = useState<ConfirmAction>(null);
 
@@ -122,6 +124,20 @@ export function HostGameControls({
           <HostBtn onClick={() => setConfirming('endPhase')}>
             End {PHASE_LABEL[phase] ?? 'Phase'} Early
           </HostBtn>
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: '1px solid rgba(120,65,10,0.20)' }} />
+
+        {/* Day mode section */}
+        <div className="space-y-2">
+          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>Day Mode</p>
+          <HostBtn onClick={onToggleGuidedDay} active={guidedDayEnabled}>
+            {guidedDayEnabled ? '◆ Guided Day: ON' : '◇ Guided Day: OFF'}
+          </HostBtn>
+          <p className="text-[9px] leading-snug" style={{ color: '#78716c' }}>
+            Shows Hot Seat banner for top suspects and structures the day discussion.
+          </p>
         </div>
 
         {/* Divider */}

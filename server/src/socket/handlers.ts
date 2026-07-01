@@ -500,6 +500,20 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
+  socket.on('day_mark_trust', ({ targetId }) => {
+    const pid    = socket.data.playerId;
+    const result = rooms.markTrust(pid, targetId);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
+  });
+
+  socket.on('host_toggle_guided_day', () => {
+    const pid    = socket.data.playerId;
+    const result = rooms.toggleGuidedDay(pid);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
+  });
+
   socket.on('day_reaction', ({ targetId }) => {
     const pid  = socket.data.playerId;
     const room = rooms.getRoomByPlayer(pid);

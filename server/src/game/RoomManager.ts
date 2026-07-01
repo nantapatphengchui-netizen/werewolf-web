@@ -101,8 +101,8 @@ export class RoomManager {
       maxPlayers: MAX_PLAYERS, minPlayers: MIN_PLAYERS, createdAt: Date.now(),
       round: 0, lastAnnouncement: null, winner: null, publicVotes: null,
       phaseEndAt: null, readyPlayers: [], eventLog: [], isLocked: false,
-      timerPaused: false, pausedTimeRemaining: null, suspicionMap: {},
-      hunterPendingShot: null,
+      timerPaused: false, pausedTimeRemaining: null, suspicionMap: {}, trustMap: {},
+      guidedDayEnabled: false, hunterPendingShot: null,
     };
 
     this.rooms.set(code, room);
@@ -253,6 +253,7 @@ export class RoomManager {
     room.pausedTimeRemaining = null;
     room.eventLog       = [];
     room.suspicionMap   = {};
+    room.trustMap       = {};
     room.hunterPendingShot = null;
 
     this.clearNightMaps(room.code);
@@ -574,11 +575,12 @@ export class RoomManager {
 
     const winner = this.checkWin(room);
 
+    const survivedAttack = intendedKillId !== null && wolfKillId === null;
     const deadDesc = killedNames.length === 0
-      ? 'No one was harmed.'
+      ? (survivedAttack ? 'Someone narrowly survived the night. No one was eliminated.' : 'No one was harmed.')
       : killedNames.length === 1
-        ? `${killedNames[0]} was found dead in the village square. Their role remains unknown.`
-        : `${killedNames.join(' and ')} were found dead. Their roles remain unknown.`;
+        ? `${killedNames[0]} was found dead at dawn. Their role remains unknown.`
+        : `${killedNames.join(' and ')} were found dead at dawn. Their roles remain unknown.`;
 
     if (winner) {
       // Game over — no hunter shot
@@ -596,6 +598,7 @@ export class RoomManager {
 
     room.phase         = 'day';
     room.suspicionMap  = {};
+    room.trustMap      = {};
     room.lastAnnouncement = `Dawn breaks. ${deadDesc}${hunterPendingInfo ? ' The Hunter\'s eyes still burn — a final shot is coming.' : ''}`;
     this.addEvent(room, killedNames.length ? `${killedNames.join(', ')} found dead at dawn.` : 'A quiet night passed. No one was harmed.');
     this.addEvent(room, 'Dawn breaks. The village wakes to discuss.');
@@ -661,6 +664,38 @@ export class RoomManager {
       if (myMarkCount >= 2) return { ok: false, error: 'You can only mark up to 2 players as suspicious.' };
       room.suspicionMap[targetId] = [...markers, persistentId];
     }
+    return { ok: true, room };
+  }
+
+  markTrust(persistentId: string, targetId: string): { ok: boolean; error?: string; room?: RoomState } {
+    const room = this.getRoomByPlayer(persistentId);
+    if (!room) return { ok: false, error: 'Not in a room.' };
+    if (room.phase !== 'day') return { ok: false, error: 'Trust marks are only available during day phase.' };
+    const marker = room.players.find(p => p.id === persistentId);
+    if (!marker?.isAlive) return { ok: false, error: 'Only alive players can mark trust.' };
+    const target = room.players.find(p => p.id === targetId);
+    if (!target?.isAlive) return { ok: false, error: 'Cannot mark a dead player.' };
+    if (targetId === persistentId) return { ok: false, error: 'Cannot mark yourself as trusted.' };
+    if (!room.trustMap) room.trustMap = {};
+    // Remove any existing trust mark by this player (max 1 trust per day — toggle if same target)
+    for (const [tid, markers] of Object.entries(room.trustMap)) {
+      const filtered = markers.filter(id => id !== persistentId);
+      if (filtered.length === 0) delete room.trustMap[tid];
+      else room.trustMap[tid] = filtered;
+    }
+    // Check if we're toggling off the same target
+    const alreadyTrusted = (room.trustMap[targetId] ?? []).includes(persistentId);
+    if (!alreadyTrusted) {
+      room.trustMap[targetId] = [...(room.trustMap[targetId] ?? []), persistentId];
+    }
+    return { ok: true, room };
+  }
+
+  toggleGuidedDay(persistentId: string): { ok: boolean; error?: string; room?: RoomState } {
+    const room = this.getRoomByPlayer(persistentId);
+    if (!room) return { ok: false, error: 'Not in a room.' };
+    if (room.hostId !== persistentId) return { ok: false, error: 'Only the host can toggle guided day.' };
+    room.guidedDayEnabled = !room.guidedDayEnabled;
     return { ok: true, room };
   }
 

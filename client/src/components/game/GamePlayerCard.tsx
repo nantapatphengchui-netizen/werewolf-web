@@ -80,6 +80,10 @@ interface Props {
   isSuspectedByMe?: boolean;
   showSuspectBtn?: boolean;
   onMarkSuspicion?: () => void;
+  trustCount?: number;
+  isTrustedByMe?: boolean;
+  showTrustBtn?: boolean;
+  onMarkTrust?: () => void;
   actionType?: CardActionType | null;
   onConfirmAction?: () => void;
   onCancelAction?: () => void;
@@ -116,6 +120,7 @@ export function GamePlayerCard({
   voteCount, actionSubmitted, myRole, seerRevealedRole,
   isValidTarget = false, isSelected = false, onClick,
   suspicionCount = 0, isSuspectedByMe = false, showSuspectBtn = false, onMarkSuspicion,
+  trustCount = 0, isTrustedByMe = false, showTrustBtn = false, onMarkTrust,
   actionType = null, onConfirmAction, onCancelAction, showAskBtn = false, onAsk,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -351,13 +356,25 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── Suspicion badge ── */}
-      {suspicionCount > 0 && !voteCount && alive && (
-        <div className="absolute top-[42%] left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 h-[18px] rounded-full px-1.5" style={{ backgroundColor: 'rgba(120,53,0,0.97)', border: '1px solid rgba(217,119,6,0.65)' }}>
-          <svg viewBox="0 0 12 12" className="w-2 h-2" fill="#fbbf24">
-            <path d="M6 1L7.5 4.5H11L8.5 6.5L9.5 10L6 8L2.5 10L3.5 6.5L1 4.5H4.5Z" />
-          </svg>
-          <span className="text-[9px] font-bold leading-none" style={{ color: '#fcd34d' }}>{suspicionCount}</span>
+      {/* ── Social badges (suspicion + trust) ── */}
+      {(suspicionCount > 0 || trustCount > 0) && !voteCount && alive && (
+        <div className="absolute top-[40%] left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
+          {suspicionCount > 0 && (
+            <div className="flex items-center gap-0.5 h-[16px] rounded-full px-1.5" style={{ backgroundColor: 'rgba(120,53,0,0.97)', border: '1px solid rgba(217,119,6,0.65)' }}>
+              <svg viewBox="0 0 12 12" className="w-2 h-2" fill="#fbbf24">
+                <path d="M6 1L7.5 4.5H11L8.5 6.5L9.5 10L6 8L2.5 10L3.5 6.5L1 4.5H4.5Z" />
+              </svg>
+              <span className="text-[9px] font-bold leading-none" style={{ color: '#fcd34d' }}>{suspicionCount}</span>
+            </div>
+          )}
+          {trustCount > 0 && (
+            <div className="flex items-center gap-0.5 h-[16px] rounded-full px-1.5" style={{ backgroundColor: 'rgba(6,53,37,0.97)', border: '1px solid rgba(52,211,153,0.65)' }}>
+              <svg viewBox="0 0 12 12" className="w-2 h-2" fill="#4ade80">
+                <path d="M2 6l3 3 5-5" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
+              <span className="text-[9px] font-bold leading-none" style={{ color: '#86efac' }}>{trustCount}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -425,6 +442,54 @@ export function GamePlayerCard({
               {subLabel.text}
             </p>
           )
+        )}
+
+        {/* Social action buttons: Suspect / Trust / Ask — shown during day */}
+        {!isSelected && alive && !isCurrentPlayer && (showSuspectBtn || showTrustBtn || showAskBtn) && (
+          <div className="flex gap-1 mt-1">
+            {showSuspectBtn && (
+              <button
+                onClick={e => { e.stopPropagation(); onMarkSuspicion?.(); }}
+                className="flex-1 rounded text-[8px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125 active:scale-[0.95]"
+                style={{
+                  padding: '4px 2px',
+                  backgroundColor: isSuspectedByMe ? 'rgba(120,53,0,0.85)' : 'rgba(0,0,0,0.60)',
+                  border: isSuspectedByMe ? '1px solid rgba(217,119,6,0.75)' : '1px solid rgba(120,65,10,0.40)',
+                  color: isSuspectedByMe ? '#fcd34d' : '#78716c',
+                }}
+              >
+                {isSuspectedByMe ? '⚑' : '⚐'}
+              </button>
+            )}
+            {showTrustBtn && (
+              <button
+                onClick={e => { e.stopPropagation(); onMarkTrust?.(); }}
+                className="flex-1 rounded text-[8px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125 active:scale-[0.95]"
+                style={{
+                  padding: '4px 2px',
+                  backgroundColor: isTrustedByMe ? 'rgba(6,53,37,0.85)' : 'rgba(0,0,0,0.60)',
+                  border: isTrustedByMe ? '1px solid rgba(52,211,153,0.75)' : '1px solid rgba(120,65,10,0.40)',
+                  color: isTrustedByMe ? '#86efac' : '#57534e',
+                }}
+              >
+                {isTrustedByMe ? '✓' : '✓'}
+              </button>
+            )}
+            {showAskBtn && (
+              <button
+                onClick={e => { e.stopPropagation(); onAsk?.(); }}
+                className="flex-1 rounded text-[8px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125 active:scale-[0.95]"
+                style={{
+                  padding: '4px 2px',
+                  backgroundColor: 'rgba(0,0,0,0.60)',
+                  border: '1px solid rgba(109,40,217,0.35)',
+                  color: '#7c3aed',
+                }}
+              >
+                Ask
+              </button>
+            )}
+          </div>
         )}
 
         {/* Cancel + Confirm buttons: shown on selected card before submission */}

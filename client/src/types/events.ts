@@ -46,6 +46,8 @@ export interface ClientToServerEvents {
   host_restart_game:    () => void;
   host_return_to_lobby: () => void;
   // Social deduction actions
-  day_mark_suspicion:   (payload: { targetId: string }) => void;
-  day_reaction:         (payload: { targetId: string }) => void;
+  day_mark_suspicion:      (payload: { targetId: string }) => void;
+  day_mark_trust:          (payload: { targetId: string }) => void;
+  day_reaction:            (payload: { targetId: string }) => void;
+  host_toggle_guided_day:  () => void;
 }

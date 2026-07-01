@@ -122,8 +122,16 @@ export function useRoom() {
     socket?.emit('day_mark_suspicion', { targetId });
   }, [socket]);
 
+  const markTrust = useCallback((targetId: string) => {
+    socket?.emit('day_mark_trust', { targetId });
+  }, [socket]);
+
   const dayReaction = useCallback((targetId: string) => {
     socket?.emit('day_reaction', { targetId });
+  }, [socket]);
+
+  const toggleGuidedDay = useCallback(() => {
+    socket?.emit('host_toggle_guided_day');
   }, [socket]);
 
   const hostAddBot = useCallback(() => {
@@ -166,7 +174,9 @@ export function useRoom() {
     hostRestartGame,
     hostReturnToLobby,
     markSuspicion,
+    markTrust,
     dayReaction,
+    toggleGuidedDay,
     hostAddBot,
     hostFillBots,
     hostRemoveBots,

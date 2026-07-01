@@ -16,6 +16,9 @@ interface Props {
   suspicionMap?: Record<string, string[]>;
   canMarkSuspicion?: boolean;
   onMarkSuspicion?: (targetId: string) => void;
+  trustMap?: Record<string, string[]>;
+  canMarkTrust?: boolean;
+  onMarkTrust?: (targetId: string) => void;
   actionType?: CardActionType | null;
   onConfirmAction?: (playerId: string) => void;
   onCancelAction?: () => void;
@@ -37,6 +40,9 @@ export function GamePlayerGrid({
   suspicionMap = {},
   canMarkSuspicion = false,
   onMarkSuspicion,
+  trustMap = {},
+  canMarkTrust = false,
+  onMarkTrust,
   actionType = null,
   onConfirmAction,
   onCancelAction,
@@ -74,6 +80,9 @@ export function GamePlayerGrid({
     const suspicionCount  = (suspicionMap[player.id] ?? []).length;
     const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
     const showSuspectBtn  = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
+    const trustCount      = (trustMap[player.id] ?? []).length;
+    const isTrustedByMe   = (trustMap[player.id] ?? []).includes(currentPlayerId);
+    const showTrustBtn    = canMarkTrust && player.isAlive && player.id !== currentPlayerId;
     const showAskBtn      = showAskBtns && player.isAlive && player.id !== currentPlayerId;
     const isSelected      = player.id === selectedTargetId;
 
@@ -95,6 +104,10 @@ export function GamePlayerGrid({
           isSuspectedByMe={isSuspectedByMe}
           showSuspectBtn={showSuspectBtn}
           onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
+          trustCount={trustCount}
+          isTrustedByMe={isTrustedByMe}
+          showTrustBtn={showTrustBtn}
+          onMarkTrust={showTrustBtn && onMarkTrust ? () => onMarkTrust(player.id) : undefined}
           actionType={actionType}
           onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
           onCancelAction={onCancelAction}
