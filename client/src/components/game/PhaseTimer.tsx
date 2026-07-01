@@ -16,22 +16,23 @@ const PHASE_TOTAL: Record<string, number> = {
   voting: 60,
 };
 
-const COLORS: Record<string, { bar: string; urgentBar: string; text: string; urgentText: string }> = {
-  night:  { bar: 'bg-violet-600',  urgentBar: 'bg-red-600',  text: 'text-violet-300', urgentText: 'text-red-400' },
-  day:    { bar: 'bg-amber-500',   urgentBar: 'bg-red-500',  text: 'text-amber-300',  urgentText: 'text-red-400' },
-  voting: { bar: 'bg-red-600',     urgentBar: 'bg-red-800',  text: 'text-red-300',    urgentText: 'text-red-500' },
+// Bar color (not text — these are bg classes, opacity fraction is fine on bg)
+const BAR_COLOR: Record<string, { bar: string; urgent: string; text: string; urgentText: string }> = {
+  night:  { bar: '#7c3aed', urgent: '#dc2626', text: '#a78bfa', urgentText: '#f87171' },
+  day:    { bar: '#d97706', urgent: '#ef4444', text: '#fbbf24', urgentText: '#f87171' },
+  voting: { bar: '#dc2626', urgent: '#991b1b', text: '#f87171', urgentText: '#ef4444' },
 };
 
 function formatSecs(secs: number): string {
   const mins = Math.floor(secs / 60);
-  const s = secs % 60;
+  const s    = secs % 60;
   return mins > 0 ? `${mins}:${String(s).padStart(2, '0')}` : `${s}s`;
 }
 
 export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemaining = null }: Props) {
   const [secsLeft, setSecsLeft] = useState<number | null>(null);
   const total = PHASE_TOTAL[phase];
-  const c = COLORS[phase];
+  const c     = BAR_COLOR[phase];
 
   useEffect(() => {
     if (paused) {
@@ -52,14 +53,13 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between text-[10px]">
-          <span className="text-amber-700 uppercase tracking-widest flex items-center gap-1.5">
-            <span>⏸</span>
-            <span>Paused</span>
+          <span className="font-cinzel uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#a16207' }}>
+            <span>⏸</span><span>Paused</span>
           </span>
-          <span className="font-mono tabular-nums text-amber-600">{formatSecs(secsLeft)}</span>
+          <span className="font-mono tabular-nums" style={{ color: '#d97706' }}>{formatSecs(secsLeft)}</span>
         </div>
-        <div className="h-2 bg-black/50 rounded-full overflow-hidden">
-          <div className="h-full bg-amber-800/35 rounded-full" style={{ width: `${pct}%` }} />
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.50)' }}>
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: 'rgba(120,65,10,0.55)' }} />
         </div>
       </div>
     );
@@ -67,21 +67,24 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
 
   if (secsLeft === null) return null;
 
-  const pct = Math.max(0, Math.min(100, (secsLeft / total) * 100));
+  const pct      = Math.max(0, Math.min(100, (secsLeft / total) * 100));
   const isUrgent = secsLeft <= 10;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-amber-800/60 uppercase tracking-widest">Time remaining</span>
-        <span className={`font-mono tabular-nums font-semibold ${isUrgent ? c.urgentText + ' animate-pulse' : c.text}`}>
+        <span className="font-cinzel uppercase tracking-widest" style={{ color: '#a16207' }}>Time remaining</span>
+        <span
+          className={`font-mono tabular-nums font-semibold ${isUrgent ? 'animate-pulse' : ''}`}
+          style={{ color: isUrgent ? c.urgentText : c.text }}
+        >
           {formatSecs(secsLeft)}
         </span>
       </div>
-      <div className="h-2 bg-black/50 rounded-full overflow-hidden">
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.50)' }}>
         <div
-          className={`h-full rounded-full transition-all duration-500 ${isUrgent ? c.urgentBar : c.bar}`}
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: isUrgent ? c.urgent : c.bar }}
         />
       </div>
     </div>

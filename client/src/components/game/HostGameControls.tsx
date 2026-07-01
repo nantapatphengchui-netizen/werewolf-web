@@ -19,20 +19,40 @@ interface Props {
 type ConfirmAction = 'restart' | 'lobby' | 'endPhase' | null;
 
 const PHASE_LABEL: Partial<Record<GamePhase, string>> = {
-  night: 'Night',
-  day: 'Day',
-  voting: 'Vote',
+  night: 'Night', day: 'Day', voting: 'Vote',
 };
 
+function HostBtn({
+  onClick,
+  children,
+  danger,
+  active,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  danger?: boolean;
+  active?: boolean;
+}) {
+  const style: React.CSSProperties = danger
+    ? { backgroundColor: 'rgba(50,10,10,0.75)', border: '1px solid rgba(185,28,28,0.45)', color: '#f87171' }
+    : active
+    ? { backgroundColor: 'rgba(6,53,37,0.75)',  border: '1px solid rgba(52,211,153,0.50)', color: '#6ee7b7' }
+    : { backgroundColor: 'rgba(12,8,3,0.70)',   border: '1px solid rgba(120,65,10,0.42)', color: '#ca8a04' };
+
+  return (
+    <button
+      onClick={onClick}
+      style={style}
+      className="w-full py-2 text-[11px] font-cinzel tracking-wider uppercase rounded-lg transition-all duration-150 hover:brightness-125 active:scale-[0.98]"
+    >
+      {children}
+    </button>
+  );
+}
+
 export function HostGameControls({
-  phase,
-  timerPaused,
-  onPauseTimer,
-  onResumeTimer,
-  onExtendTimer,
-  onEndPhase,
-  onRestartGame,
-  onReturnToLobby,
+  phase, timerPaused,
+  onPauseTimer, onResumeTimer, onExtendTimer, onEndPhase, onRestartGame, onReturnToLobby,
 }: Props) {
   const [confirming, setConfirming] = useState<ConfirmAction>(null);
 
@@ -40,8 +60,8 @@ export function HostGameControls({
   if (!hasTimer) return null;
 
   const handleConfirm = () => {
-    if (confirming === 'restart') onRestartGame();
-    if (confirming === 'lobby') onReturnToLobby();
+    if (confirming === 'restart')  onRestartGame();
+    if (confirming === 'lobby')    onReturnToLobby();
     if (confirming === 'endPhase') onEndPhase();
     setConfirming(null);
   };
@@ -51,8 +71,8 @@ export function HostGameControls({
       {confirming && (
         <ConfirmDialog
           title={
-            confirming === 'restart' ? 'Restart Game' :
-            confirming === 'lobby' ? 'Return to Lobby' :
+            confirming === 'restart'  ? 'Restart Game' :
+            confirming === 'lobby'    ? 'Return to Lobby' :
             `End ${PHASE_LABEL[phase] ?? 'Phase'} Early`
           }
           description={
@@ -69,87 +89,49 @@ export function HostGameControls({
       )}
 
       <DarkPanel className="p-4 space-y-4">
+        {/* Header */}
         <div className="flex items-center gap-2">
-          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="#d97706" strokeWidth="1.5">
             <circle cx="8" cy="5" r="3" />
             <path strokeLinecap="round" d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" />
           </svg>
-          <p className="text-amber-600 text-[10px] uppercase tracking-widest">Host Controls</p>
+          <p className="text-[10px] uppercase tracking-widest font-cinzel" style={{ color: '#d97706' }}>Host Controls</p>
         </div>
 
-        {/* Timer controls */}
+        {/* Timer section */}
         <div className="space-y-2">
-          <p className="text-amber-800 text-[10px] uppercase tracking-widest">Phase Timer</p>
+          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>Phase Timer</p>
 
-          {/* Pause / Resume */}
-          <button
-            onClick={timerPaused ? onResumeTimer : onPauseTimer}
-            className={`w-full flex items-center justify-center gap-2 py-2 text-xs font-cinzel tracking-widest uppercase rounded border transition-colors ${
-              timerPaused
-                ? 'bg-green-950/40 border-green-800/50 text-green-400 hover:bg-green-900/50'
-                : 'bg-amber-950/30 border-amber-900/40 text-amber-600 hover:border-amber-700/50 hover:text-amber-400'
-            }`}
-          >
-            {timerPaused ? (
-              <>
-                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
-                  <path d="M4 3l9 5-9 5V3z" />
-                </svg>
-                Resume Timer
-              </>
-            ) : (
-              <>
-                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="currentColor">
-                  <rect x="3" y="3" width="3" height="10" rx="1" />
-                  <rect x="10" y="3" width="3" height="10" rx="1" />
-                </svg>
-                Pause Timer
-              </>
-            )}
-          </button>
+          <HostBtn onClick={timerPaused ? onResumeTimer : onPauseTimer} active={timerPaused}>
+            {timerPaused ? '▶ Resume Timer' : '⏸ Pause Timer'}
+          </HostBtn>
 
-          {/* Extend buttons */}
           <div className="flex gap-1.5">
-            {[30, 60, 120].map(secs => (
+            {[30, 60, 120].map(s => (
               <button
-                key={secs}
-                onClick={() => onExtendTimer(secs)}
-                className="flex-1 py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded border border-amber-900/30 text-amber-800 hover:border-amber-700/50 hover:text-amber-600 bg-black/20 transition-colors"
+                key={s}
+                onClick={() => onExtendTimer(s)}
+                style={{ backgroundColor: 'rgba(12,8,3,0.60)', border: '1px solid rgba(120,65,10,0.38)', color: '#ca8a04', flex: 1 }}
+                className="py-1.5 text-[10px] font-cinzel tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-125"
               >
-                +{secs}s
+                +{s}s
               </button>
             ))}
           </div>
 
-          {/* End phase */}
-          <button
-            onClick={() => setConfirming('endPhase')}
-            className="w-full py-2 text-xs font-cinzel tracking-widest uppercase rounded border border-amber-800/40 text-amber-600 hover:border-amber-600/60 hover:text-amber-400 bg-amber-950/20 transition-colors"
-          >
+          <HostBtn onClick={() => setConfirming('endPhase')}>
             End {PHASE_LABEL[phase] ?? 'Phase'} Early
-          </button>
+          </HostBtn>
         </div>
 
         {/* Divider */}
-        <div className="border-t border-amber-900/20" />
+        <div style={{ borderTop: '1px solid rgba(120,65,10,0.20)' }} />
 
-        {/* Game controls */}
+        {/* Game section */}
         <div className="space-y-2">
-          <p className="text-amber-800 text-[10px] uppercase tracking-widest">Game</p>
-
-          <button
-            onClick={() => setConfirming('lobby')}
-            className="w-full py-2 text-xs font-cinzel tracking-widest uppercase rounded border border-red-900/30 text-red-800 hover:border-red-700/50 hover:text-red-500 bg-black/20 transition-colors"
-          >
-            Return to Lobby
-          </button>
-
-          <button
-            onClick={() => setConfirming('restart')}
-            className="w-full py-2 text-xs font-cinzel tracking-widest uppercase rounded border border-amber-900/30 text-amber-800 hover:border-amber-700/50 hover:text-amber-600 bg-black/20 transition-colors"
-          >
-            Restart Game
-          </button>
+          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>Game</p>
+          <HostBtn onClick={() => setConfirming('lobby')} danger>Return to Lobby</HostBtn>
+          <HostBtn onClick={() => setConfirming('restart')}>Restart Game</HostBtn>
         </div>
       </DarkPanel>
     </>

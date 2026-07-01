@@ -32,17 +32,24 @@ export function GamePlayerGrid({
   canMarkSuspicion = false,
   onMarkSuspicion,
 }: Props) {
-  const desktopRowCount = Math.ceil(players.length / 4);
-  const rowClass = desktopRowCount <= 2
-    ? 'lg:[grid-template-rows:repeat(2,minmax(0,1fr))]'
-    : 'lg:[grid-template-rows:repeat(3,minmax(0,1fr))]';
+  const n = players.length;
+
+  // Responsive column counts
+  const lgCols = n >= 7 ? 4 : 3;
+  const lgRows = Math.ceil(n / lgCols);
+
+  const lgColClass = lgCols === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3';
+  const lgRowClass =
+    lgRows <= 2 ? 'lg:[grid-template-rows:repeat(2,minmax(0,1fr))]' :
+    lgRows <= 3 ? 'lg:[grid-template-rows:repeat(3,minmax(0,1fr))]' :
+                  'lg:[grid-template-rows:repeat(4,minmax(0,1fr))]';
 
   return (
-    <div className={`w-full lg:h-full grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2 sm:gap-2.5 ${rowClass}`}>
+    <div className={`w-full lg:h-full grid grid-cols-3 sm:grid-cols-4 ${lgColClass} gap-2 sm:gap-2.5 ${lgRowClass}`}>
       {players.map((player, index) => {
-        const suspicionCount = (suspicionMap[player.id] ?? []).length;
+        const suspicionCount  = (suspicionMap[player.id] ?? []).length;
         const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
-        const showSuspectBtn = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
+        const showSuspectBtn  = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
         return (
           <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
             <GamePlayerCard

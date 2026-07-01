@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { RoomState, Role } from '@/types/game';
 import { useGameStore } from '@/store/gameStore';
-import { DarkPanel } from '@/components/ui/DarkPanel';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
+import { DarkPanel } from '@/components/ui/DarkPanel';
 import { RolePanel } from './RolePanel';
 import { ActionPanel } from './ActionPanel';
 import { GamePlayerGrid } from './GamePlayerGrid';
@@ -37,6 +37,40 @@ interface Props {
   onDayReaction: (targetId: string) => void;
 }
 
+// ── Phase banner config ────────────────────────────────────────────────────────
+const PHASE_BANNER: Record<string, { bg: string; borderColor: string; textColor: string; instrColor: string }> = {
+  night:  { bg: 'rgba(10,5,25,0.92)',  borderColor: 'rgba(109,40,217,0.50)',  textColor: '#a78bfa', instrColor: '#c4b5fd' },
+  day:    { bg: 'rgba(25,14,2,0.92)',  borderColor: 'rgba(180,83,9,0.50)',    textColor: '#fbbf24', instrColor: '#fde68a' },
+  voting: { bg: 'rgba(25,4,4,0.92)',   borderColor: 'rgba(185,28,28,0.50)',   textColor: '#f87171', instrColor: '#fca5a5' },
+};
+
+const PHASE_ICON_SVG: Record<string, React.ReactNode> = {
+  night: (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="currentColor">
+      <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+    </svg>
+  ),
+  day: (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="5" />
+      <path strokeLinecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  ),
+  voting: (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l9-3 9 3M12 3v18M5 6l-2 8h4l-2-8zM19 6l-2 8h4l-2-8z" />
+      <path strokeLinecap="round" d="M5 21h14" />
+    </svg>
+  ),
+};
+
+const PHASE_HUD_COLOR: Record<string, string> = {
+  night:  '#a78bfa',
+  day:    '#fbbf24',
+  voting: '#f87171',
+  ended:  '#fbbf24',
+};
+
 const DISCUSSION_PROMPTS = [
   'Who seemed most suspicious last round?',
   'Who changed their story since dawn?',
@@ -48,94 +82,43 @@ const DISCUSSION_PROMPTS = [
   'Who looked most relieved when the victim was named?',
 ];
 
-function getInstructionText(
-  phase: string,
-  myRole: Role | null,
-  imAlive: boolean,
-  isSubmitted: boolean,
-): string {
+function getInstructionText(phase: string, myRole: Role | null, imAlive: boolean, isSubmitted: boolean): string {
   if (phase === 'ended' || phase === 'lobby') return '';
   if (isSubmitted) {
-    if (phase === 'night') return 'Action submitted — awaiting other night actions...';
-    if (phase === 'voting') return 'Vote cast — awaiting other players...';
+    if (phase === 'night')  return 'Action submitted — awaiting other night actions…';
+    if (phase === 'voting') return 'Vote cast — awaiting other players…';
   }
   if (!imAlive) {
-    if (phase === 'night') return 'You have perished. Watch the night from the shadows.';
+    if (phase === 'night')  return 'You have perished. Watch the night from the shadows.';
     if (phase === 'voting') return 'You are eliminated. Watch the vote.';
     return 'You have perished.';
   }
   if (phase === 'night') {
     if (myRole === 'werewolf') return 'Click a player to eliminate tonight.';
-    if (myRole === 'seer') return 'Click a player to reveal their identity.';
-    if (myRole === 'doctor') return 'Click a player to protect tonight.';
+    if (myRole === 'seer')     return 'Click a player to reveal their identity.';
+    if (myRole === 'doctor')   return 'Click a player to protect tonight.';
     return 'Night falls. The village sleeps. Wait for dawn.';
   }
-  if (phase === 'day') return 'Discuss with the village. Find the wolves among you.';
+  if (phase === 'day')    return 'Discuss with the village. Find the wolves among you.';
   if (phase === 'voting') return 'Click a player to cast your vote for exile.';
   return '';
 }
 
-const PHASE_ICON: Record<string, React.ReactNode> = {
-  night: (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-violet-400 shrink-0" fill="currentColor">
-      <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
-    </svg>
-  ),
-  day: (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="5" />
-      <path strokeLinecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  ),
-  voting: (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-red-400 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l9-3 9 3M12 3v18M5 6l-2 8h4l-2-8zM19 6l-2 8h4l-2-8z" />
-      <path strokeLinecap="round" d="M5 21h14" />
-    </svg>
-  ),
-};
-
-const PHASE_COLOR: Record<string, string> = {
-  night:  'text-violet-300',
-  day:    'text-amber-300',
-  voting: 'text-red-300',
-  ended:  'text-amber-300',
-};
-
-const STRIP_STYLE: Record<string, string> = {
-  night:  'bg-indigo-950/30 border-indigo-800/30 text-violet-300/85',
-  day:    'bg-amber-950/20 border-amber-900/25 text-amber-300/85',
-  voting: 'bg-red-950/20 border-red-900/25 text-red-300/85',
-};
-
 export function GameView({
-  room,
-  playerId,
-  myRole,
-  werewolfIds,
-  isConnected,
-  onLeave,
-  onNightAction,
-  onCastVote,
-  onAdvanceDay,
-  onRestart,
-  onReturnToLobby,
-  onHostPauseTimer,
-  onHostResumeTimer,
-  onHostExtendTimer,
-  onHostEndPhase,
-  onHostRestartGame,
-  onHostReturnToLobby,
-  onMarkSuspicion,
-  onDayReaction,
+  room, playerId, myRole, werewolfIds, isConnected,
+  onLeave, onNightAction, onCastVote, onAdvanceDay,
+  onRestart, onReturnToLobby,
+  onHostPauseTimer, onHostResumeTimer, onHostExtendTimer, onHostEndPhase,
+  onHostRestartGame, onHostReturnToLobby,
+  onMarkSuspicion, onDayReaction,
 }: Props) {
-  const [actionSubmitted, setActionSubmitted]     = useState(false);
-  const [selectedTarget, setSelectedTarget]       = useState<string | null>(null);
-  const [logOpen, setLogOpen]                     = useState(false);
-  const [hostControlsOpen, setHostControlsOpen]   = useState(false);
+  const [actionSubmitted, setActionSubmitted]   = useState(false);
+  const [selectedTarget, setSelectedTarget]     = useState<string | null>(null);
+  const [logOpen, setLogOpen]                   = useState(false);
+  const [hostCtrlOpen, setHostCtrlOpen]         = useState(false);
   const prevPhaseRef = useRef(room.phase);
-  const isHost = room.hostId === playerId;
-  const seerLog = useGameStore(s => s.seerLog);
+  const isHost       = room.hostId === playerId;
+  const seerLog      = useGameStore(s => s.seerLog);
   const dayReactions = useGameStore(s => s.dayReactions);
 
   const seerRevealedMap = useMemo((): Record<string, Role> => {
@@ -148,12 +131,12 @@ export function GameView({
       prevPhaseRef.current = room.phase;
       setActionSubmitted(false);
       setSelectedTarget(null);
-      setHostControlsOpen(false);
+      setHostCtrlOpen(false);
     }
   }, [room.phase]);
 
-  const handleNightAction = (targetId: string) => { onNightAction(targetId); setActionSubmitted(true); };
-  const handleCastVote    = (targetId: string) => { onCastVote(targetId);    setActionSubmitted(true); };
+  const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); };
+  const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); };
 
   const me             = room.players.find(p => p.id === playerId);
   const imAlive        = me?.isAlive ?? false;
@@ -161,6 +144,7 @@ export function GameView({
   const deadCount      = room.players.length - aliveCount;
   const hasVotedAlready    = room.publicVotes?.hasVoted.includes(playerId) ?? false;
   const isActionSubmitted  = actionSubmitted || hasVotedAlready;
+  const showTimer          = !!(room.phaseEndAt || room.timerPaused);
 
   const validTargetIds = useMemo(() => {
     if (isActionSubmitted || !imAlive) return [];
@@ -174,20 +158,20 @@ export function GameView({
     return [];
   }, [isActionSubmitted, imAlive, room.phase, room.players, myRole, werewolfIds, playerId]);
 
-  const onPlayerCardClick = (targetPlayerId: string) => {
-    if (!validTargetIds.includes(targetPlayerId)) return;
-    setSelectedTarget(prev => prev === targetPlayerId ? null : targetPlayerId);
+  const onPlayerCardClick = (targetId: string) => {
+    if (!validTargetIds.includes(targetId)) return;
+    setSelectedTarget(prev => prev === targetId ? null : targetId);
   };
 
   const instructionText    = getInstructionText(room.phase, myRole, imAlive, isActionSubmitted);
-  const stripStyle         = STRIP_STYLE[room.phase] ?? STRIP_STYLE.day;
+  const banner             = PHASE_BANNER[room.phase];
   const selectedPlayerName = selectedTarget ? room.players.find(p => p.id === selectedTarget)?.name : null;
-  const showTimer          = !!(room.phaseEndAt || room.timerPaused);
+  const phaseHudColor      = PHASE_HUD_COLOR[room.phase] ?? '#fbbf24';
 
   return (
     <div className="relative z-10 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
 
-      {/* Game over modal */}
+      {/* ── Game over modal ── */}
       {room.phase === 'ended' && (
         <GameOverScreen
           room={room}
@@ -198,92 +182,128 @@ export function GameView({
         />
       )}
 
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      {/* ── Top HUD — matches lobby RoomHeader exactly ───────────────────── */}
       <div className="shrink-0 px-3 pt-3 pb-2">
-        <DarkPanel className="flex items-center gap-3 px-4 py-2">
-
+        <div
+          style={{ backgroundColor: 'rgba(3,5,7,0.94)', border: '1px solid rgba(146,64,14,0.50)', borderRadius: '10px', boxShadow: '0 4px 28px rgba(0,0,0,0.7)' }}
+          className="flex items-center gap-3 px-4 py-2.5"
+        >
           {/* Room code */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-amber-700 text-[10px] uppercase tracking-widest hidden sm:inline">Room</span>
-            <span className="font-mono font-bold text-base text-amber-300 tracking-[0.3em]">{room.code}</span>
+            <span className="text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline" style={{ color: '#a16207' }}>Room</span>
+            <span className="font-mono font-bold text-lg tracking-[0.35em]" style={{ color: '#fbbf24', textShadow: '0 0 12px rgba(251,191,36,0.45)' }}>
+              {room.code}
+            </span>
             <CopyButton text={room.code} />
           </div>
 
+          <div className="hidden sm:block w-px h-4 shrink-0" style={{ backgroundColor: 'rgba(146,64,14,0.35)' }} />
+
           {/* Phase + round */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            {PHASE_ICON[room.phase]}
-            <span className={`font-cinzel text-xs tracking-widest uppercase truncate ${PHASE_COLOR[room.phase] ?? 'text-amber-300'}`}>
-              {room.phase === 'ended' ? 'Ended' : `${room.phase} · R${room.round}`}
+          <div className="flex items-center gap-1.5 shrink-0" style={{ color: phaseHudColor }}>
+            {PHASE_ICON_SVG[room.phase]}
+            <span className="font-cinzel text-xs tracking-widest uppercase">
+              {room.phase === 'ended' ? 'Game Over' : `${room.phase} · R${room.round}`}
             </span>
             {room.timerPaused && (
-              <span className="text-[9px] text-amber-700 border border-amber-800/40 rounded px-1.5 py-0.5 shrink-0">⏸</span>
+              <span className="text-[9px] font-cinzel" style={{ color: '#a16207', border: '1px solid rgba(146,64,14,0.45)', borderRadius: '4px', padding: '1px 5px' }}>⏸</span>
             )}
           </div>
 
-          {/* Alive / Dead counts */}
+          {/* Alive / Dead */}
           <div className="hidden sm:flex items-center gap-1.5 text-[11px] shrink-0">
-            <span className="text-green-500 font-semibold">{aliveCount}</span>
-            <span className="text-stone-700 text-[10px]">alive</span>
-            <span className="text-stone-700 mx-0.5">·</span>
-            <span className="text-red-700 font-semibold">{deadCount}</span>
-            <span className="text-stone-700 text-[10px]">dead</span>
+            <span className="font-semibold" style={{ color: '#4ade80' }}>{aliveCount}</span>
+            <span className="text-[10px]" style={{ color: '#57534e' }}>alive</span>
+            <span className="mx-0.5" style={{ color: '#44403c' }}>·</span>
+            <span className="font-semibold" style={{ color: '#ef4444' }}>{deadCount}</span>
+            <span className="text-[10px]" style={{ color: '#57534e' }}>dead</span>
           </div>
 
           <div className="flex-1" />
 
           {/* Connection + music + leave */}
           <div className="flex items-center gap-3 shrink-0">
-            <StatusDot connected={isConnected} />
-            <div className="h-4 w-px bg-amber-900/20 hidden sm:block" />
+            <div className="flex items-center gap-1.5">
+              <StatusDot connected={isConnected} />
+              <span className="text-[9px] font-cinzel uppercase tracking-wider hidden sm:inline" style={{ color: isConnected ? '#4ade80' : '#ef4444' }}>
+                {isConnected ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: 'rgba(146,64,14,0.30)' }} />
             <AudioControls />
-            <div className="h-4 w-px bg-amber-900/20 hidden sm:block" />
+            <div className="h-4 w-px hidden sm:block" style={{ backgroundColor: 'rgba(146,64,14,0.30)' }} />
             <button
               onClick={onLeave}
-              className="px-3 py-1 border border-amber-900/40 hover:border-red-800/60 text-amber-700 hover:text-red-400 text-xs uppercase tracking-widest rounded transition-colors"
+              className="px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg text-amber-400 hover:text-red-400 transition-colors"
+              style={{ border: '1px solid rgba(146,64,14,0.50)' }}
             >
               Leave
             </button>
           </div>
-        </DarkPanel>
+        </div>
       </div>
 
-      {/* ── Main content ─────────────────────────────────────────────────── */}
+      {/* ── Main content ─────────────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 px-3 pb-3 flex flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden">
 
-        {/* ── Player grid area ─────────────────────────────────────────── */}
+        {/* ── Player grid area ── */}
         <div className="flex flex-col gap-2 lg:flex-1 lg:min-h-0">
 
           {/* Last announcement */}
           {room.lastAnnouncement && (
-            <div className="shrink-0 px-3 py-1.5 rounded-lg border border-amber-900/15 bg-amber-950/10 text-center">
-              <p className="text-amber-400/65 text-[11px] italic leading-snug">{room.lastAnnouncement}</p>
+            <div className="shrink-0 px-3 py-1.5 rounded-lg text-center" style={{ backgroundColor: 'rgba(25,14,2,0.80)', border: '1px solid rgba(180,83,9,0.30)' }}>
+              <p className="text-[11px] italic leading-snug" style={{ color: '#fde68a' }}>{room.lastAnnouncement}</p>
             </div>
           )}
 
-          {/* Discussion prompt — day phase only */}
+          {/* Phase banner — instruction strip replacement */}
+          {instructionText && banner && (
+            <div
+              className="shrink-0 flex items-center gap-3 px-3 py-2 rounded-lg"
+              style={{ backgroundColor: banner.bg, borderLeft: `3px solid ${banner.borderColor}`, paddingLeft: '12px' }}
+            >
+              <div style={{ color: banner.textColor }} className="flex items-center gap-1.5 shrink-0">
+                {PHASE_ICON_SVG[room.phase]}
+                <span className="font-cinzel text-[10px] uppercase tracking-widest font-semibold">
+                  {room.phase} · R{room.round}
+                </span>
+              </div>
+              <div className="w-px h-3 shrink-0" style={{ backgroundColor: banner.borderColor }} />
+              <p className="text-[11px] flex-1 leading-snug" style={{ color: banner.instrColor }}>
+                {instructionText}
+              </p>
+              {selectedPlayerName && (
+                <span className="shrink-0 text-[11px] font-cinzel uppercase tracking-wider" style={{ color: banner.textColor }}>
+                  → {selectedPlayerName}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Discussion prompt — day only */}
           {room.phase === 'day' && (
-            <div className="shrink-0 flex items-start gap-2 px-3 py-1.5 rounded-lg border border-amber-800/20 bg-amber-950/10">
-              <svg viewBox="0 0 16 16" className="w-3 h-3 text-amber-600/60 shrink-0 mt-0.5" fill="currentColor">
+            <div className="shrink-0 flex items-start gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(20,12,2,0.75)', border: '1px solid rgba(120,65,10,0.28)' }}>
+              <svg viewBox="0 0 16 16" className="w-3 h-3 shrink-0 mt-0.5" fill="#92400e">
                 <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
               </svg>
-              <p className="text-amber-400/70 text-[10px] italic leading-snug flex-1">
+              <p className="text-[10px] italic leading-snug flex-1" style={{ color: '#ca8a04' }}>
                 {DISCUSSION_PROMPTS[(room.round - 1) % DISCUSSION_PROMPTS.length]}
               </p>
             </div>
           )}
 
-          {/* Ask reactions strip */}
+          {/* Day reactions */}
           {dayReactions.length > 0 && room.phase === 'day' && (
             <div className="shrink-0 flex flex-col gap-0.5">
               {dayReactions.map(r => (
-                <div key={r.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-950/20 border border-violet-800/20">
-                  <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 text-violet-500/70 shrink-0" fill="currentColor">
+                <div key={r.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md" style={{ backgroundColor: 'rgba(46,16,101,0.30)', border: '1px solid rgba(109,40,217,0.28)' }}>
+                  <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 shrink-0" fill="#7c3aed">
                     <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
                   </svg>
-                  <p className="text-[10px] text-violet-300/65 truncate">
-                    <span className="text-violet-200/80">{r.fromName}</span>
+                  <p className="text-[10px] truncate" style={{ color: '#a78bfa' }}>
+                    <span style={{ color: '#c4b5fd' }}>{r.fromName}</span>
                     {' '}asks{' '}
-                    <span className="text-violet-200/80">{r.targetName}</span>
+                    <span style={{ color: '#c4b5fd' }}>{r.targetName}</span>
                     {' '}to speak
                   </p>
                 </div>
@@ -291,26 +311,15 @@ export function GameView({
             </div>
           )}
 
-          {/* Instruction strip */}
-          {instructionText && (
-            <div className={`shrink-0 flex items-center gap-3 px-3 py-2 rounded-lg border ${stripStyle}`}>
-              <p className="text-xs flex-1 leading-snug">{instructionText}</p>
-              {selectedPlayerName && (
-                <span className="shrink-0 text-amber-400 text-[11px] font-cinzel uppercase tracking-wider">
-                  → {selectedPlayerName}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Ask to speak chips — day phase, alive only */}
+          {/* Ask-to-speak chips — day, alive players only */}
           {room.phase === 'day' && imAlive && (
             <div className="shrink-0 flex flex-wrap gap-1">
               {room.players.filter(p => p.isAlive && p.id !== playerId).map(p => (
                 <button
                   key={p.id}
                   onClick={() => onDayReaction(p.id)}
-                  className="px-2 py-0.5 rounded border border-violet-800/25 bg-violet-950/10 text-violet-400/60 hover:border-violet-600/45 hover:text-violet-300/85 text-[9px] font-cinzel uppercase tracking-wide transition-colors"
+                  style={{ backgroundColor: 'rgba(46,16,101,0.25)', border: '1px solid rgba(109,40,217,0.35)', color: '#8b5cf6' }}
+                  className="px-2 py-0.5 rounded text-[9px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125"
                 >
                   Ask {p.name}
                 </button>
@@ -318,7 +327,7 @@ export function GameView({
             </div>
           )}
 
-          {/* Grid */}
+          {/* Player grid */}
           <div className="lg:flex-1 lg:min-h-0">
             <GamePlayerGrid
               players={room.players}
@@ -338,7 +347,7 @@ export function GameView({
           </div>
         </div>
 
-        {/* ── Right sidebar — slim ─────────────────────────────────────── */}
+        {/* ── Right sidebar — Action Console ── */}
         <div className="w-full lg:w-48 xl:w-52 shrink-0 flex flex-col gap-2">
 
           {/* Timer */}
@@ -361,7 +370,7 @@ export function GameView({
             playerId={playerId}
           />
 
-          {/* Primary action */}
+          {/* Action */}
           <ActionPanel
             room={room}
             playerId={playerId}
@@ -374,75 +383,69 @@ export function GameView({
             onAdvanceDay={onAdvanceDay}
           />
 
-          {/* Host controls — collapsible */}
+          {/* Host Controls — collapsible */}
           {isHost && (
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-1">
               <button
-                onClick={() => setHostControlsOpen(p => !p)}
-                className="flex items-center justify-between px-3 py-2 rounded-lg border border-amber-900/20 bg-black/20 hover:border-amber-800/35 transition-colors"
+                onClick={() => setHostCtrlOpen(p => !p)}
+                style={{ backgroundColor: 'rgba(12,8,3,0.85)', border: '1px solid rgba(120,65,10,0.42)', borderRadius: '8px' }}
+                className="flex items-center justify-between px-3 py-2 transition-all duration-150 hover:brightness-125"
               >
-                <span className="text-[10px] font-cinzel uppercase tracking-widest text-amber-800/70">Host Controls</span>
-                <svg
-                  viewBox="0 0 16 16"
-                  className={`w-3 h-3 text-amber-800/50 transition-transform duration-200 ${hostControlsOpen ? 'rotate-180' : ''}`}
-                  fill="none" stroke="currentColor" strokeWidth="2"
-                >
+                <span className="text-[10px] font-cinzel uppercase tracking-widest" style={{ color: '#d97706' }}>Host Controls</span>
+                <svg viewBox="0 0 16 16" className={`w-3 h-3 transition-transform duration-200 ${hostCtrlOpen ? 'rotate-180' : ''}`} fill="none" stroke="#d97706" strokeWidth="2">
                   <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-              {hostControlsOpen && (
-                <div className="mt-1">
-                  <HostGameControls
-                    phase={room.phase}
-                    timerPaused={room.timerPaused}
-                    onPauseTimer={onHostPauseTimer}
-                    onResumeTimer={onHostResumeTimer}
-                    onExtendTimer={onHostExtendTimer}
-                    onEndPhase={onHostEndPhase}
-                    onRestartGame={onHostRestartGame}
-                    onReturnToLobby={onHostReturnToLobby}
-                  />
-                </div>
+              {hostCtrlOpen && (
+                <HostGameControls
+                  phase={room.phase}
+                  timerPaused={room.timerPaused}
+                  onPauseTimer={onHostPauseTimer}
+                  onResumeTimer={onHostResumeTimer}
+                  onExtendTimer={onHostExtendTimer}
+                  onEndPhase={onHostEndPhase}
+                  onRestartGame={onHostRestartGame}
+                  onReturnToLobby={onHostReturnToLobby}
+                />
               )}
             </div>
           )}
 
-          {/* Event log toggle */}
+          {/* Event Log toggle */}
           <button
             onClick={() => setLogOpen(true)}
-            className="flex items-center justify-between px-3 py-2 rounded-lg border border-amber-900/15 bg-black/10 hover:border-amber-900/30 hover:bg-black/20 transition-colors group"
+            style={{ backgroundColor: 'rgba(8,5,2,0.80)', border: '1px solid rgba(120,65,10,0.40)', borderRadius: '8px' }}
+            className="flex items-center justify-between px-3 py-2 transition-all duration-150 hover:brightness-125"
           >
-            <span className="text-[10px] font-cinzel uppercase tracking-widest text-amber-900/50 group-hover:text-amber-800/70 transition-colors">
-              Event Log
-            </span>
-            <span className="text-[10px] text-amber-900/30 group-hover:text-amber-800/50 transition-colors">
-              {room.eventLog.length}
-            </span>
+            <span className="text-[10px] font-cinzel uppercase tracking-widest" style={{ color: '#d97706' }}>Event Log</span>
+            <span className="text-[10px] font-cinzel" style={{ color: '#a16207' }}>{room.eventLog.length}</span>
           </button>
 
         </div>
       </div>
 
-      {/* ── Event log drawer ─────────────────────────────────────────────── */}
+      {/* ── Event log drawer ── */}
       {logOpen && (
         <div className="fixed inset-0 z-50 flex" onClick={() => setLogOpen(false)}>
-          {/* Backdrop */}
-          <div className="flex-1 bg-black/40 backdrop-blur-[1px]" />
-          {/* Panel */}
+          <div className="flex-1 bg-black/50 backdrop-blur-[1px]" />
           <div
-            className="relative w-72 bg-stone-950/98 border-l border-amber-900/25 flex flex-col shadow-2xl"
+            className="relative w-72 flex flex-col shadow-2xl"
+            style={{ backgroundColor: 'rgba(3,5,7,0.98)', borderLeft: '1px solid rgba(120,65,10,0.35)' }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-900/20 shrink-0">
-              <p className="font-cinzel text-amber-600/80 text-[10px] uppercase tracking-widest">Event Log</p>
+            <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: '1px solid rgba(120,65,10,0.28)' }}>
+              <p className="font-cinzel text-[10px] uppercase tracking-widest" style={{ color: '#d97706' }}>Event Log</p>
               <button
                 onClick={() => setLogOpen(false)}
-                className="text-amber-800/60 hover:text-amber-500 text-xl leading-none transition-colors"
+                className="text-xl leading-none w-6 h-6 flex items-center justify-center transition-colors"
+                style={{ color: '#92400e' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fbbf24')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#92400e')}
               >
                 ×
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto">
               <EventLog events={room.eventLog} />
             </div>
           </div>
