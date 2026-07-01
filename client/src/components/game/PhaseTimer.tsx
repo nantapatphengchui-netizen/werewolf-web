@@ -8,6 +8,7 @@ interface Props {
   phase: GamePhase;
   paused?: boolean;
   pausedTimeRemaining?: number | null;
+  compact?: boolean;
 }
 
 const PHASE_TOTAL: Record<string, number> = {
@@ -16,7 +17,6 @@ const PHASE_TOTAL: Record<string, number> = {
   voting: 60,
 };
 
-// Bar color (not text — these are bg classes, opacity fraction is fine on bg)
 const BAR_COLOR: Record<string, { bar: string; urgent: string; text: string; urgentText: string }> = {
   night:  { bar: '#7c3aed', urgent: '#dc2626', text: '#a78bfa', urgentText: '#f87171' },
   day:    { bar: '#d97706', urgent: '#ef4444', text: '#fbbf24', urgentText: '#f87171' },
@@ -29,7 +29,7 @@ function formatSecs(secs: number): string {
   return mins > 0 ? `${mins}:${String(s).padStart(2, '0')}` : `${s}s`;
 }
 
-export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemaining = null }: Props) {
+export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemaining = null, compact = false }: Props) {
   const [secsLeft, setSecsLeft] = useState<number | null>(null);
   const total = PHASE_TOTAL[phase];
   const c     = BAR_COLOR[phase];
@@ -48,6 +48,41 @@ export function PhaseTimer({ phaseEndAt, phase, paused = false, pausedTimeRemain
 
   if (!total || !c) return null;
 
+  // ── Compact mode — used inline in HUD ─────────────────────────────────────
+  if (compact) {
+    if (paused) {
+      if (secsLeft === null) return null;
+      return (
+        <div className="flex items-center gap-1.5">
+          <span style={{ color: '#a16207' }}>⏸</span>
+          <span className="font-mono text-[11px] font-semibold tabular-nums" style={{ color: '#d97706' }}>
+            {formatSecs(secsLeft)}
+          </span>
+        </div>
+      );
+    }
+    if (secsLeft === null) return null;
+    const pct      = Math.max(0, Math.min(100, (secsLeft / total) * 100));
+    const isUrgent = secsLeft <= 10;
+    return (
+      <div className="flex items-center gap-1.5">
+        <span
+          className={`font-mono text-[12px] font-semibold tabular-nums${isUrgent ? ' animate-pulse' : ''}`}
+          style={{ color: isUrgent ? c.urgentText : c.text }}
+        >
+          {formatSecs(secsLeft)}
+        </span>
+        <div className="w-8 h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.50)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${pct}%`, backgroundColor: isUrgent ? c.urgent : c.bar }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal mode — used in sidebar / drawer ─────────────────────────────────
   if (paused && secsLeft !== null) {
     const pct = Math.max(0, Math.min(100, (secsLeft / total) * 100));
     return (
