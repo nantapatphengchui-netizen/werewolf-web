@@ -133,6 +133,12 @@ export function GamePlayerCard({
   // ── Action color lookup ───────────────────────────────────────────────────────
   const ac = actionType ? ACTION_COLORS[actionType] : null;
 
+  // ── Role RGB for current player (used in border + YOU banner) ───────────────────
+  const myRoleRgb = myRole === 'werewolf' ? '220,38,38'
+    : myRole === 'seer'   ? '124,58,237'
+    : myRole === 'doctor' ? '16,185,129'
+    : '217,119,6';
+
   // ── Border / shadow per state ─────────────────────────────────────────────────
   let border    = '1px solid rgba(120,65,10,0.35)';
   let boxShadow: string | undefined;
@@ -148,12 +154,8 @@ export function GamePlayerCard({
   } else if (isInvalidTarget) {
     border = '1px solid rgba(68,64,60,0.22)';
   } else if (isCurrentPlayer) {
-    const rgb = myRole === 'werewolf' ? '220,38,38'
-      : myRole === 'seer'   ? '124,58,237'
-      : myRole === 'doctor' ? '16,185,129'
-      : '217,119,6';
-    border    = `2px solid rgba(${rgb},0.75)`;
-    boxShadow = `0 0 16px rgba(${rgb},0.22)`;
+    border    = `2px solid rgba(${myRoleRgb},0.75)`;
+    boxShadow = `0 0 20px rgba(${myRoleRgb},0.28)`;
   } else if (isWerewolfTeammate) {
     border    = '1px solid rgba(185,28,28,0.60)';
     boxShadow = '0 0 10px rgba(185,28,28,0.18)';
@@ -281,9 +283,28 @@ export function GamePlayerCard({
         </div>
       )}
 
+      {/* ── YOU banner (current player only) ── */}
+      {isCurrentPlayer && (
+        <div
+          className="absolute top-0 left-0 right-0 z-20 flex items-center justify-center"
+          style={{
+            background: `linear-gradient(to bottom, rgba(${myRoleRgb},${alive ? '0.72' : '0.40'}) 0%, rgba(${myRoleRgb},0.00) 100%)`,
+            paddingTop: '3px',
+            paddingBottom: '10px',
+          }}
+        >
+          <span
+            className="text-[7px] font-cinzel font-bold tracking-[0.30em] uppercase"
+            style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.95)' }}
+          >
+            ◆ YOU ◆
+          </span>
+        </div>
+      )}
+
       {/* ── Host crown ── */}
       {player.isHost && (
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
+        <div className={`absolute ${isCurrentPlayer ? 'top-4' : 'top-1'} left-1/2 -translate-x-1/2 z-20`}>
           <svg viewBox="0 0 18 12" className="w-4 h-3" fill="#fbbf24">
             <path d="M1 11L4 5.5L9 8.5L14 5.5L17 11H1Z" stroke="#92400e" strokeWidth="0.7" strokeLinejoin="round" />
             <circle cx="1"  cy="4.5" r="1.5" fill="#fbbf24" />
@@ -372,12 +393,29 @@ export function GamePlayerCard({
 
         {/* Sub-label: hidden when day actions or confirm button take its space */}
         {subLabel && !showDayActions && !isSelected && (
-          <p
-            className="text-[8px] font-cinzel uppercase tracking-[0.14em] text-center leading-none mt-0.5 truncate"
-            style={{ color: subLabel.color, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}
-          >
-            {subLabel.text}
-          </p>
+          isCurrentPlayer && alive ? (
+            <div className="flex justify-center mt-1">
+              <span
+                className="px-1.5 py-px rounded-full text-[8px] font-cinzel font-bold uppercase tracking-[0.12em] truncate"
+                style={{
+                  backgroundColor: `rgba(${myRoleRgb},0.20)`,
+                  border: `1px solid rgba(${myRoleRgb},0.55)`,
+                  color: subLabel.color,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                  maxWidth: '90%',
+                }}
+              >
+                {subLabel.text}
+              </span>
+            </div>
+          ) : (
+            <p
+              className="text-[8px] font-cinzel uppercase tracking-[0.14em] text-center leading-none mt-0.5 truncate"
+              style={{ color: subLabel.color, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}
+            >
+              {subLabel.text}
+            </p>
+          )
         )}
 
         {/* Day quick actions: Suspect + Ask (hidden when card is selected) */}

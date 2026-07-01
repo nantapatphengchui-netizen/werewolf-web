@@ -88,6 +88,39 @@ const PHASE_BAR_ACCENT: Record<string, string> = {
   voting: 'rgba(185,28,28,0.60)',
 };
 
+const ROLE_HUD_ICON: Record<string, React.ReactNode> = {
+  werewolf: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <path d="M5 10.5c.6.8 1.7 1.4 3 1.4s2.4-.6 3-1.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <circle cx="5.8" cy="7.5" r="1.1" fill="currentColor"/>
+      <circle cx="10.2" cy="7.5" r="1.1" fill="currentColor"/>
+      <path d="M4 5.5C5 4 6.4 3.2 8 3.2s3 .8 4 2.3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+      <path d="M3 9.5C2 8 2 6 3 4.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity=".5"/>
+      <path d="M13 9.5C14 8 14 6 13 4.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity=".5"/>
+    </svg>
+  ),
+  seer: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <ellipse cx="8" cy="9" rx="5.5" ry="3.5" stroke="currentColor" strokeWidth="1.2"/>
+      <circle cx="8" cy="9" r="2" fill="currentColor"/>
+      <circle cx="8" cy="9" r="0.8" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="0.8"/>
+      <path d="M8 2v1.5M5.2 3.7l.9.9M10.8 3.7l-.9.9" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+    </svg>
+  ),
+  doctor: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M8 5v6M5 8h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  villager: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M3.5 14c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  ),
+};
+
 const DISCUSSION_PROMPTS = [
   'Who seemed most suspicious last round?',
   'Who changed their story since dawn?',
@@ -240,7 +273,7 @@ function ActionBar({
     if (!imAlive) {
       return (
         <div style={barStyle(phase)}>
-          <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
+          <p className="text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>
             You have perished. Watch the night from the shadows.
           </p>
         </div>
@@ -297,7 +330,7 @@ function ActionBar({
     return (
       <div style={barStyle(phase)}>
         {!imAlive ? (
-          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>You have perished.</p>
+          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>You have perished.</p>
         ) : (
           <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a16207' }}>
             Discuss with the village. Use card buttons to Suspect or Ask players.
@@ -323,7 +356,7 @@ function ActionBar({
     if (!imAlive) {
       return (
         <div style={barStyle(phase)}>
-          <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
+          <p className="text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>
             You are eliminated. Watch the vote unfold.
           </p>
         </div>
@@ -521,20 +554,35 @@ export function GameView({
           <div className="flex-1" />
 
           {/* Role badge — opens role drawer */}
-          {roleInfo && (
+          {roleInfo && myRole && (
             <button
               onClick={() => setRoleOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 shrink-0 transition-all duration-150 hover:brightness-125 active:scale-[0.97]"
               style={{
-                backgroundColor: `${roleInfo.accentColor}18`,
-                border: `1px solid ${roleInfo.accentColor}55`,
-                borderRadius: '7px',
+                background: `linear-gradient(135deg, ${roleInfo.accentColor}28 0%, rgba(0,0,0,0.55) 100%)`,
+                border: `1px solid ${roleInfo.accentColor}70`,
+                borderRadius: '8px',
+                boxShadow: `0 0 18px ${roleInfo.accentColor}28, inset 0 1px 0 ${roleInfo.accentColor}18`,
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1 shrink-0 transition-all duration-150 hover:brightness-125"
             >
-              <span className="text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline" style={{ color: '#a16207' }}>Role</span>
-              <span className="text-[10px] font-cinzel font-bold uppercase tracking-wider" style={{ color: roleInfo.accentColor }}>
-                {roleInfo.name}
-              </span>
+              <div
+                className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full"
+                style={{
+                  backgroundColor: `${roleInfo.accentColor}25`,
+                  border: `1px solid ${roleInfo.accentColor}60`,
+                  color: roleInfo.accentColor,
+                }}
+              >
+                {ROLE_HUD_ICON[myRole]}
+              </div>
+              <div className="flex flex-col items-start leading-tight hidden sm:flex">
+                <span className="text-[7px] font-cinzel uppercase tracking-[0.18em]" style={{ color: `${roleInfo.accentColor}99` }}>
+                  Your Role
+                </span>
+                <span className="text-[12px] font-cinzel font-bold uppercase tracking-wide" style={{ color: roleInfo.accentColor, textShadow: `0 0 8px ${roleInfo.accentColor}66` }}>
+                  {roleInfo.name}
+                </span>
+              </div>
             </button>
           )}
 
