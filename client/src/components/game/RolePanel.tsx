@@ -46,11 +46,42 @@ function VillagerIcon({ color }: { color: string }) {
   );
 }
 
+function HunterIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className="w-10 h-10" fill="none">
+      <path d="M16 40V24L10 16H22L24 8L26 16H38L32 24V40" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+      <path d="M17 31H31" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function WitchIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className="w-10 h-10" fill="none">
+      <path d="M10 42c1.5-9 7.5-15 14-15s12.5 6 14 15" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M24 27V19" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M16 19h16" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M20 19L24 7l4 12" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function BodyguardIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className="w-10 h-10" fill="none">
+      <path d="M24 4L8 10v12c0 10 7.5 18 16 20C32.5 40 40 32 40 22V10L24 4z" stroke={color} strokeWidth="2.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 const ROLE_ICONS: Record<Role, (color: string) => ReactNode> = {
-  werewolf: c => <WerewolfIcon color={c} />,
-  seer:     c => <SeerIcon color={c} />,
-  doctor:   c => <DoctorIcon color={c} />,
-  villager: c => <VillagerIcon color={c} />,
+  werewolf:  c => <WerewolfIcon color={c} />,
+  seer:      c => <SeerIcon color={c} />,
+  doctor:    c => <DoctorIcon color={c} />,
+  villager:  c => <VillagerIcon color={c} />,
+  hunter:    c => <HunterIcon color={c} />,
+  witch:     c => <WitchIcon color={c} />,
+  bodyguard: c => <BodyguardIcon color={c} />,
 };
 
 interface Props {

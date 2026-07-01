@@ -1,4 +1,4 @@
-export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor';
+export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor' | 'hunter' | 'witch' | 'bodyguard';
 
 export interface RoleInfo {
   name: string;
@@ -13,15 +13,15 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
   werewolf: {
     name: 'Werewolf',
     alignment: 'werewolf',
-    description: 'You are a Werewolf. Eliminate the villagers and avoid suspicion.',
-    nightAction: 'Each night, choose a villager to eliminate.',
+    description: 'You are a Werewolf. Eliminate the villagers each night and avoid suspicion during the day.',
+    nightAction: 'Choose a villager to eliminate tonight.',
     accentColor: '#dc2626',
     bgClass: 'bg-red-950',
   },
   seer: {
     name: 'Seer',
     alignment: 'village',
-    description: 'You are the Seer. Each night you may investigate one player to learn their role.',
+    description: 'You are the Seer. Each night you may investigate one player to learn their true role.',
     nightAction: 'Investigate a player to reveal their true nature.',
     accentColor: '#7c3aed',
     bgClass: 'bg-violet-950',
@@ -41,6 +41,30 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
     nightAction: null,
     accentColor: '#d97706',
     bgClass: 'bg-amber-950',
+  },
+  hunter: {
+    name: 'Hunter',
+    alignment: 'village',
+    description: 'You are the Hunter. If you are eliminated — by vote or by night — you may take one player with you.',
+    nightAction: null,
+    accentColor: '#ea580c',
+    bgClass: 'bg-orange-950',
+  },
+  witch: {
+    name: 'Witch',
+    alignment: 'village',
+    description: 'You are the Witch. You hold one save potion and one poison potion — each usable only once per game.',
+    nightAction: 'After the werewolves strike, decide whether to save or poison a player.',
+    accentColor: '#9333ea',
+    bgClass: 'bg-purple-950',
+  },
+  bodyguard: {
+    name: 'Bodyguard',
+    alignment: 'village',
+    description: 'You are the Bodyguard. Each night you protect one player. You cannot guard the same person two nights in a row.',
+    nightAction: 'Choose a player to protect from the werewolves tonight.',
+    accentColor: '#2563eb',
+    bgClass: 'bg-blue-950',
   },
 };
 
@@ -86,4 +110,5 @@ export interface RoomState {
   timerPaused: boolean;
   pausedTimeRemaining: number | null;
   suspicionMap: Record<string, string[]>;
+  hunterPendingShot: string | null;
 }

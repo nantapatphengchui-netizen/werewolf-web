@@ -1,4 +1,4 @@
-export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor';
+export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor' | 'hunter' | 'witch' | 'bodyguard';
 
 export interface Player {
   id: string;
@@ -35,11 +35,13 @@ export interface RoomState {
   lastAnnouncement: string | null;
   winner: 'village' | 'werewolf' | null;
   publicVotes: PublicVotes | null;
-  phaseEndAt: number | null;          // server timestamp (ms) when phase timer expires; null when paused
-  readyPlayers: string[];             // persistentIds of lobby-ready players
-  eventLog: GameEvent[];              // public game events, oldest first (max 30)
-  isLocked: boolean;                  // when true, new players cannot join
-  timerPaused: boolean;               // when true, phase timer is paused
-  pausedTimeRemaining: number | null; // ms remaining when timer was paused
-  suspicionMap: Record<string, string[]>; // targetId → array of marker playerIds
+  phaseEndAt: number | null;
+  readyPlayers: string[];
+  eventLog: GameEvent[];
+  isLocked: boolean;
+  timerPaused: boolean;
+  pausedTimeRemaining: number | null;
+  suspicionMap: Record<string, string[]>;
+  /** hunterId waiting to fire their final shot; null when not pending */
+  hunterPendingShot: string | null;
 }

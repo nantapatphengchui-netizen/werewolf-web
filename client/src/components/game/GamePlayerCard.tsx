@@ -3,10 +3,13 @@ import type { Player, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 
 const ROLE_IMAGE: Record<Role, string> = {
-  werewolf: '/role-werewolf.png',
-  seer:     '/role-seer.png',
-  doctor:   '/role-doctor.png',
-  villager: '/role-villager.png',
+  werewolf:  '/role-werewolf.png',
+  seer:      '/role-seer.png',
+  doctor:    '/role-doctor.png',
+  villager:  '/role-villager.png',
+  hunter:    '/role-hunter.png',
+  witch:     '/role-witch.png',
+  bodyguard: '/role-bodyguard.png',
 };
 
 // ── Action color config ───────────────────────────────────────────────────────
@@ -135,9 +138,12 @@ export function GamePlayerCard({
   const ac = actionType ? ACTION_COLORS[actionType] : null;
 
   // ── Role RGB for current player (used in border + YOU banner) ───────────────────
-  const myRoleRgb = myRole === 'werewolf' ? '220,38,38'
-    : myRole === 'seer'   ? '124,58,237'
-    : myRole === 'doctor' ? '16,185,129'
+  const myRoleRgb = myRole === 'werewolf'  ? '220,38,38'
+    : myRole === 'seer'      ? '124,58,237'
+    : myRole === 'doctor'    ? '16,185,129'
+    : myRole === 'hunter'    ? '234,88,12'
+    : myRole === 'witch'     ? '147,51,234'
+    : myRole === 'bodyguard' ? '37,99,235'
     : '217,119,6';
 
   // ── Border / shadow per state ─────────────────────────────────────────────────
@@ -213,9 +219,12 @@ export function GamePlayerCard({
     cornerOpacity = 0.72;
   } else if (isCurrentPlayer) {
     cornerColor   =
-      myRole === 'werewolf' ? 'rgba(220,38,38,0.85)' :
-      myRole === 'seer'     ? 'rgba(139,92,246,0.85)' :
-      myRole === 'doctor'   ? 'rgba(52,211,153,0.85)' : 'rgba(251,191,36,0.85)';
+      myRole === 'werewolf'  ? 'rgba(220,38,38,0.85)' :
+      myRole === 'seer'      ? 'rgba(139,92,246,0.85)' :
+      myRole === 'doctor'    ? 'rgba(52,211,153,0.85)' :
+      myRole === 'hunter'    ? 'rgba(234,88,12,0.85)' :
+      myRole === 'witch'     ? 'rgba(147,51,234,0.85)' :
+      myRole === 'bodyguard' ? 'rgba(37,99,235,0.85)' : 'rgba(251,191,36,0.85)';
     cornerOpacity = 0.80;
   } else if (isWerewolfTeammate) {
     cornerColor   = 'rgba(220,38,38,0.70)';

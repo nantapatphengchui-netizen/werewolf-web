@@ -14,9 +14,7 @@ export const PHASE_DURATIONS: Record<string, number> = {
 
 function generateCode(): string {
   let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  }
+  for (let i = 0; i < 6; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
   return code;
 }
 
@@ -31,15 +29,15 @@ function makeEventId(): string {
 function tallyVotes(votes: Map<string, string>): string | null {
   if (votes.size === 0) return null;
   const counts = new Map<string, number>();
-  for (const targetId of votes.values()) {
-    counts.set(targetId, (counts.get(targetId) ?? 0) + 1);
-  }
+  for (const targetId of votes.values()) counts.set(targetId, (counts.get(targetId) ?? 0) + 1);
   const max = Math.max(...counts.values());
   const candidates = [...counts.entries()].filter(([, c]) => c === max).map(([id]) => id);
   return pickRandom(candidates);
 }
 
-type SeerResultData = {
+// ── Shared result types ───────────────────────────────────────────────────────
+
+export type SeerResultData = {
   seerId: string;
   targetId: string;
   targetName: string;
@@ -47,28 +45,49 @@ type SeerResultData = {
   round: number;
 };
 
+export type HunterPendingInfo = {
+  hunterId: string;
+  availableTargetIds: string[];
+};
+
+export type WitchNightInfo = {
+  witchId: string;
+  attackedPlayerId: string | null;
+  attackedPlayerName: string | null;
+  savePotionUsed: boolean;
+  poisonPotionUsed: boolean;
+};
+
+// ── RoomManager ───────────────────────────────────────────────────────────────
+
 export class RoomManager {
-  private rooms = new Map<string, RoomState>();
-  private playerRoomMap = new Map<string, string>(); // persistentId → roomCode
-  private roleMap = new Map<string, Role>();
+  private rooms          = new Map<string, RoomState>();
+  private playerRoomMap  = new Map<string, string>();  // persistentId → roomCode
+  private roleMap        = new Map<string, Role>();
 
-  private socketToPlayer = new Map<string, string>(); // socketId → persistentId
-  private playerToSocket = new Map<string, string>(); // persistentId → socketId
+  private socketToPlayer = new Map<string, string>();  // socketId → persistentId
+  private playerToSocket = new Map<string, string>();  // persistentId → socketId
 
-  private nightVotes = new Map<string, Map<string, string>>(); // roomCode → (pid → targetId)
-  private seerChoices = new Map<string, string>();             // roomCode → targetId
-  private doctorChoices = new Map<string, string>();           // roomCode → targetId
-  private dayVotes = new Map<string, Map<string, string>>();   // roomCode → (pid → targetId)
+  // Night action stores
+  private nightVotes     = new Map<string, Map<string, string>>(); // roomCode → (pid → targetId)
+  private seerChoices    = new Map<string, string>();              // roomCode → targetId
+  private doctorChoices  = new Map<string, string>();              // roomCode → targetId
+  private bodyguardChoices       = new Map<string, string>();      // roomCode → targetId
+  private bodyguardLastProtected = new Map<string, string>();      // roomCode → targetId (from prev night)
+
+  // Witch state
+  private witchSaveUsed   = new Map<string, boolean>();            // roomCode → used
+  private witchPoisonUsed = new Map<string, boolean>();            // roomCode → used
+  private witchAction     = new Map<string, { save: boolean; poisonTargetId: string | null }>(); // roomCode → action
+  private witchPhase1Done = new Map<string, boolean>();            // roomCode → info already sent
+
+  // Day votes
+  private dayVotes = new Map<string, Map<string, string>>();       // roomCode → (pid → targetId)
 
   // ── Socket tracking ──────────────────────────────────────────────────────────
 
-  getSocketId(persistentId: string): string | undefined {
-    return this.playerToSocket.get(persistentId);
-  }
-
-  roomCount(): number {
-    return this.rooms.size;
-  }
+  getSocketId(persistentId: string): string | undefined { return this.playerToSocket.get(persistentId); }
+  roomCount(): number { return this.rooms.size; }
 
   // ── Room lifecycle ───────────────────────────────────────────────────────────
 
@@ -77,26 +96,13 @@ export class RoomManager {
     while (this.rooms.has(code)) code = generateCode();
 
     const host: Player = { id: persistentId, name: hostName, isHost: true, isConnected: true, isAlive: true };
-
     const room: RoomState = {
-      code,
-      hostId: persistentId,
-      players: [host],
-      phase: 'lobby',
-      maxPlayers: MAX_PLAYERS,
-      minPlayers: MIN_PLAYERS,
-      createdAt: Date.now(),
-      round: 0,
-      lastAnnouncement: null,
-      winner: null,
-      publicVotes: null,
-      phaseEndAt: null,
-      readyPlayers: [],
-      eventLog: [],
-      isLocked: false,
-      timerPaused: false,
-      pausedTimeRemaining: null,
-      suspicionMap: {},
+      code, hostId: persistentId, players: [host], phase: 'lobby',
+      maxPlayers: MAX_PLAYERS, minPlayers: MIN_PLAYERS, createdAt: Date.now(),
+      round: 0, lastAnnouncement: null, winner: null, publicVotes: null,
+      phaseEndAt: null, readyPlayers: [], eventLog: [], isLocked: false,
+      timerPaused: false, pausedTimeRemaining: null, suspicionMap: {},
+      hunterPendingShot: null,
     };
 
     this.rooms.set(code, room);
@@ -106,21 +112,14 @@ export class RoomManager {
     return room;
   }
 
-  joinRoom(
-    roomCode: string,
-    socketId: string,
-    persistentId: string,
-    playerName: string
-  ): RoomState | { error: string } {
+  joinRoom(roomCode: string, socketId: string, persistentId: string, playerName: string): RoomState | { error: string } {
     const code = roomCode.toUpperCase();
     const room = this.rooms.get(code);
     if (!room) return { error: 'Room not found.' };
     if (room.phase !== 'lobby') return { error: 'Game already in progress.' };
     if (room.isLocked) return { error: 'Room is locked. The host is not accepting new players.' };
     if (room.players.length >= room.maxPlayers) return { error: 'Room is full.' };
-    if (room.players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
-      return { error: 'That name is already taken in this room.' };
-    }
+    if (room.players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) return { error: 'That name is already taken in this room.' };
     if (this.playerRoomMap.has(persistentId)) return { error: 'You are already in a room.' };
 
     const player: Player = { id: persistentId, name: playerName, isHost: false, isConnected: true, isAlive: true };
@@ -140,10 +139,7 @@ export class RoomManager {
     this.playerToSocket.delete(persistentId);
 
     const room = this.rooms.get(roomCode);
-    if (!room) {
-      this.playerRoomMap.delete(persistentId);
-      return { roomCode, room: null };
-    }
+    if (!room) { this.playerRoomMap.delete(persistentId); return { roomCode, room: null }; }
 
     room.players = room.players.filter(p => p.id !== persistentId);
     room.readyPlayers = room.readyPlayers.filter(id => id !== persistentId);
@@ -154,9 +150,7 @@ export class RoomManager {
 
     if (room.players.length === 0) {
       this.rooms.delete(roomCode);
-      this.nightVotes.delete(roomCode);
-      this.seerChoices.delete(roomCode);
-      this.doctorChoices.delete(roomCode);
+      this.clearNightMaps(roomCode);
       this.dayVotes.delete(roomCode);
       return { roomCode, room: null };
     }
@@ -173,57 +167,41 @@ export class RoomManager {
   markOffline(socketId: string): { roomCode: string; room: RoomState; wasHost: boolean } | null {
     const persistentId = this.socketToPlayer.get(socketId);
     if (!persistentId) return null;
-
     this.socketToPlayer.delete(socketId);
     this.playerToSocket.delete(persistentId);
-
     const roomCode = this.playerRoomMap.get(persistentId);
     if (!roomCode) return null;
-
     const room = this.rooms.get(roomCode);
     if (!room) return null;
-
     const player = room.players.find(p => p.id === persistentId);
     if (player) player.isConnected = false;
-
     return { roomCode, room, wasHost: room.hostId === persistentId };
   }
 
-  tryReconnect(
-    persistentId: string,
-    socketId: string
-  ): { room: RoomState; role: Role | null; werewolfIds: string[] } | null {
+  tryReconnect(persistentId: string, socketId: string): { room: RoomState; role: Role | null; werewolfIds: string[] } | null {
     const roomCode = this.playerRoomMap.get(persistentId);
     if (!roomCode) return null;
-
     const room = this.rooms.get(roomCode);
     if (!room) return null;
-
     const player = room.players.find(p => p.id === persistentId);
     if (!player) return null;
-
     player.isConnected = true;
-
     const oldSocketId = this.playerToSocket.get(persistentId);
     if (oldSocketId) this.socketToPlayer.delete(oldSocketId);
     this.socketToPlayer.set(socketId, persistentId);
     this.playerToSocket.set(persistentId, socketId);
-
     return { room, role: this.roleMap.get(persistentId) ?? null, werewolfIds: this.getWerewolfIds(roomCode) };
   }
 
   transferHost(roomCode: string): RoomState | null {
     const room = this.rooms.get(roomCode);
     if (!room) return null;
-
     const newHost = room.players.find(p => p.isConnected && !p.isBot && p.id !== room.hostId);
     if (!newHost) return null;
-
     const oldHost = room.players.find(p => p.id === room.hostId);
     if (oldHost) oldHost.isHost = false;
     newHost.isHost = true;
     room.hostId = newHost.id;
-
     console.log(`[room] Host transferred in ${roomCode} → ${newHost.name}`);
     return room;
   }
@@ -239,14 +217,9 @@ export class RoomManager {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.phase !== 'lobby') return { ok: false, error: 'Game has already started.' };
-
     const idx = room.readyPlayers.indexOf(persistentId);
-    if (idx === -1) {
-      room.readyPlayers.push(persistentId);
-    } else {
-      room.readyPlayers.splice(idx, 1);
-    }
-
+    if (idx === -1) room.readyPlayers.push(persistentId);
+    else room.readyPlayers.splice(idx, 1);
     return { ok: true, room };
   }
 
@@ -255,13 +228,9 @@ export class RoomManager {
     if (!room) return { ok: false, error: 'You are not in a room.' };
     if (room.hostId !== persistentId) return { ok: false, error: 'Only the host can start the game.' };
     if (room.phase !== 'lobby') return { ok: false, error: 'Game already started.' };
-    if (room.players.length < room.minPlayers) {
-      return { ok: false, error: `Need at least ${room.minPlayers} players (currently ${room.players.length}).` };
-    }
+    if (room.players.length < room.minPlayers) return { ok: false, error: `Need at least ${room.minPlayers} players (currently ${room.players.length}).` };
     const notReady = room.players.filter(p => !room.readyPlayers.includes(p.id));
-    if (notReady.length > 0) {
-      return { ok: false, error: `Waiting for ${notReady.length} player${notReady.length !== 1 ? 's' : ''} to ready up.` };
-    }
+    if (notReady.length > 0) return { ok: false, error: `Waiting for ${notReady.length} player${notReady.length !== 1 ? 's' : ''} to ready up.` };
     return { ok: true };
   }
 
@@ -273,26 +242,27 @@ export class RoomManager {
     for (const [pid, role] of roleMap) this.roleMap.set(pid, role);
 
     room.players.forEach(p => { p.isAlive = true; delete p.revealedRole; });
-    room.phase = 'night';
-    room.round = 1;
+    room.phase          = 'night';
+    room.round          = 1;
     room.lastAnnouncement = null;
-    room.winner = null;
-    room.publicVotes = null;
-    room.readyPlayers = [];
-    room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
-    room.timerPaused = false;
+    room.winner         = null;
+    room.publicVotes    = null;
+    room.readyPlayers   = [];
+    room.phaseEndAt     = Date.now() + PHASE_DURATIONS.night;
+    room.timerPaused    = false;
     room.pausedTimeRemaining = null;
-    room.eventLog = [];
+    room.eventLog       = [];
+    room.suspicionMap   = {};
+    room.hunterPendingShot = null;
 
-    this.nightVotes.delete(room.code);
-    this.seerChoices.delete(room.code);
-    this.doctorChoices.delete(room.code);
+    this.clearNightMaps(room.code);
     this.dayVotes.delete(room.code);
-    room.suspicionMap = {};
+    this.witchSaveUsed.delete(room.code);
+    this.witchPoisonUsed.delete(room.code);
+    this.bodyguardLastProtected.delete(room.code);
 
     this.addEvent(room, 'The game has begun. Roles have been assigned.');
     this.addEvent(room, 'Night falls upon the village. All close their eyes.');
-
     return { room, roleMap };
   }
 
@@ -309,13 +279,18 @@ export class RoomManager {
   submitNightAction(
     persistentId: string,
     targetId: string
-  ): { ok: boolean; error?: string; room?: RoomState; seerResult?: SeerResultData } {
+  ): {
+    ok: boolean; error?: string; room?: RoomState;
+    seerResult?: SeerResultData;
+    witchNeedsInfo?: WitchNightInfo;
+    hunterPendingInfo?: HunterPendingInfo;
+  } {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.phase !== 'night') return { ok: false, error: 'Not night phase.' };
 
     const myRole = this.roleMap.get(persistentId);
-    const me = room.players.find(p => p.id === persistentId);
+    const me     = room.players.find(p => p.id === persistentId);
     if (!me?.isAlive) return { ok: false, error: 'You are dead.' };
 
     const target = room.players.find(p => p.id === targetId);
@@ -329,13 +304,32 @@ export class RoomManager {
         this.nightVotes.get(room.code)!.set(persistentId, targetId);
         break;
       case 'seer':
+        if (targetId === persistentId) return { ok: false, error: 'Cannot inspect yourself.' };
         this.seerChoices.set(room.code, targetId);
         break;
       case 'doctor':
         this.doctorChoices.set(room.code, targetId);
         break;
+      case 'bodyguard': {
+        const lastProtected = this.bodyguardLastProtected.get(room.code);
+        if (targetId === lastProtected) return { ok: false, error: 'Cannot protect the same player two nights in a row.' };
+        this.bodyguardChoices.set(room.code, targetId);
+        break;
+      }
       default:
         return { ok: false, error: 'You have no night action.' };
+    }
+
+    // Check if witch needs to be informed before full resolution
+    const witch = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'witch');
+    if (witch && this.isPhase1NightReady(room) && !this.witchPhase1Done.get(room.code)) {
+      const saveUsed   = this.witchSaveUsed.get(room.code)   ?? false;
+      const poisonUsed = this.witchPoisonUsed.get(room.code) ?? false;
+      if (!saveUsed || !poisonUsed) {
+        this.witchPhase1Done.set(room.code, true);
+        const witchInfo = this.buildWitchNightInfo(room, witch.id, saveUsed, poisonUsed);
+        return { ok: true, witchNeedsInfo: witchInfo };
+      }
     }
 
     if (this.isNightReady(room)) {
@@ -345,14 +339,101 @@ export class RoomManager {
     return { ok: true };
   }
 
-  forceNightResolve(roomCode: string): { ok: boolean; room?: RoomState; seerResult?: SeerResultData } {
+  submitWitchAction(
+    persistentId: string,
+    action: { save: boolean; poisonTargetId: string | null }
+  ): {
+    ok: boolean; error?: string; room?: RoomState;
+    seerResult?: SeerResultData;
+    hunterPendingInfo?: HunterPendingInfo;
+  } {
+    const room = this.getRoomByPlayer(persistentId);
+    if (!room) return { ok: false, error: 'Not in a room.' };
+    if (room.phase !== 'night') return { ok: false, error: 'Not night phase.' };
+    if (this.roleMap.get(persistentId) !== 'witch') return { ok: false, error: 'You are not the Witch.' };
+
+    const me = room.players.find(p => p.id === persistentId);
+    if (!me?.isAlive) return { ok: false, error: 'You are dead.' };
+    if (this.witchAction.has(room.code)) return { ok: false, error: 'Already submitted your night action.' };
+
+    const saveUsed   = this.witchSaveUsed.get(room.code)   ?? false;
+    const poisonUsed = this.witchPoisonUsed.get(room.code) ?? false;
+    if (action.save && saveUsed) return { ok: false, error: 'Save potion already used.' };
+    if (action.poisonTargetId && poisonUsed) return { ok: false, error: 'Poison potion already used.' };
+    if (action.poisonTargetId) {
+      const target = room.players.find(p => p.id === action.poisonTargetId);
+      if (!target?.isAlive) return { ok: false, error: 'Cannot poison a dead player.' };
+      if (action.poisonTargetId === persistentId) return { ok: false, error: 'Cannot poison yourself.' };
+    }
+
+    this.witchAction.set(room.code, action);
+
+    if (this.isNightReady(room)) {
+      const resolution = this.resolveNight(room);
+      return { ok: true, room, ...resolution };
+    }
+    return { ok: true };
+  }
+
+  submitHunterShot(
+    persistentId: string,
+    targetId: string | null
+  ): { ok: boolean; error?: string; room?: RoomState } {
+    const room = this.getRoomByPlayer(persistentId);
+    if (!room) return { ok: false, error: 'Not in a room.' };
+    if (room.hunterPendingShot !== persistentId) return { ok: false, error: 'No pending hunter shot.' };
+    if (room.phase === 'ended') return { ok: false, error: 'Game is already over.' };
+
+    room.hunterPendingShot = null;
+
+    if (targetId) {
+      const target = room.players.find(p => p.id === targetId && p.isAlive);
+      if (!target) return { ok: false, error: 'Invalid target.' };
+      target.isAlive = false;
+      target.revealedRole = this.roleMap.get(targetId);
+      this.addEvent(room, `Hunter's final shot: ${target.name} falls.`);
+    } else {
+      this.addEvent(room, 'The Hunter chose not to fire a final shot.');
+    }
+
+    const winner = this.checkWin(room);
+    if (winner) {
+      room.phase  = 'ended';
+      room.winner = winner;
+      room.phaseEndAt = null;
+      this.addEvent(room, winner === 'village' ? 'The village triumphed. All werewolves are gone.' : 'The werewolves claim the village.');
+      this.revealAllRoles(room);
+    } else {
+      // Start the phase timer (phase is already set to day or night by prior resolution)
+      room.phaseEndAt          = Date.now() + PHASE_DURATIONS[room.phase];
+      room.timerPaused         = false;
+      room.pausedTimeRemaining = null;
+    }
+
+    return { ok: true, room };
+  }
+
+  skipHunterShot(roomCode: string): { ok: boolean; room?: RoomState } {
+    const room = this.rooms.get(roomCode);
+    if (!room || !room.hunterPendingShot) return { ok: false };
+    room.hunterPendingShot = null;
+    this.addEvent(room, 'The Hunter\'s shot was not fired (time expired).');
+    if (room.phase !== 'ended') {
+      room.phaseEndAt          = Date.now() + PHASE_DURATIONS[room.phase];
+      room.timerPaused         = false;
+      room.pausedTimeRemaining = null;
+    }
+    return { ok: true, room };
+  }
+
+  forceNightResolve(roomCode: string): { ok: boolean; room?: RoomState; seerResult?: SeerResultData; hunterPendingInfo?: HunterPendingInfo } {
     const room = this.rooms.get(roomCode);
     if (!room || room.phase !== 'night') return { ok: false };
 
+    // Auto-fill werewolf votes
     const wolves = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) === 'werewolf');
     if (!this.nightVotes.has(roomCode)) this.nightVotes.set(roomCode, new Map());
     const wolfVotes = this.nightVotes.get(roomCode)!;
-
     for (const wolf of wolves) {
       if (!wolfVotes.has(wolf.id)) {
         const validTargets = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) !== 'werewolf');
@@ -360,38 +441,124 @@ export class RoomManager {
       }
     }
 
+    // Skip witch (treat as do nothing)
+    if (!this.witchAction.has(roomCode)) {
+      const witch = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'witch');
+      if (witch) this.witchAction.set(roomCode, { save: false, poisonTargetId: null });
+    }
+
     const resolution = this.resolveNight(room);
     return { ok: true, room, ...resolution };
   }
 
-  private isNightReady(room: RoomState): boolean {
-    const wolves  = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) === 'werewolf');
-    const seer    = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'seer');
-    const doctor  = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'doctor');
+  // ── Night readiness checks ───────────────────────────────────────────────────
+
+  /** Phase-1: all roles except Witch have submitted */
+  private isPhase1NightReady(room: RoomState): boolean {
+    const wolves    = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) === 'werewolf');
+    const seer      = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'seer');
+    const doctor    = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'doctor');
+    const bodyguard = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'bodyguard');
     const wolfVotes = this.nightVotes.get(room.code);
     if (!wolves.every(w => wolfVotes?.has(w.id))) return false;
-    if (seer   && !this.seerChoices.has(room.code))   return false;
-    if (doctor && !this.doctorChoices.has(room.code)) return false;
+    if (seer      && !this.seerChoices.has(room.code))      return false;
+    if (doctor    && !this.doctorChoices.has(room.code))    return false;
+    if (bodyguard && !this.bodyguardChoices.has(room.code)) return false;
     return true;
   }
 
-  private resolveNight(room: RoomState): { seerResult?: SeerResultData } {
-    const killVotes    = this.nightVotes.get(room.code);
-    const seerTargetId = this.seerChoices.get(room.code);
-    const protectedId  = this.doctorChoices.get(room.code);
+  /** Full readiness: phase-1 complete AND witch has acted (or has no potions) */
+  private isNightReady(room: RoomState): boolean {
+    if (!this.isPhase1NightReady(room)) return false;
+    const witch = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'witch');
+    if (witch) {
+      const saveUsed   = this.witchSaveUsed.get(room.code)   ?? false;
+      const poisonUsed = this.witchPoisonUsed.get(room.code) ?? false;
+      if (!saveUsed || !poisonUsed) {
+        // witch still has at least one potion and has not yet acted
+        if (!this.witchAction.has(room.code)) return false;
+      }
+    }
+    return true;
+  }
 
-    this.nightVotes.delete(room.code);
-    this.seerChoices.delete(room.code);
-    this.doctorChoices.delete(room.code);
+  private buildWitchNightInfo(room: RoomState, witchId: string, saveUsed: boolean, poisonUsed: boolean): WitchNightInfo {
+    const wolfVotes          = this.nightVotes.get(room.code);
+    const intendedKillId     = wolfVotes ? tallyVotes(wolfVotes) : null;
+    const doctorProtectedId  = this.doctorChoices.get(room.code);
+    const guardProtectedId   = this.bodyguardChoices.get(room.code);
+    const tentativeKillId    =
+      intendedKillId && intendedKillId !== doctorProtectedId && intendedKillId !== guardProtectedId
+        ? intendedKillId : null;
+    const tentativeTarget = tentativeKillId ? room.players.find(p => p.id === tentativeKillId) : null;
+    return {
+      witchId,
+      attackedPlayerId:   tentativeTarget?.id   ?? null,
+      attackedPlayerName: tentativeTarget?.name ?? null,
+      savePotionUsed:   saveUsed,
+      poisonPotionUsed: poisonUsed,
+    };
+  }
 
-    room.timerPaused = false;
+  // ── Night resolution ─────────────────────────────────────────────────────────
+
+  private resolveNight(room: RoomState): { seerResult?: SeerResultData; hunterPendingInfo?: HunterPendingInfo } {
+    const killVotes          = this.nightVotes.get(room.code);
+    const seerTargetId       = this.seerChoices.get(room.code);
+    const doctorProtectedId  = this.doctorChoices.get(room.code);
+    const guardProtectedId   = this.bodyguardChoices.get(room.code);
+    const witchAct           = this.witchAction.get(room.code);
+
+    // Track potion usage before clearing
+    if (witchAct?.save)           this.witchSaveUsed.set(room.code, true);
+    if (witchAct?.poisonTargetId) this.witchPoisonUsed.set(room.code, true);
+
+    // Update bodyguard "last protected"
+    if (guardProtectedId) this.bodyguardLastProtected.set(room.code, guardProtectedId);
+
+    this.clearNightMaps(room.code);
+    room.timerPaused         = false;
     room.pausedTimeRemaining = null;
 
-    const intendedKillId = killVotes ? tallyVotes(killVotes) : null;
-    const actualKillId   = (intendedKillId && intendedKillId !== protectedId) ? intendedKillId : null;
+    // ── Determine deaths ──────────────────────────────────────────────────────
 
-    const killed = actualKillId ? room.players.find(p => p.id === actualKillId) : null;
-    if (killed) killed.isAlive = false;
+    const intendedKillId = killVotes ? tallyVotes(killVotes) : null;
+
+    // Wolf victim: killed only if not protected by doctor OR bodyguard, OR saved by witch
+    let wolfKillId: string | null = null;
+    if (intendedKillId) {
+      const doctorSaved   = intendedKillId === doctorProtectedId;
+      const bodyguardSaved = intendedKillId === guardProtectedId;
+      const witchSaved    = witchAct?.save && witchAct;
+      // witch saves if they chose save AND the tentative victim matches intendedKillId (and it wasn't already protected)
+      const witchSavedTarget = witchAct?.save && intendedKillId !== doctorProtectedId && intendedKillId !== guardProtectedId;
+      if (!doctorSaved && !bodyguardSaved && !witchSavedTarget) wolfKillId = intendedKillId;
+    }
+
+    // Witch poison victim (different from wolf kill)
+    const poisonKillId = witchAct?.poisonTargetId ?? null;
+
+    // Collect unique deaths in order
+    const deathIds: string[] = [];
+    if (wolfKillId) deathIds.push(wolfKillId);
+    if (poisonKillId && poisonKillId !== wolfKillId) deathIds.push(poisonKillId);
+
+    // Apply deaths, detect Hunter
+    let hunterPendingInfo: HunterPendingInfo | undefined;
+    const killedNames: string[] = [];
+    for (const deadId of deathIds) {
+      const deadPlayer = room.players.find(p => p.id === deadId);
+      if (deadPlayer && deadPlayer.isAlive) {
+        deadPlayer.isAlive = false;
+        killedNames.push(deadPlayer.name);
+        if (this.roleMap.get(deadId) === 'hunter' && !hunterPendingInfo) {
+          const availableTargetIds = room.players.filter(p => p.isAlive).map(p => p.id);
+          hunterPendingInfo = { hunterId: deadId, availableTargetIds };
+        }
+      }
+    }
+
+    // ── Seer result ────────────────────────────────────────────────────────────
 
     let seerResult: SeerResultData | undefined;
     if (seerTargetId) {
@@ -403,29 +570,44 @@ export class RoomManager {
       }
     }
 
+    // ── Win check (before hunter shot) ────────────────────────────────────────
+
     const winner = this.checkWin(room);
+
+    const deadDesc = killedNames.length === 0
+      ? 'No one was harmed.'
+      : killedNames.length === 1
+        ? `${killedNames[0]} was found dead in the village square. Their role remains unknown.`
+        : `${killedNames.join(' and ')} were found dead. Their roles remain unknown.`;
+
     if (winner) {
+      // Game over — no hunter shot
       room.phase  = 'ended';
       room.winner = winner;
       room.phaseEndAt = null;
-      room.lastAnnouncement = killed
-        ? `${killed.name} was claimed by the night. Their secret died with them.`
-        : 'The night has passed.';
-      this.addEvent(room, killed ? `${killed.name} was found dead at dawn.` : 'A quiet night passed. No one was harmed.');
+      room.lastAnnouncement = `Dawn breaks. ${deadDesc}`;
+      this.addEvent(room, killedNames.length ? `${killedNames.join(', ')} found dead at dawn.` : 'A quiet night passed. No one was harmed.');
       this.addEvent(room, winner === 'village' ? 'The village triumphed. All werewolves are gone.' : 'The werewolves claim the village.');
       this.revealAllRoles(room);
-    } else {
-      room.phase   = 'day';
-      room.phaseEndAt = Date.now() + PHASE_DURATIONS.day;
-      room.suspicionMap = {};
-      room.lastAnnouncement = killed
-        ? `Dawn breaks. ${killed.name} was found dead in the village square. Their role remains unknown.`
-        : 'A quiet night passes. No one was found dead.';
-      this.addEvent(room, killed ? `${killed.name} was found dead at dawn.` : 'A quiet night passed. No one was harmed.');
-      this.addEvent(room, 'Dawn breaks. The village wakes to discuss.');
+      return { seerResult };
     }
 
-    return { seerResult };
+    // ── Transition to day (with or without hunter pause) ──────────────────────
+
+    room.phase         = 'day';
+    room.suspicionMap  = {};
+    room.lastAnnouncement = `Dawn breaks. ${deadDesc}${hunterPendingInfo ? ' The Hunter\'s eyes still burn — a final shot is coming.' : ''}`;
+    this.addEvent(room, killedNames.length ? `${killedNames.join(', ')} found dead at dawn.` : 'A quiet night passed. No one was harmed.');
+    this.addEvent(room, 'Dawn breaks. The village wakes to discuss.');
+
+    if (hunterPendingInfo) {
+      room.hunterPendingShot = hunterPendingInfo.hunterId;
+      room.phaseEndAt        = null; // timer starts AFTER hunter resolves
+    } else {
+      room.phaseEndAt        = Date.now() + PHASE_DURATIONS.day;
+    }
+
+    return { seerResult, hunterPendingInfo };
   }
 
   // ── Day → Voting ─────────────────────────────────────────────────────────────
@@ -445,11 +627,11 @@ export class RoomManager {
   }
 
   private transitionToVoting(room: RoomState): { ok: boolean; room: RoomState } {
-    room.phase      = 'voting';
-    room.publicVotes = { hasVoted: [], tally: {} };
+    room.phase        = 'voting';
+    room.publicVotes  = { hasVoted: [], tally: {} };
     room.lastAnnouncement = null;
-    room.phaseEndAt = Date.now() + PHASE_DURATIONS.voting;
-    room.timerPaused = false;
+    room.phaseEndAt   = Date.now() + PHASE_DURATIONS.voting;
+    room.timerPaused  = false;
     room.pausedTimeRemaining = null;
     this.dayVotes.delete(room.code);
     this.addEvent(room, 'The village gathers to cast their votes.');
@@ -462,18 +644,14 @@ export class RoomManager {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.phase !== 'day') return { ok: false, error: 'Suspicion marks are only available during day phase.' };
-
     const marker = room.players.find(p => p.id === persistentId);
     if (!marker?.isAlive) return { ok: false, error: 'Only alive players can mark suspicion.' };
-
     const target = room.players.find(p => p.id === targetId);
     if (!target?.isAlive) return { ok: false, error: 'Cannot mark a dead player.' };
     if (targetId === persistentId) return { ok: false, error: 'Cannot mark yourself as suspicious.' };
-
     if (!room.suspicionMap) room.suspicionMap = {};
-    const markers = room.suspicionMap[targetId] ?? [];
+    const markers      = room.suspicionMap[targetId] ?? [];
     const alreadyMarked = markers.includes(persistentId);
-
     if (alreadyMarked) {
       const updated = markers.filter(id => id !== persistentId);
       if (updated.length === 0) delete room.suspicionMap[targetId];
@@ -483,7 +661,6 @@ export class RoomManager {
       if (myMarkCount >= 2) return { ok: false, error: 'You can only mark up to 2 players as suspicious.' };
       room.suspicionMap[targetId] = [...markers, persistentId];
     }
-
     return { ok: true, room };
   }
 
@@ -492,15 +669,13 @@ export class RoomManager {
   submitVote(
     persistentId: string,
     targetId: string
-  ): { ok: boolean; error?: string; room?: RoomState } {
+  ): { ok: boolean; error?: string; room?: RoomState; hunterPendingInfo?: HunterPendingInfo } {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.phase !== 'voting') return { ok: false, error: 'Not voting phase.' };
-
     const voter = room.players.find(p => p.id === persistentId);
     if (!voter?.isAlive) return { ok: false, error: 'Only alive players can vote.' };
     if (room.publicVotes?.hasVoted.includes(persistentId)) return { ok: false, error: 'You have already voted.' };
-
     const target = room.players.find(p => p.id === targetId);
     if (!target) return { ok: false, error: 'Invalid target.' };
     if (!target.isAlive) return { ok: false, error: 'Cannot vote for a dead player.' };
@@ -508,42 +683,39 @@ export class RoomManager {
 
     if (!this.dayVotes.has(room.code)) this.dayVotes.set(room.code, new Map());
     this.dayVotes.get(room.code)!.set(persistentId, targetId);
-
     if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {} };
     room.publicVotes.hasVoted.push(persistentId);
     room.publicVotes.tally[targetId] = (room.publicVotes.tally[targetId] ?? 0) + 1;
 
     const alivePlayers = room.players.filter(p => p.isAlive);
     if (alivePlayers.every(p => room.publicVotes!.hasVoted.includes(p.id))) {
-      this.resolveVoting(room);
+      const hunterPendingInfo = this.resolveVoting(room);
+      return { ok: true, room, hunterPendingInfo };
     }
-
     return { ok: true, room };
   }
 
-  forceResolveVoting(roomCode: string): { ok: boolean; room?: RoomState } {
+  forceResolveVoting(roomCode: string): { ok: boolean; room?: RoomState; hunterPendingInfo?: HunterPendingInfo } {
     const room = this.rooms.get(roomCode);
     if (!room || room.phase !== 'voting') return { ok: false };
-    this.resolveVoting(room);
-    return { ok: true, room };
+    const hunterPendingInfo = this.resolveVoting(room);
+    return { ok: true, room, hunterPendingInfo };
   }
 
-  private resolveVoting(room: RoomState): void {
+  private resolveVoting(room: RoomState): HunterPendingInfo | undefined {
     const votes = this.dayVotes.get(room.code);
     this.dayVotes.delete(room.code);
-
-    room.timerPaused = false;
+    room.timerPaused         = false;
     room.pausedTimeRemaining = null;
 
     const eliminatedId = votes ? tallyVotes(votes) : null;
     const eliminated   = eliminatedId ? room.players.find(p => p.id === eliminatedId) : null;
     if (eliminated) {
-      eliminated.isAlive = false;
+      eliminated.isAlive     = false;
       eliminated.revealedRole = this.roleMap.get(eliminatedId!);
     }
 
     room.publicVotes = null;
-
     const winner   = this.checkWin(room);
     const roleLabel = eliminated?.revealedRole
       ? `the ${eliminated.revealedRole.charAt(0).toUpperCase() + eliminated.revealedRole.slice(1)}`
@@ -559,54 +731,44 @@ export class RoomManager {
       this.addEvent(room, eliminated ? `${eliminated.name} was exiled (${roleLabel}).` : 'The vote was tied. No one was exiled.');
       this.addEvent(room, winner === 'village' ? 'The village triumphed. All werewolves are gone.' : 'The werewolves claim the village.');
       this.revealAllRoles(room);
-    } else {
-      room.round++;
-      room.phase   = 'night';
-      room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
-      room.lastAnnouncement = eliminated
-        ? `${eliminated.name} has been exiled from the village. They were ${roleLabel}. Night falls once more.`
-        : 'The vote ended in a tie. No one was exiled. Night falls.';
-      this.addEvent(room, eliminated ? `${eliminated.name} was exiled (${roleLabel}).` : 'The vote was tied. No one was exiled.');
-      this.addEvent(room, 'Night falls once more. All close their eyes.');
+      return undefined;
     }
+
+    // Check Hunter trigger AFTER win check
+    const isHunter = eliminated && this.roleMap.get(eliminatedId!) === 'hunter';
+    room.round++;
+    room.phase = 'night';
+
+    if (isHunter) {
+      const availableTargetIds = room.players.filter(p => p.isAlive).map(p => p.id);
+      room.hunterPendingShot = eliminatedId!;
+      room.phaseEndAt        = null; // timer starts after hunter resolves
+      room.lastAnnouncement  = eliminated
+        ? `${eliminated.name} was exiled (${roleLabel}). Their eyes burn — the Hunter's shot is not spent.`
+        : 'The vote was tied. No one was exiled.';
+      this.addEvent(room, `${eliminated!.name} was exiled (${roleLabel}).`);
+      this.addEvent(room, 'The Hunter readies one final shot before falling.');
+      return { hunterId: eliminatedId!, availableTargetIds };
+    }
+
+    room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
+    room.lastAnnouncement = eliminated
+      ? `${eliminated.name} has been exiled (${roleLabel}). Night falls once more.`
+      : 'The vote ended in a tie. No one was exiled. Night falls.';
+    this.addEvent(room, eliminated ? `${eliminated.name} was exiled (${roleLabel}).` : 'The vote was tied. No one was exiled.');
+    this.addEvent(room, 'Night falls once more. All close their eyes.');
+    return undefined;
   }
 
   // ── Post-game controls ───────────────────────────────────────────────────────
 
-  restartGame(
-    persistentId: string
-  ): { room: RoomState; roleMap: Map<string, Role> } | { error: string } | null {
+  restartGame(persistentId: string): { room: RoomState; roleMap: Map<string, Role> } | { error: string } | null {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return null;
     if (room.hostId !== persistentId) return { error: 'Only the host can restart the game.' };
     if (room.phase !== 'ended') return { error: 'Game is not over yet.' };
     if (room.players.length < room.minPlayers) return { error: `Need at least ${room.minPlayers} players to restart.` };
-
-    const roleMap = assignRoles(room.players.map(p => p.id));
-    for (const [pid, role] of roleMap) this.roleMap.set(pid, role);
-
-    room.players.forEach(p => { p.isAlive = true; delete p.revealedRole; });
-    this.nightVotes.delete(room.code);
-    this.seerChoices.delete(room.code);
-    this.doctorChoices.delete(room.code);
-    this.dayVotes.delete(room.code);
-
-    room.phase   = 'night';
-    room.round   = 1;
-    room.winner  = null;
-    room.lastAnnouncement = null;
-    room.publicVotes = null;
-    room.readyPlayers = [];
-    room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
-    room.timerPaused = false;
-    room.pausedTimeRemaining = null;
-    room.eventLog = [];
-
-    room.suspicionMap = {};
-    this.addEvent(room, 'A new game has begun. Roles have been reassigned.');
-    this.addEvent(room, 'Night falls upon the village. All close their eyes.');
-
-    return { room, roleMap };
+    return this.doStartNewRound(room);
   }
 
   returnToLobby(persistentId: string): RoomState | { error: string } | null {
@@ -614,7 +776,6 @@ export class RoomManager {
     if (!room) return null;
     if (room.hostId !== persistentId) return { error: 'Only the host can return to lobby.' };
     if (room.phase !== 'ended') return { error: 'Game is not over yet.' };
-
     this.clearRoomGameState(room);
     return room;
   }
@@ -628,30 +789,22 @@ export class RoomManager {
     return { ok: true, room };
   }
 
-  kickPlayer(
-    hostPid: string,
-    targetPid: string
-  ): { ok: boolean; error?: string; room?: RoomState; kickedSocketId?: string } {
+  kickPlayer(hostPid: string, targetPid: string): { ok: boolean; error?: string; room?: RoomState; kickedSocketId?: string } {
     const check = this.requireHost(hostPid);
     if (!check.ok) return check;
     const room = check.room;
-
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only kick players in the lobby.' };
     if (targetPid === hostPid) return { ok: false, error: 'Cannot kick yourself.' };
-
     const target = room.players.find(p => p.id === targetPid);
     if (!target) return { ok: false, error: 'Player not found.' };
-
     const kickedSocketId = this.playerToSocket.get(targetPid);
     const socketId = this.playerToSocket.get(targetPid);
     if (socketId) this.socketToPlayer.delete(socketId);
     this.playerToSocket.delete(targetPid);
-
     room.players = room.players.filter(p => p.id !== targetPid);
     room.readyPlayers = room.readyPlayers.filter(id => id !== targetPid);
     this.playerRoomMap.delete(targetPid);
     this.roleMap.delete(targetPid);
-
     this.addEvent(room, `${target.name} was removed from the room by the host.`);
     return { ok: true, room, kickedSocketId };
   }
@@ -661,7 +814,7 @@ export class RoomManager {
     if (!check.ok) return check;
     const room = check.room;
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only lock the room in lobby.' };
-    if (room.isLocked) return { ok: true, room }; // idempotent
+    if (room.isLocked) return { ok: true, room };
     room.isLocked = true;
     this.addEvent(room, 'The room has been locked by the host. No new players can join.');
     return { ok: true, room };
@@ -671,7 +824,7 @@ export class RoomManager {
     const check = this.requireHost(hostPid);
     if (!check.ok) return check;
     const room = check.room;
-    if (!room.isLocked) return { ok: true, room }; // idempotent
+    if (!room.isLocked) return { ok: true, room };
     room.isLocked = false;
     this.addEvent(room, 'The room has been unlocked by the host.');
     return { ok: true, room };
@@ -695,9 +848,7 @@ export class RoomManager {
     'Sable', 'Thane', 'Urien', 'Vance', 'Wulfric', 'Xander',
   ];
 
-  hasBots(roomCode: string): boolean {
-    return this.rooms.get(roomCode)?.players.some(p => p.isBot) ?? false;
-  }
+  hasBots(roomCode: string): boolean { return this.rooms.get(roomCode)?.players.some(p => p.isBot) ?? false; }
 
   addBot(hostPid: string): { ok: boolean; error?: string; room?: RoomState } {
     const check = this.requireHost(hostPid);
@@ -705,19 +856,14 @@ export class RoomManager {
     const room = check.room;
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only add bots in lobby.' };
     if (room.players.length >= room.maxPlayers) return { ok: false, error: 'Room is full.' };
-
     const usedNames = new Set(room.players.map(p => p.name));
     const available = this.BOT_NAMES.filter(n => !usedNames.has(n));
-    const name = available.length > 0
-      ? pickRandom(available)
-      : `Bot-${Math.floor(Math.random() * 1000)}`;
-
+    const name = available.length > 0 ? pickRandom(available) : `Bot-${Math.floor(Math.random() * 1000)}`;
     const botId = `bot_${Math.random().toString(36).slice(2, 10)}`;
     const bot: Player = { id: botId, name, isHost: false, isConnected: true, isAlive: true, isBot: true };
     room.players.push(bot);
-    room.readyPlayers.push(botId); // auto-ready
+    room.readyPlayers.push(botId);
     this.playerRoomMap.set(botId, room.code);
-
     return { ok: true, room };
   }
 
@@ -726,13 +872,8 @@ export class RoomManager {
     if (!check.ok) return check;
     const room = check.room;
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only add bots in lobby.' };
-
-    const clampedTarget = Math.min(target, room.maxPlayers);
-    while (room.players.length < clampedTarget) {
-      const res = this.addBot(hostPid);
-      if (!res.ok) break;
-    }
-
+    const clamped = Math.min(target, room.maxPlayers);
+    while (room.players.length < clamped) { const res = this.addBot(hostPid); if (!res.ok) break; }
     return { ok: true, room };
   }
 
@@ -741,7 +882,6 @@ export class RoomManager {
     if (!check.ok) return check;
     const room = check.room;
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only remove bots in lobby.' };
-
     const botIds = room.players.filter(p => p.isBot).map(p => p.id);
     for (const botId of botIds) {
       room.players = room.players.filter(p => p.id !== botId);
@@ -749,44 +889,62 @@ export class RoomManager {
       this.playerRoomMap.delete(botId);
       this.roleMap.delete(botId);
     }
-
     return { ok: true, room };
   }
 
-  // Auto-submit random night actions for alive bots; returns resolved=true if night ends
-  runBotNightActions(roomCode: string): { resolved: boolean; room?: RoomState; seerResult?: SeerResultData } {
+  runBotNightActions(roomCode: string): { resolved: boolean; room?: RoomState; seerResult?: SeerResultData; witchNeedsInfo?: WitchNightInfo; hunterPendingInfo?: HunterPendingInfo } {
     const room = this.rooms.get(roomCode);
     if (!room || room.phase !== 'night') return { resolved: false };
 
     for (const bot of room.players.filter(p => p.isAlive && p.isBot)) {
       const role = this.roleMap.get(bot.id);
       if (!role) continue;
-
-      if (role === 'werewolf') {
-        if (!this.nightVotes.has(roomCode)) this.nightVotes.set(roomCode, new Map());
-        if (!this.nightVotes.get(roomCode)!.has(bot.id)) {
-          const targets = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) !== 'werewolf');
-          if (targets.length > 0) this.nightVotes.get(roomCode)!.set(bot.id, pickRandom(targets).id);
+      switch (role) {
+        case 'werewolf': {
+          if (!this.nightVotes.has(roomCode)) this.nightVotes.set(roomCode, new Map());
+          if (!this.nightVotes.get(roomCode)!.has(bot.id)) {
+            const targets = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) !== 'werewolf');
+            if (targets.length > 0) this.nightVotes.get(roomCode)!.set(bot.id, pickRandom(targets).id);
+          }
+          break;
         }
-      } else if (role === 'seer' && !this.seerChoices.has(roomCode)) {
-        const targets = room.players.filter(p => p.isAlive && p.id !== bot.id);
-        if (targets.length > 0) this.seerChoices.set(roomCode, pickRandom(targets).id);
-      } else if (role === 'doctor' && !this.doctorChoices.has(roomCode)) {
-        const targets = room.players.filter(p => p.isAlive);
-        if (targets.length > 0) this.doctorChoices.set(roomCode, pickRandom(targets).id);
+        case 'seer':
+          if (!this.seerChoices.has(roomCode)) {
+            const targets = room.players.filter(p => p.isAlive && p.id !== bot.id);
+            if (targets.length > 0) this.seerChoices.set(roomCode, pickRandom(targets).id);
+          }
+          break;
+        case 'doctor':
+          if (!this.doctorChoices.has(roomCode)) {
+            const targets = room.players.filter(p => p.isAlive);
+            if (targets.length > 0) this.doctorChoices.set(roomCode, pickRandom(targets).id);
+          }
+          break;
+        case 'bodyguard': {
+          if (!this.bodyguardChoices.has(roomCode)) {
+            const lastProtected = this.bodyguardLastProtected.get(roomCode);
+            const targets = room.players.filter(p => p.isAlive && p.id !== lastProtected);
+            const fallback = room.players.filter(p => p.isAlive);
+            const pool = targets.length > 0 ? targets : fallback;
+            if (pool.length > 0) this.bodyguardChoices.set(roomCode, pickRandom(pool).id);
+          }
+          break;
+        }
+        case 'witch':
+          // Bot witch does nothing
+          if (!this.witchAction.has(roomCode)) this.witchAction.set(roomCode, { save: false, poisonTargetId: null });
+          break;
       }
     }
 
     if (this.isNightReady(room)) {
-      const seerResult = this.resolveNight(room);
-      return { resolved: true, room, ...seerResult };
+      const resolution = this.resolveNight(room);
+      return { resolved: true, room, ...resolution };
     }
-
     return { resolved: false };
   }
 
-  // Auto-submit random votes for alive bots; returns resolved=true if voting ends
-  runBotVotes(roomCode: string): { resolved: boolean; room?: RoomState } {
+  runBotVotes(roomCode: string): { resolved: boolean; room?: RoomState; hunterPendingInfo?: HunterPendingInfo } {
     const room = this.rooms.get(roomCode);
     if (!room || room.phase !== 'voting') return { resolved: false };
 
@@ -804,12 +962,13 @@ export class RoomManager {
 
     const alive = room.players.filter(p => p.isAlive);
     if (alive.every(p => room.publicVotes!.hasVoted.includes(p.id))) {
-      this.resolveVoting(room);
-      return { resolved: true, room };
+      const hunterPendingInfo = this.resolveVoting(room);
+      return { resolved: true, room, hunterPendingInfo };
     }
-
     return { resolved: false, room };
   }
+
+  // ── Timer controls ───────────────────────────────────────────────────────────
 
   pauseTimer(hostPid: string): { ok: boolean; error?: string; room?: RoomState } {
     const check = this.requireHost(hostPid);
@@ -818,10 +977,9 @@ export class RoomManager {
     if (!['night', 'day', 'voting'].includes(room.phase)) return { ok: false, error: 'No active timer.' };
     if (room.timerPaused) return { ok: false, error: 'Timer is already paused.' };
     if (!room.phaseEndAt) return { ok: false, error: 'No timer running.' };
-
     room.pausedTimeRemaining = Math.max(0, room.phaseEndAt - Date.now());
-    room.phaseEndAt = null;
-    room.timerPaused = true;
+    room.phaseEndAt          = null;
+    room.timerPaused         = true;
     this.addEvent(room, 'The phase timer has been paused by the host.');
     return { ok: true, room };
   }
@@ -831,24 +989,19 @@ export class RoomManager {
     if (!check.ok) return check;
     const room = check.room;
     if (!room.timerPaused) return { ok: false, error: 'Timer is not paused.' };
-
     const remaining = room.pausedTimeRemaining ?? PHASE_DURATIONS[room.phase] ?? 60_000;
-    room.phaseEndAt = Date.now() + remaining;
-    room.timerPaused = false;
+    room.phaseEndAt          = Date.now() + remaining;
+    room.timerPaused         = false;
     room.pausedTimeRemaining = null;
     this.addEvent(room, 'The phase timer has been resumed by the host.');
     return { ok: true, room };
   }
 
-  extendTimer(
-    hostPid: string,
-    extraSeconds: number
-  ): { ok: boolean; error?: string; room?: RoomState } {
+  extendTimer(hostPid: string, extraSeconds: number): { ok: boolean; error?: string; room?: RoomState } {
     const check = this.requireHost(hostPid);
     if (!check.ok) return check;
     const room = check.room;
     if (!['night', 'day', 'voting'].includes(room.phase)) return { ok: false, error: 'No active timer.' };
-
     const extraMs = extraSeconds * 1000;
     if (room.timerPaused) {
       room.pausedTimeRemaining = (room.pausedTimeRemaining ?? 0) + extraMs;
@@ -860,11 +1013,10 @@ export class RoomManager {
     return { ok: true, room };
   }
 
-  hostEndPhase(hostPid: string): { ok: boolean; error?: string; room?: RoomState; seerResult?: SeerResultData } {
+  hostEndPhase(hostPid: string): { ok: boolean; error?: string; room?: RoomState; seerResult?: SeerResultData; hunterPendingInfo?: HunterPendingInfo } {
     const check = this.requireHost(hostPid);
     if (!check.ok) return { ok: false, error: check.error };
     const room = check.room;
-
     if (room.phase === 'night') {
       this.addEvent(room, 'The host ended the night phase early.');
       return this.forceNightResolve(room.code);
@@ -880,40 +1032,13 @@ export class RoomManager {
     return { ok: false, error: 'Not in an active game phase.' };
   }
 
-  hostRestartGame(
-    hostPid: string
-  ): { room: RoomState; roleMap: Map<string, Role> } | { error: string } | null {
+  hostRestartGame(hostPid: string): { room: RoomState; roleMap: Map<string, Role> } | { error: string } | null {
     const room = this.getRoomByPlayer(hostPid);
     if (!room) return null;
     if (room.hostId !== hostPid) return { error: 'Only the host can restart the game.' };
     if (room.phase === 'lobby') return { error: 'Game has not started yet.' };
     if (room.players.length < room.minPlayers) return { error: `Need at least ${room.minPlayers} players.` };
-
-    const roleMap = assignRoles(room.players.map(p => p.id));
-    for (const [pid, role] of roleMap) this.roleMap.set(pid, role);
-
-    room.players.forEach(p => { p.isAlive = true; delete p.revealedRole; });
-    this.nightVotes.delete(room.code);
-    this.seerChoices.delete(room.code);
-    this.doctorChoices.delete(room.code);
-    this.dayVotes.delete(room.code);
-
-    room.phase = 'night';
-    room.round = 1;
-    room.winner = null;
-    room.lastAnnouncement = null;
-    room.publicVotes = null;
-    room.readyPlayers = [];
-    room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
-    room.timerPaused = false;
-    room.pausedTimeRemaining = null;
-    room.eventLog = [];
-
-    room.suspicionMap = {};
-    this.addEvent(room, 'The host has restarted the game. New roles assigned.');
-    this.addEvent(room, 'Night falls upon the village. All close their eyes.');
-
-    return { room, roleMap };
+    return this.doStartNewRound(room);
   }
 
   hostReturnToLobby(hostPid: string): RoomState | { error: string } | null {
@@ -921,12 +1046,46 @@ export class RoomManager {
     if (!room) return null;
     if (room.hostId !== hostPid) return { error: 'Only the host can return to lobby.' };
     if (room.phase === 'lobby') return { error: 'Already in lobby.' };
-
     this.clearRoomGameState(room);
     return room;
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  private doStartNewRound(room: RoomState): { room: RoomState; roleMap: Map<string, Role> } {
+    const roleMap = assignRoles(room.players.map(p => p.id));
+    for (const [pid, role] of roleMap) this.roleMap.set(pid, role);
+    room.players.forEach(p => { p.isAlive = true; delete p.revealedRole; });
+    room.phase            = 'night';
+    room.round            = 1;
+    room.winner           = null;
+    room.lastAnnouncement = null;
+    room.publicVotes      = null;
+    room.readyPlayers     = [];
+    room.phaseEndAt       = Date.now() + PHASE_DURATIONS.night;
+    room.timerPaused      = false;
+    room.pausedTimeRemaining = null;
+    room.eventLog         = [];
+    room.suspicionMap     = {};
+    room.hunterPendingShot = null;
+    this.clearNightMaps(room.code);
+    this.dayVotes.delete(room.code);
+    this.witchSaveUsed.delete(room.code);
+    this.witchPoisonUsed.delete(room.code);
+    this.bodyguardLastProtected.delete(room.code);
+    this.addEvent(room, 'A new game has begun. Roles have been reassigned.');
+    this.addEvent(room, 'Night falls upon the village. All close their eyes.');
+    return { room, roleMap };
+  }
+
+  private clearNightMaps(roomCode: string): void {
+    this.nightVotes.delete(roomCode);
+    this.seerChoices.delete(roomCode);
+    this.doctorChoices.delete(roomCode);
+    this.bodyguardChoices.delete(roomCode);
+    this.witchAction.delete(roomCode);
+    this.witchPhase1Done.delete(roomCode);
+  }
 
   private clearRoomGameState(room: RoomState): void {
     for (const player of room.players) {
@@ -934,41 +1093,38 @@ export class RoomManager {
       delete player.revealedRole;
       player.isAlive = true;
     }
-    this.nightVotes.delete(room.code);
-    this.seerChoices.delete(room.code);
-    this.doctorChoices.delete(room.code);
+    this.clearNightMaps(room.code);
     this.dayVotes.delete(room.code);
-
-    room.phase = 'lobby';
-    room.round = 0;
-    room.winner = null;
+    this.witchSaveUsed.delete(room.code);
+    this.witchPoisonUsed.delete(room.code);
+    this.bodyguardLastProtected.delete(room.code);
+    room.phase            = 'lobby';
+    room.round            = 0;
+    room.winner           = null;
     room.lastAnnouncement = null;
-    room.publicVotes = null;
-    room.readyPlayers = [];
-    room.phaseEndAt = null;
-    room.timerPaused = false;
+    room.publicVotes      = null;
+    room.readyPlayers     = [];
+    room.phaseEndAt       = null;
+    room.timerPaused      = false;
     room.pausedTimeRemaining = null;
-    room.suspicionMap = {};
+    room.suspicionMap     = {};
+    room.hunterPendingShot = null;
   }
 
   private checkWin(room: RoomState): 'village' | 'werewolf' | null {
-    const aliveWolves     = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) === 'werewolf').length;
-    const aliveVillagers  = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) !== 'werewolf').length;
+    const aliveWolves    = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) === 'werewolf').length;
+    const aliveVillagers = room.players.filter(p => p.isAlive && this.roleMap.get(p.id) !== 'werewolf').length;
     if (aliveWolves === 0) return 'village';
     if (aliveWolves >= aliveVillagers) return 'werewolf';
     return null;
   }
 
   private revealAllRoles(room: RoomState): void {
-    for (const player of room.players) {
-      player.revealedRole = this.roleMap.get(player.id);
-    }
+    for (const player of room.players) player.revealedRole = this.roleMap.get(player.id);
   }
 
   private addEvent(room: RoomState, text: string): void {
     room.eventLog.push({ id: makeEventId(), text, timestamp: Date.now() });
-    if (room.eventLog.length > MAX_EVENT_LOG) {
-      room.eventLog = room.eventLog.slice(room.eventLog.length - MAX_EVENT_LOG);
-    }
+    if (room.eventLog.length > MAX_EVENT_LOG) room.eventLog = room.eventLog.slice(room.eventLog.length - MAX_EVENT_LOG);
   }
 }

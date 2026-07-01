@@ -14,6 +14,13 @@ export interface DayReaction {
   targetName: string;
 }
 
+export interface WitchNightInfo {
+  attackedPlayerId:   string | null;
+  attackedPlayerName: string | null;
+  savePotionUsed:     boolean;
+  poisonPotionUsed:   boolean;
+}
+
 interface GameStore {
   room: RoomState | null;
   playerId: string | null;
@@ -21,6 +28,8 @@ interface GameStore {
   werewolfIds: string[];
   seerLog: SeerEntry[];
   dayReactions: DayReaction[];
+  witchNightInfo: WitchNightInfo | null;
+  witchActionSubmitted: boolean;
   error: string | null;
   isConnected: boolean;
 
@@ -30,6 +39,8 @@ interface GameStore {
   addSeerResult: (entry: SeerEntry) => void;
   addDayReaction: (r: DayReaction) => void;
   clearDayReactions: () => void;
+  setWitchNightInfo: (info: WitchNightInfo | null) => void;
+  setWitchActionSubmitted: (v: boolean) => void;
   setError: (error: string | null) => void;
   setConnected: (connected: boolean) => void;
   clearGameState: () => void;
@@ -43,20 +54,30 @@ export const useGameStore = create<GameStore>((set) => ({
   werewolfIds: [],
   seerLog: [],
   dayReactions: [],
+  witchNightInfo: null,
+  witchActionSubmitted: false,
   error: null,
   isConnected: false,
 
-  setRoom: (room, playerId) => set({ room, playerId, error: null }),
+  setRoom:    (room, playerId) => set({ room, playerId, error: null }),
   updateRoom: (room) => set({ room }),
-  setMyRole: (myRole, werewolfIds) => set({ myRole, werewolfIds }),
+  setMyRole:  (myRole, werewolfIds) => set({ myRole, werewolfIds }),
   addSeerResult: (entry) => set(s => ({ seerLog: [...s.seerLog, entry] })),
   addDayReaction: (r) => set(s => {
     const deduped = s.dayReactions.filter(x => !(x.fromName === r.fromName && x.targetName === r.targetName));
     return { dayReactions: [...deduped.slice(-2), r] };
   }),
   clearDayReactions: () => set({ dayReactions: [] }),
-  setError: (error) => set({ error }),
+  setWitchNightInfo:     (witchNightInfo) => set({ witchNightInfo }),
+  setWitchActionSubmitted: (witchActionSubmitted) => set({ witchActionSubmitted }),
+  setError:     (error) => set({ error }),
   setConnected: (isConnected) => set({ isConnected }),
-  clearGameState: () => set({ myRole: null, werewolfIds: [], seerLog: [], dayReactions: [] }),
-  clearRoom: () => set({ room: null, playerId: null, myRole: null, werewolfIds: [], seerLog: [], dayReactions: [] }),
+  clearGameState: () => set({
+    myRole: null, werewolfIds: [], seerLog: [], dayReactions: [],
+    witchNightInfo: null, witchActionSubmitted: false,
+  }),
+  clearRoom: () => set({
+    room: null, playerId: null, myRole: null, werewolfIds: [], seerLog: [], dayReactions: [],
+    witchNightInfo: null, witchActionSubmitted: false,
+  }),
 }));

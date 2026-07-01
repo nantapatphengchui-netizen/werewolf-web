@@ -1,14 +1,9 @@
 import type { Server, Socket } from 'socket.io';
-import type {
-  ServerToClientEvents,
-  ClientToServerEvents,
-  InterServerEvents,
-  SocketData,
-} from '../types/events';
+import type { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData } from '../types/events';
 import type { GamePhase } from '../types/game';
 import { RoomManager, PHASE_DURATIONS } from '../game/RoomManager';
 
-type IO = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
+type IO   = Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 type Sock = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>;
 
 const TEST_BOTS_ENABLED = process.env.ENABLE_TEST_BOTS === 'true';
@@ -24,8 +19,7 @@ function clearBotTimer(roomCode: string): void {
 
 function scheduleBotActions(roomCode: string, phase: GamePhase, io: IO, rooms: RoomManager): void {
   clearBotTimer(roomCode);
-  if (!TEST_BOTS_ENABLED) return;
-  if (!rooms.hasBots(roomCode)) return;
+  if (!TEST_BOTS_ENABLED || !rooms.hasBots(roomCode)) return;
   if (phase !== 'night' && phase !== 'voting') return;
 
   botTimers.set(roomCode, setTimeout(() => {
@@ -35,6 +29,16 @@ function scheduleBotActions(roomCode: string, phase: GamePhase, io: IO, rooms: R
       const result = rooms.runBotNightActions(roomCode);
       if (result.resolved && result.room) {
         clearPhaseTimer(roomCode);
+        // Send witch night info if needed
+        if (result.witchNeedsInfo) {
+          const { witchId, attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed } = result.witchNeedsInfo;
+          const witchSocketId = rooms.getSocketId(witchId);
+          const witchSocket = witchSocketId ? io.sockets.sockets.get(witchSocketId) : undefined;
+          if (witchSocket && !witchSocket.data.playerId.startsWith('bot_')) {
+            witchSocket.emit('witch_night_info', { attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed });
+          }
+          // witch is a bot — it already auto-acted, so this branch shouldn't normally fire
+        }
         io.to(roomCode).emit('room_updated', { room: result.room });
         if (result.seerResult) {
           const { seerId, targetId: tid, targetName, role, round } = result.seerResult;
@@ -45,7 +49,9 @@ function scheduleBotActions(roomCode: string, phase: GamePhase, io: IO, rooms: R
             sock?.emit('seer_result', { round, targetId: tid, targetName, role });
           }
         }
-        if (result.room.phaseEndAt) {
+        if (result.hunterPendingInfo) {
+          emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, roomCode, io, rooms);
+        } else if (result.room.phaseEndAt) {
           schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
         }
       }
@@ -54,15 +60,19 @@ function scheduleBotActions(roomCode: string, phase: GamePhase, io: IO, rooms: R
       if (result.room) {
         if (result.resolved) clearPhaseTimer(roomCode);
         io.to(roomCode).emit('room_updated', { room: result.room });
-        if (result.resolved && result.room.phaseEndAt) {
-          schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
+        if (result.resolved) {
+          if (result.hunterPendingInfo) {
+            emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, roomCode, io, rooms);
+          } else if (result.room.phaseEndAt) {
+            schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
+          }
         }
       }
     }
   }, 2000));
 }
 
-// ── Phase timers (module-level: survive across connections) ──────────────────
+// ── Phase timers ─────────────────────────────────────────────────────────────
 
 const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -87,7 +97,9 @@ function schedulePhaseTimer(roomCode: string, phase: GamePhase, endAt: number, i
           const seerSocket = seerSocketId ? io.sockets.sockets.get(seerSocketId) : undefined;
           seerSocket?.emit('seer_result', { round, targetId: tid, targetName, role });
         }
-        if (result.room.phaseEndAt) {
+        if (result.hunterPendingInfo) {
+          emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, roomCode, io, rooms);
+        } else if (result.room.phaseEndAt) {
           schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
         }
         console.log(`[timer] night expired → ${result.room.phase} in ${roomCode}`);
@@ -96,16 +108,16 @@ function schedulePhaseTimer(roomCode: string, phase: GamePhase, endAt: number, i
       const result = rooms.forceAdvanceDay(roomCode);
       if (result.ok && result.room) {
         io.to(roomCode).emit('room_updated', { room: result.room });
-        if (result.room.phaseEndAt) {
-          schedulePhaseTimer(roomCode, 'voting', result.room.phaseEndAt, io, rooms);
-        }
+        if (result.room.phaseEndAt) schedulePhaseTimer(roomCode, 'voting', result.room.phaseEndAt, io, rooms);
         console.log(`[timer] day expired → voting in ${roomCode}`);
       }
     } else if (phase === 'voting') {
       const result = rooms.forceResolveVoting(roomCode);
       if (result.ok && result.room) {
         io.to(roomCode).emit('room_updated', { room: result.room });
-        if (result.room.phaseEndAt) {
+        if (result.hunterPendingInfo) {
+          emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, roomCode, io, rooms);
+        } else if (result.room.phaseEndAt) {
           schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
         }
         console.log(`[timer] voting expired → ${result.room.phase} in ${roomCode}`);
@@ -116,10 +128,45 @@ function schedulePhaseTimer(roomCode: string, phase: GamePhase, endAt: number, i
 
 export function clearPhaseTimer(roomCode: string): void {
   const t = phaseTimers.get(roomCode);
-  if (t !== undefined) {
-    clearTimeout(t);
-    phaseTimers.delete(roomCode);
+  if (t !== undefined) { clearTimeout(t); phaseTimers.delete(roomCode); }
+}
+
+// ── Hunter shot timeout ───────────────────────────────────────────────────────
+
+const hunterTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function emitHunterPending(
+  hunterId: string,
+  availableTargetIds: string[],
+  roomCode: string,
+  io: IO,
+  rooms: RoomManager
+): void {
+  // Notify hunter (skip if bot)
+  const hunterSocketId = rooms.getSocketId(hunterId);
+  const hunterSocket   = hunterSocketId ? io.sockets.sockets.get(hunterSocketId) : undefined;
+  if (hunterSocket) {
+    hunterSocket.emit('hunter_shot_pending', { hunterId, availableTargetIds });
   }
+
+  // 30s auto-skip if hunter doesn't shoot
+  const existing = hunterTimers.get(roomCode);
+  if (existing !== undefined) clearTimeout(existing);
+
+  hunterTimers.set(roomCode, setTimeout(() => {
+    hunterTimers.delete(roomCode);
+    const result = rooms.skipHunterShot(roomCode);
+    if (result.ok && result.room) {
+      io.to(roomCode).emit('room_updated', { room: result.room });
+      if (result.room.phaseEndAt) schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
+      console.log(`[hunter] auto-skipped shot in ${roomCode}`);
+    }
+  }, 30_000));
+}
+
+function clearHunterTimer(roomCode: string): void {
+  const t = hunterTimers.get(roomCode);
+  if (t !== undefined) { clearTimeout(t); hunterTimers.delete(roomCode); }
 }
 
 // ── Host transfer timers ─────────────────────────────────────────────────────
@@ -129,38 +176,26 @@ const hostTransferTimers = new Map<string, ReturnType<typeof setTimeout>>();
 function scheduleHostTransfer(roomCode: string, io: IO, rooms: RoomManager): void {
   const existing = hostTransferTimers.get(roomCode);
   if (existing !== undefined) clearTimeout(existing);
-
-  hostTransferTimers.set(
-    roomCode,
-    setTimeout(() => {
-      hostTransferTimers.delete(roomCode);
-      const room = rooms.transferHost(roomCode);
-      if (room) {
-        io.to(roomCode).emit('room_updated', { room });
-        console.log(`[room] Host auto-transferred in ${roomCode}`);
-      }
-    }, 30_000)
-  );
+  hostTransferTimers.set(roomCode, setTimeout(() => {
+    hostTransferTimers.delete(roomCode);
+    const room = rooms.transferHost(roomCode);
+    if (room) { io.to(roomCode).emit('room_updated', { room }); console.log(`[room] Host auto-transferred in ${roomCode}`); }
+  }, 30_000));
 }
 
 export function cancelHostTransfer(roomCode: string): void {
   const t = hostTransferTimers.get(roomCode);
-  if (t !== undefined) {
-    clearTimeout(t);
-    hostTransferTimers.delete(roomCode);
-  }
+  if (t !== undefined) { clearTimeout(t); hostTransferTimers.delete(roomCode); }
 }
 
 // ── Handler registration ─────────────────────────────────────────────────────
 
 export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void {
+
   socket.on('create_room', ({ playerName }) => {
     const name = playerName?.trim();
-    if (!name || name.length < 1 || name.length > 20) {
-      socket.emit('error', { message: 'Name must be 1–20 characters.' });
-      return;
-    }
-    const pid = socket.data.playerId;
+    if (!name || name.length < 1 || name.length > 20) { socket.emit('error', { message: 'Name must be 1–20 characters.' }); return; }
+    const pid  = socket.data.playerId;
     const room = rooms.createRoom(socket.id, pid, name);
     socket.join(room.code);
     socket.emit('room_joined', { room, playerId: pid });
@@ -170,20 +205,11 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   socket.on('join_room', ({ roomCode, playerName }) => {
     const name = playerName?.trim();
     const code = roomCode?.trim().toUpperCase();
-    if (!name || name.length < 1 || name.length > 20) {
-      socket.emit('error', { message: 'Name must be 1–20 characters.' });
-      return;
-    }
-    if (!code || code.length < 4) {
-      socket.emit('error', { message: 'Invalid room code.' });
-      return;
-    }
-    const pid = socket.data.playerId;
+    if (!name || name.length < 1 || name.length > 20) { socket.emit('error', { message: 'Name must be 1–20 characters.' }); return; }
+    if (!code || code.length < 4) { socket.emit('error', { message: 'Invalid room code.' }); return; }
+    const pid    = socket.data.playerId;
     const result = rooms.joinRoom(code, socket.id, pid, name);
-    if ('error' in result) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
+    if ('error' in result) { socket.emit('error', { message: result.error }); return; }
     socket.join(result.code);
     socket.emit('room_joined', { room: result, playerId: pid });
     socket.to(result.code).emit('room_updated', { room: result });
@@ -193,123 +219,139 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   socket.on('leave_room', () => {
     const pid = socket.data.playerId;
     const { roomCode, room } = rooms.leaveRoom(pid);
-    if (roomCode) {
-      socket.leave(roomCode);
-      // Only clear timer when the room was destroyed (no players left)
-      if (!room) clearPhaseTimer(roomCode);
-    }
+    if (roomCode) { socket.leave(roomCode); if (!room) clearPhaseTimer(roomCode); }
     if (room) io.to(room.code).emit('room_updated', { room });
     console.log(`[room] ${pid} left ${roomCode ?? 'unknown'}`);
   });
 
   socket.on('player_ready', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.toggleReady(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
-    if (result.room) {
-      io.to(result.room.code).emit('room_updated', { room: result.room });
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
   socket.on('start_game', () => {
-    const pid = socket.data.playerId;
+    const pid   = socket.data.playerId;
     const check = rooms.canStartGame(pid);
-    if (!check.ok) {
-      socket.emit('error', { message: check.error });
-      return;
-    }
-
+    if (!check.ok) { socket.emit('error', { message: check.error }); return; }
     const result = rooms.startGame(pid);
     if (!result) return;
-
     const { room, roleMap } = result;
     const werewolfIds = rooms.getWerewolfIds(room.code);
-
-    // Broadcast game_started first so the client clears stale state, then deliver
-    // each player's private role — Socket.IO serializes on one TCP connection so
-    // role_assigned always arrives after game_started for that socket.
     io.to(room.code).emit('game_started', { room });
     for (const [persistentId, role] of roleMap) {
-      const socketId = rooms.getSocketId(persistentId);
+      const socketId     = rooms.getSocketId(persistentId);
       const targetSocket = socketId ? io.sockets.sockets.get(socketId) : undefined;
-      if (targetSocket) {
-        targetSocket.emit('role_assigned', { role, werewolfIds: role === 'werewolf' ? werewolfIds : [] });
-      }
+      if (targetSocket) targetSocket.emit('role_assigned', { role, werewolfIds: role === 'werewolf' ? werewolfIds : [] });
     }
-
     if (room.phaseEndAt) schedulePhaseTimer(room.code, room.phase, room.phaseEndAt, io, rooms);
     console.log(`[game] started in ${room.code} — roles assigned to ${roleMap.size} players`);
   });
 
   socket.on('night_action', ({ targetId }) => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.submitNightAction(pid, targetId);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+
+    // Witch needs to be informed before full resolution
+    if (result.witchNeedsInfo) {
+      const { witchId, attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed } = result.witchNeedsInfo;
+      const witchSocketId = rooms.getSocketId(witchId);
+      const witchSocket   = witchSocketId ? io.sockets.sockets.get(witchSocketId) : undefined;
+      witchSocket?.emit('witch_night_info', { attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed });
+      return; // night not yet resolved; don't do anything else yet
     }
+
     if (result.room) {
       clearPhaseTimer(result.room.code);
       io.to(result.room.code).emit('room_updated', { room: result.room });
       if (result.seerResult) {
         const { seerId, targetId: tid, targetName, role, round } = result.seerResult;
         const seerSocketId = rooms.getSocketId(seerId);
-        const seerSocket = seerSocketId ? io.sockets.sockets.get(seerSocketId) : undefined;
+        const seerSocket   = seerSocketId ? io.sockets.sockets.get(seerSocketId) : undefined;
         seerSocket?.emit('seer_result', { round, targetId: tid, targetName, role });
       }
-      if (result.room.phaseEndAt) {
+      if (result.hunterPendingInfo) {
+        emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, result.room.code, io, rooms);
+      } else if (result.room.phaseEndAt) {
         schedulePhaseTimer(result.room.code, result.room.phase, result.room.phaseEndAt, io, rooms);
       }
       console.log(`[game] night resolved in ${result.room.code} → phase:${result.room.phase}`);
     }
   });
 
-  socket.on('advance_day', () => {
-    const pid = socket.data.playerId;
-    const result = rooms.advanceDay(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+  socket.on('witch_action', ({ save, poisonTargetId }) => {
+    const pid    = socket.data.playerId;
+    const result = rooms.submitWitchAction(pid, { save, poisonTargetId });
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+
     if (result.room) {
       clearPhaseTimer(result.room.code);
       io.to(result.room.code).emit('room_updated', { room: result.room });
-      if (result.room.phaseEndAt) {
-        schedulePhaseTimer(result.room.code, 'voting', result.room.phaseEndAt, io, rooms);
+      if (result.seerResult) {
+        const { seerId, targetId: tid, targetName, role, round } = result.seerResult;
+        const seerSocketId = rooms.getSocketId(seerId);
+        const seerSocket   = seerSocketId ? io.sockets.sockets.get(seerSocketId) : undefined;
+        seerSocket?.emit('seer_result', { round, targetId: tid, targetName, role });
       }
+      if (result.hunterPendingInfo) {
+        emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, result.room.code, io, rooms);
+      } else if (result.room.phaseEndAt) {
+        schedulePhaseTimer(result.room.code, result.room.phase, result.room.phaseEndAt, io, rooms);
+      }
+      console.log(`[game] witch action resolved in ${result.room.code}`);
+    }
+  });
+
+  socket.on('hunter_shoot', ({ targetId }) => {
+    const pid    = socket.data.playerId;
+    const result = rooms.submitHunterShot(pid, targetId);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) {
+      clearHunterTimer(result.room.code);
+      io.to(result.room.code).emit('room_updated', { room: result.room });
+      if (result.room.phaseEndAt) schedulePhaseTimer(result.room.code, result.room.phase, result.room.phaseEndAt, io, rooms);
+      console.log(`[hunter] shot resolved in ${result.room.code} → phase:${result.room.phase}`);
+    }
+  });
+
+  socket.on('advance_day', () => {
+    const pid    = socket.data.playerId;
+    const result = rooms.advanceDay(pid);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) {
+      clearPhaseTimer(result.room.code);
+      io.to(result.room.code).emit('room_updated', { room: result.room });
+      if (result.room.phaseEndAt) schedulePhaseTimer(result.room.code, 'voting', result.room.phaseEndAt, io, rooms);
       console.log(`[game] day advanced to voting in ${result.room.code}`);
     }
   });
 
   socket.on('cast_vote', ({ targetId }) => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.submitVote(pid, targetId);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) {
       const phaseChanged = result.room.phase !== 'voting';
       if (phaseChanged) clearPhaseTimer(result.room.code);
       io.to(result.room.code).emit('room_updated', { room: result.room });
-      if (phaseChanged && result.room.phaseEndAt) {
-        schedulePhaseTimer(result.room.code, result.room.phase, result.room.phaseEndAt, io, rooms);
+      if (phaseChanged) {
+        if (result.hunterPendingInfo) {
+          emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, result.room.code, io, rooms);
+        } else if (result.room.phaseEndAt) {
+          schedulePhaseTimer(result.room.code, result.room.phase, result.room.phaseEndAt, io, rooms);
+        }
       }
       if (phaseChanged) console.log(`[game] voting resolved in ${result.room.code} → phase:${result.room.phase}`);
     }
   });
 
   socket.on('restart_game', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.restartGame(pid);
     if (!result) return;
-    if ('error' in result) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
+    if ('error' in result) { socket.emit('error', { message: result.error }); return; }
     const { room, roleMap } = result;
     const werewolfIds = rooms.getWerewolfIds(room.code);
     io.to(room.code).emit('game_started', { room });
@@ -323,13 +365,10 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   });
 
   socket.on('return_to_lobby', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.returnToLobby(pid);
     if (!result) return;
-    if ('error' in result) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
+    if ('error' in result) { socket.emit('error', { message: result.error }); return; }
     clearPhaseTimer(result.code);
     io.to(result.code).emit('room_updated', { room: result });
     console.log(`[room] ${result.code} returned to lobby`);
@@ -338,20 +377,13 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   // ── Host admin handlers ──────────────────────────────────────────────────────
 
   socket.on('host_kick_player', ({ targetId }) => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.kickPlayer(pid, targetId);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) {
-      // Notify kicked player's socket
       if (result.kickedSocketId) {
         const kickedSocket = io.sockets.sockets.get(result.kickedSocketId);
-        if (kickedSocket) {
-          kickedSocket.emit('kicked');
-          kickedSocket.leave(result.room.code);
-        }
+        if (kickedSocket) { kickedSocket.emit('kicked'); kickedSocket.leave(result.room.code); }
       }
       io.to(result.room.code).emit('room_updated', { room: result.room });
       console.log(`[host] kicked ${targetId} from ${result.room.code}`);
@@ -359,116 +391,83 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   });
 
   socket.on('host_lock_room', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.lockRoom(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
   socket.on('host_unlock_room', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.unlockRoom(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
   socket.on('host_reset_ready', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.resetReady(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
   socket.on('host_pause_timer', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.pauseTimer(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
-    if (result.room) {
-      clearPhaseTimer(result.room.code);
-      io.to(result.room.code).emit('room_updated', { room: result.room });
-      console.log(`[host] timer paused in ${result.room.code}`);
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) { clearPhaseTimer(result.room.code); io.to(result.room.code).emit('room_updated', { room: result.room }); }
   });
 
   socket.on('host_resume_timer', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.resumeTimer(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) {
       io.to(result.room.code).emit('room_updated', { room: result.room });
-      if (result.room.phaseEndAt) {
-        schedulePhaseTimer(result.room.code, result.room.phase as any, result.room.phaseEndAt, io, rooms);
-      }
-      console.log(`[host] timer resumed in ${result.room.code}`);
+      if (result.room.phaseEndAt) schedulePhaseTimer(result.room.code, result.room.phase as any, result.room.phaseEndAt, io, rooms);
     }
   });
 
   socket.on('host_extend_timer', ({ extraSeconds }) => {
-    const pid = socket.data.playerId;
-    const clamped = Math.min(Math.max(extraSeconds, 1), 300); // 1–300s
-    const result = rooms.extendTimer(pid, clamped);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    const pid     = socket.data.playerId;
+    const clamped = Math.min(Math.max(extraSeconds, 1), 300);
+    const result  = rooms.extendTimer(pid, clamped);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) {
-      // If not paused, reschedule the timer with the new end time
-      if (!result.room.timerPaused && result.room.phaseEndAt) {
-        schedulePhaseTimer(result.room.code, result.room.phase as any, result.room.phaseEndAt, io, rooms);
-      }
+      if (!result.room.timerPaused && result.room.phaseEndAt) schedulePhaseTimer(result.room.code, result.room.phase as any, result.room.phaseEndAt, io, rooms);
       io.to(result.room.code).emit('room_updated', { room: result.room });
-      console.log(`[host] timer extended +${clamped}s in ${result.room.code}`);
     }
   });
 
   socket.on('host_end_phase', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.hostEndPhase(pid);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) {
       clearPhaseTimer(result.room.code);
       io.to(result.room.code).emit('room_updated', { room: result.room });
       if (result.seerResult) {
         const { seerId, targetId: tid, targetName, role, round } = result.seerResult;
         const seerSocketId = rooms.getSocketId(seerId);
-        const seerSocket = seerSocketId ? io.sockets.sockets.get(seerSocketId) : undefined;
+        const seerSocket   = seerSocketId ? io.sockets.sockets.get(seerSocketId) : undefined;
         seerSocket?.emit('seer_result', { round, targetId: tid, targetName, role });
       }
-      if (result.room.phaseEndAt) {
+      if (result.hunterPendingInfo) {
+        emitHunterPending(result.hunterPendingInfo.hunterId, result.hunterPendingInfo.availableTargetIds, result.room.code, io, rooms);
+      } else if (result.room.phaseEndAt) {
         schedulePhaseTimer(result.room.code, result.room.phase as any, result.room.phaseEndAt, io, rooms);
       }
-      console.log(`[host] phase ended early in ${result.room.code} → ${result.room.phase}`);
     }
   });
 
   socket.on('host_restart_game', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.hostRestartGame(pid);
     if (!result) return;
-    if ('error' in result) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
+    if ('error' in result) { socket.emit('error', { message: result.error }); return; }
     const { room, roleMap } = result;
     clearPhaseTimer(room.code);
+    clearHunterTimer(room.code);
     const werewolfIds = rooms.getWerewolfIds(room.code);
     io.to(room.code).emit('game_started', { room });
     for (const [persistentId, role] of roleMap) {
@@ -481,51 +480,41 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   });
 
   socket.on('host_return_to_lobby', () => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.hostReturnToLobby(pid);
     if (!result) return;
-    if ('error' in result) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
+    if ('error' in result) { socket.emit('error', { message: result.error }); return; }
     clearPhaseTimer(result.code);
     clearBotTimer(result.code);
+    clearHunterTimer(result.code);
     io.to(result.code).emit('room_updated', { room: result });
     console.log(`[host] force-returned ${result.code} to lobby`);
   });
 
-  // ── Test bot handlers (guarded by ENABLE_TEST_BOTS) ─────────────────────────
-
-  // ── Social deduction handlers ────────────────────────────────────────────────
+  // ── Social deduction ─────────────────────────────────────────────────────────
 
   socket.on('day_mark_suspicion', ({ targetId }) => {
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.markSuspicion(pid, targetId);
-    if (!result.ok) {
-      socket.emit('error', { message: result.error! });
-      return;
-    }
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
   });
 
   socket.on('day_reaction', ({ targetId }) => {
-    const pid = socket.data.playerId;
+    const pid  = socket.data.playerId;
     const room = rooms.getRoomByPlayer(pid);
     if (!room || room.phase !== 'day') return;
     const player = room.players.find(p => p.id === pid);
     const target = room.players.find(p => p.id === targetId);
     if (!player?.isAlive || !target?.isAlive) return;
-    io.to(room.code).emit('day_reaction_sent', {
-      fromId: pid,
-      fromName: player.name,
-      targetId,
-      targetName: target.name,
-    });
+    io.to(room.code).emit('day_reaction_sent', { fromId: pid, fromName: player.name, targetId, targetName: target.name });
   });
+
+  // ── Test bot handlers ────────────────────────────────────────────────────────
 
   socket.on('host_add_bot', () => {
     if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.addBot(pid);
     if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
@@ -533,7 +522,7 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
 
   socket.on('host_fill_bots', ({ target }) => {
     if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.fillBots(pid, target);
     if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
@@ -541,7 +530,7 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
 
   socket.on('host_remove_bots', () => {
     if (!TEST_BOTS_ENABLED) { socket.emit('error', { message: 'Test bots are not enabled.' }); return; }
-    const pid = socket.data.playerId;
+    const pid    = socket.data.playerId;
     const result = rooms.removeBots(pid);
     if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
     if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import type { RoomState, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { useGameStore } from '@/store/gameStore';
+import { useSocket } from '@/providers/SocketProvider';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
@@ -120,6 +121,25 @@ const ROLE_HUD_ICON: Record<string, React.ReactNode> = {
       <path d="M3.5 14c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
+  hunter: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <path d="M5 13V8L3 5.5h4L8 2l1 3.5h4L11 8v5" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round"/>
+      <path d="M5.5 10.5h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+    </svg>
+  ),
+  witch: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <path d="M3 14c.5-3 2.5-5 5-5s4.5 2 5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M8 9V6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M5.5 6.5h5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+      <path d="M6.5 6.5L8 2.5l1.5 4" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeLinecap="round"/>
+    </svg>
+  ),
+  bodyguard: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none">
+      <path d="M8 1.5L2.5 4v3.5c0 3.5 2.5 5.8 5.5 6.5 3-.7 5.5-3 5.5-6.5V4L8 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+    </svg>
+  ),
 };
 
 const DISCUSSION_PROMPTS = [
@@ -151,9 +171,19 @@ const NIGHT_CFG: Record<string, NightCfg> = {
     selBg: 'rgba(46,16,101,0.55)', selBorder: 'rgba(109,40,217,0.55)', selText: '#c4b5fd',
   },
   doctor: {
-    confirmLabel: 'Confirm Protect',
+    confirmLabel: 'Protect',
     btnBg: 'rgba(6,78,59,0.90)',   btnBorder: 'rgba(52,211,153,0.65)', btnText: '#a7f3d0',
     selBg: 'rgba(6,53,37,0.55)',   selBorder: 'rgba(5,150,105,0.55)', selText: '#6ee7b7',
+  },
+  bodyguard: {
+    confirmLabel: 'Guard',
+    btnBg: 'rgba(30,58,138,0.90)', btnBorder: 'rgba(96,165,250,0.65)', btnText: '#bfdbfe',
+    selBg: 'rgba(23,37,84,0.55)',  selBorder: 'rgba(37,99,235,0.55)',  selText: '#93c5fd',
+  },
+  hunter_shoot: {
+    confirmLabel: 'Shoot',
+    btnBg: 'rgba(124,45,18,0.90)', btnBorder: 'rgba(251,146,60,0.65)', btnText: '#fed7aa',
+    selBg: 'rgba(67,20,7,0.55)',   selBorder: 'rgba(234,88,12,0.55)',  selText: '#fdba74',
   },
 };
 
@@ -171,9 +201,11 @@ function getInstructionText(phase: string, myRole: Role | null, imAlive: boolean
     return 'You have perished.';
   }
   if (phase === 'night') {
-    if (myRole === 'werewolf') return 'Click a player card to eliminate tonight.';
-    if (myRole === 'seer')     return 'Click a player card to reveal their identity.';
-    if (myRole === 'doctor')   return 'Click a player card to protect tonight.';
+    if (myRole === 'werewolf')  return 'Click a player card to eliminate tonight.';
+    if (myRole === 'seer')      return 'Click a player card to reveal their identity.';
+    if (myRole === 'doctor')    return 'Click a player card to protect tonight.';
+    if (myRole === 'bodyguard') return 'Click a player card to guard tonight.';
+    if (myRole === 'witch')     return 'Wait for the wolves to strike — your choice comes after.';
     return 'Night falls. The village sleeps.';
   }
   if (phase === 'day')    return 'Discuss and find the wolves among you.';
@@ -278,6 +310,7 @@ function ActionBar({
         </div>
       );
     }
+    // Witch is handled by the WitchNightPanel above the action bar
     if (!nc) {
       return (
         <div style={barStyle(phase)}>
@@ -389,12 +422,20 @@ export function GameView({
   onHostRestartGame, onHostReturnToLobby,
   onMarkSuspicion, onDayReaction,
 }: Props) {
+  const socket = useSocket();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
   const [logOpen, setLogOpen]     = useState(false);
   const [roleOpen, setRoleOpen]   = useState(false);
   const [hostOpen, setHostOpen]   = useState(false);
   const [showRoleReveal, setShowRoleReveal] = useState(false);
+  // Witch panel state
+  const witchNightInfo      = useGameStore(s => s.witchNightInfo);
+  const witchActionSubmitted = useGameStore(s => s.witchActionSubmitted);
+  const setWitchActionSubmitted = useGameStore(s => s.setWitchActionSubmitted);
+  const setWitchNightInfo   = useGameStore(s => s.setWitchNightInfo);
+  // Witch sub-state: choose to poison (shows player grid)
+  const [witchPoisonMode, setWitchPoisonMode] = useState(false);
   const prevPhaseRef = useRef(room.phase);
   const prevRoleRef  = useRef<Role | null>(myRole);
   const isHost       = room.hostId === playerId;
@@ -412,6 +453,7 @@ export function GameView({
       setActionSubmitted(false);
       setSelectedTarget(null);
       setHostOpen(false);
+      setWitchPoisonMode(false);
     }
   }, [room.phase]);
 
@@ -424,6 +466,13 @@ export function GameView({
 
   const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); };
   const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); };
+  const handleHunterShoot = (targetId: string | null) => { socket?.emit('hunter_shoot', { targetId }); setSelectedTarget(null); };
+  const handleWitchAction = (save: boolean, poisonTargetId: string | null) => {
+    socket?.emit('witch_action', { save, poisonTargetId });
+    setWitchActionSubmitted(true);
+    setWitchPoisonMode(false);
+    setSelectedTarget(null);
+  };
 
   const me         = room.players.find(p => p.id === playerId);
   const imAlive    = me?.isAlive ?? false;
@@ -433,17 +482,30 @@ export function GameView({
   const isActionSubmitted = actionSubmitted || hasVotedAlready;
   const showTimer         = !!(room.phaseEndAt || room.timerPaused);
 
+  // Hunter shot mode: override normal targeting
+  const isHunterPending  = room.hunterPendingShot === playerId;
+  const isOtherHunterPending = !!room.hunterPendingShot && room.hunterPendingShot !== playerId;
+
   const validTargetIds = useMemo(() => {
+    // Hunter pending shot: show valid targets regardless of phase/submitted state
+    if (isHunterPending) {
+      return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
+    }
     if (isActionSubmitted || !imAlive) return [];
+    // Witch poison mode: all alive players except self
+    if (witchPoisonMode && myRole === 'witch' && room.phase === 'night') {
+      return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
+    }
     if (room.phase === 'night') {
-      if (myRole === 'werewolf') return room.players.filter(p => p.isAlive && !werewolfIds.includes(p.id)).map(p => p.id);
-      if (myRole === 'seer')     return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
-      if (myRole === 'doctor')   return room.players.filter(p => p.isAlive).map(p => p.id);
+      if (myRole === 'werewolf')   return room.players.filter(p => p.isAlive && !werewolfIds.includes(p.id)).map(p => p.id);
+      if (myRole === 'seer')       return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
+      if (myRole === 'doctor')     return room.players.filter(p => p.isAlive).map(p => p.id);
+      if (myRole === 'bodyguard')  return room.players.filter(p => p.isAlive).map(p => p.id);
       return [];
     }
     if (room.phase === 'voting') return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
     return [];
-  }, [isActionSubmitted, imAlive, room.phase, room.players, myRole, werewolfIds, playerId]);
+  }, [isHunterPending, isActionSubmitted, imAlive, witchPoisonMode, room.phase, room.players, myRole, werewolfIds, playerId]);
 
   const onPlayerCardClick = (targetId: string) => {
     if (!validTargetIds.includes(targetId)) return;
@@ -451,18 +513,23 @@ export function GameView({
   };
 
   const handleCardConfirm = (targetId: string) => {
+    if (isHunterPending) { handleHunterShoot(targetId); return; }
+    if (witchPoisonMode && myRole === 'witch') { handleWitchAction(false, targetId); return; }
     if (isActionSubmitted) return;
     if (room.phase === 'night')  handleNightAction(targetId);
     if (room.phase === 'voting') handleCastVote(targetId);
   };
 
   const actionType = (() => {
+    if (isHunterPending) return 'kill' as const;
     if (!imAlive) return null;
     if (room.phase === 'voting') return 'vote' as const;
     if (room.phase === 'night') {
-      if (myRole === 'werewolf') return 'kill'    as const;
-      if (myRole === 'seer')     return 'inspect' as const;
-      if (myRole === 'doctor')   return 'protect' as const;
+      if (myRole === 'werewolf')  return 'kill'    as const;
+      if (myRole === 'seer')      return 'inspect' as const;
+      if (myRole === 'doctor')    return 'protect' as const;
+      if (myRole === 'bodyguard') return 'protect' as const;
+      if (myRole === 'witch' && witchPoisonMode) return 'kill' as const;
     }
     return null;
   })();
@@ -472,7 +539,7 @@ export function GameView({
   const selectedPlayerName = selectedTarget ? (room.players.find(p => p.id === selectedTarget)?.name ?? null) : null;
   const phaseHudColor      = PHASE_HUD_COLOR[room.phase] ?? '#fbbf24';
   const roleInfo           = myRole ? ROLE_INFO[myRole] : null;
-  const nc         = myRole ? (NIGHT_CFG[myRole] ?? null) : null;
+  const nc         = isHunterPending ? NIGHT_CFG['hunter_shoot'] : (myRole ? (NIGHT_CFG[myRole] ?? null) : null);
   const votedCount = room.publicVotes?.hasVoted.length ?? 0;
 
   return (
@@ -644,6 +711,36 @@ export function GameView({
           </div>
         )}
 
+        {/* Hunter pending — this player is the hunter */}
+        {isHunterPending && (
+          <div
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
+            style={{ backgroundColor: 'rgba(30,8,0,0.92)', border: '1px solid rgba(234,88,12,0.50)', borderLeft: '3px solid rgba(251,146,60,0.80)', boxShadow: '0 2px 12px rgba(0,0,0,0.55)' }}
+          >
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 shrink-0" fill="#ea580c">
+              <path d="M5 13V8L3 5.5h4L8 2l1 3.5h4L11 8v5" strokeLinejoin="round" strokeLinecap="round"/>
+            </svg>
+            <p className="text-[11px] font-cinzel leading-snug flex-1" style={{ color: '#fed7aa' }}>
+              The Hunter's Final Shot — choose a target to take down with you, or skip.
+            </p>
+          </div>
+        )}
+
+        {/* Hunter pending — another player is the hunter */}
+        {isOtherHunterPending && (
+          <div
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
+            style={{ backgroundColor: 'rgba(30,8,0,0.85)', border: '1px solid rgba(234,88,12,0.35)', boxShadow: '0 2px 12px rgba(0,0,0,0.50)' }}
+          >
+            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5 shrink-0 animate-pulse" fill="rgba(234,88,12,0.70)">
+              <circle cx="10" cy="10" r="8"/>
+            </svg>
+            <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fdba74' }}>
+              The Hunter is choosing their final shot…
+            </p>
+          </div>
+        )}
+
         {/* Day reactions */}
         {dayReactions.length > 0 && room.phase === 'day' && (
           <div className="flex flex-col gap-0.5 overflow-hidden" style={{ maxHeight: '78px' }}>
@@ -676,33 +773,145 @@ export function GameView({
           seerRevealedMap={seerRevealedMap}
           validTargetIds={validTargetIds}
           selectedTargetId={selectedTarget}
-          onPlayerCardClick={isActionSubmitted ? undefined : onPlayerCardClick}
+          onPlayerCardClick={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : onPlayerCardClick}
           suspicionMap={room.phase === 'day' || room.phase === 'voting' ? room.suspicionMap : {}}
           canMarkSuspicion={room.phase === 'day' && imAlive}
           onMarkSuspicion={onMarkSuspicion}
           actionType={actionType}
-          onConfirmAction={isActionSubmitted ? undefined : handleCardConfirm}
-          onCancelAction={isActionSubmitted ? undefined : () => setSelectedTarget(null)}
+          onConfirmAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : handleCardConfirm}
+          onCancelAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : () => setSelectedTarget(null)}
           showAskBtns={room.phase === 'day' && imAlive}
           onAsk={onDayReaction}
         />
       </div>
 
+      {/* ── Witch night panel ─────────────────────────────────────────────── */}
+      {myRole === 'witch' && room.phase === 'night' && witchNightInfo !== null && !witchActionSubmitted && !witchPoisonMode && (
+        <div className="shrink-0 px-3 pb-2 pt-1 relative z-10">
+          <div
+            style={{
+              backgroundColor: 'rgba(3,5,7,0.96)',
+              border: '1px solid rgba(147,51,234,0.55)',
+              borderTop: '2px solid rgba(147,51,234,0.70)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+            }}
+          >
+            <p className="text-[9px] font-cinzel uppercase tracking-widest mb-2" style={{ color: 'rgba(147,51,234,0.80)' }}>Witch's Choice</p>
+            <p className="text-[11px] font-cinzel italic mb-3" style={{ color: '#ddd6fe' }}>
+              {witchNightInfo.attackedPlayerId
+                ? <>Tonight's target: <span style={{ color: '#f0abfc', fontStyle: 'normal' }}>{witchNightInfo.attackedPlayerName}</span></>
+                : 'No one was attacked tonight.'}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {!witchNightInfo.savePotionUsed && witchNightInfo.attackedPlayerId !== null && (
+                <button
+                  onClick={() => handleWitchAction(true, null)}
+                  className="px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-wide rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{ backgroundColor: 'rgba(6,78,59,0.85)', border: '1px solid rgba(52,211,153,0.60)', color: '#a7f3d0' }}
+                >
+                  Save {witchNightInfo.attackedPlayerName}
+                </button>
+              )}
+              {!witchNightInfo.poisonPotionUsed && (
+                <button
+                  onClick={() => setWitchPoisonMode(true)}
+                  className="px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-wide rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{ backgroundColor: 'rgba(88,28,135,0.85)', border: '1px solid rgba(147,51,234,0.60)', color: '#e9d5ff' }}
+                >
+                  Poison Someone
+                </button>
+              )}
+              <button
+                onClick={() => handleWitchAction(false, null)}
+                className="px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-wide rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
+                style={{ backgroundColor: 'rgba(20,14,40,0.85)', border: '1px solid rgba(109,40,217,0.35)', color: '#a78bfa' }}
+              >
+                Do Nothing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Witch poison mode instruction */}
+      {witchPoisonMode && myRole === 'witch' && (
+        <div className="shrink-0 px-3 pb-1 relative z-10">
+          <div style={{ backgroundColor: 'rgba(3,5,7,0.96)', border: '1px solid rgba(147,51,234,0.50)', borderTop: '2px solid rgba(147,51,234,0.60)', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', minHeight: '46px' }}>
+            <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#c4b5fd' }}>
+              Choose a player to poison…
+            </p>
+            <button
+              onClick={() => { setWitchPoisonMode(false); setSelectedTarget(null); }}
+              className="shrink-0 px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-wide rounded-lg"
+              style={{ backgroundColor: 'rgba(20,14,40,0.85)', border: '1px solid rgba(109,40,217,0.35)', color: '#7c3aed' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hunter shot action bar */}
+      {isHunterPending && (
+        <div className="shrink-0 px-3 pb-3 pt-2 relative z-10">
+          <div style={barStyle(room.phase)}>
+            {selectedTarget ? (
+              <>
+                <CheckIcon color="#fdba74" />
+                <span className="flex-1 text-[12px] font-cinzel uppercase tracking-wide" style={{ color: '#fdba74' }}>
+                  {selectedPlayerName}
+                </span>
+                <button
+                  onClick={() => handleHunterShoot(selectedTarget)}
+                  className="shrink-0 px-3 py-1.5 text-[11px] font-cinzel uppercase tracking-widest rounded-lg transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{ backgroundColor: 'rgba(124,45,18,0.90)', border: '1px solid rgba(251,146,60,0.65)', color: '#fed7aa' }}
+                >
+                  Shoot
+                </button>
+                <button
+                  onClick={() => handleHunterShoot(null)}
+                  className="shrink-0 px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg"
+                  style={{ border: '1px solid rgba(120,65,10,0.40)', color: '#78350f' }}
+                >
+                  Skip
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#92400e' }}>
+                  Select your final target…
+                </span>
+                <button
+                  onClick={() => handleHunterShoot(null)}
+                  className="shrink-0 px-3 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg"
+                  style={{ border: '1px solid rgba(120,65,10,0.40)', color: '#78350f' }}
+                >
+                  Skip Shot
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Action bar ────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-3 pb-3 pt-2 relative z-10">
-        <ActionBar
-          phase={room.phase}
-          imAlive={imAlive}
-          isHost={isHost}
-          isActionSubmitted={isActionSubmitted}
-          selectedTarget={selectedTarget}
-          selectedPlayerName={selectedPlayerName}
-          nc={nc}
-          votedCount={votedCount}
-          totalAlive={aliveCount}
-          onAdvanceDay={onAdvanceDay}
-        />
-      </div>
+      {!isHunterPending && (
+        <div className="shrink-0 px-3 pb-3 pt-2 relative z-10">
+          <ActionBar
+            phase={room.phase}
+            imAlive={imAlive}
+            isHost={isHost}
+            isActionSubmitted={isActionSubmitted}
+            selectedTarget={selectedTarget}
+            selectedPlayerName={selectedPlayerName}
+            nc={nc}
+            votedCount={votedCount}
+            totalAlive={aliveCount}
+            onAdvanceDay={onAdvanceDay}
+          />
+        </div>
+      )}
 
       {/* ── Drawers ──────────────────────────────────────────────────────── */}
 

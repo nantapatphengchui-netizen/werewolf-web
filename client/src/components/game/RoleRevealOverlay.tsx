@@ -5,10 +5,13 @@ import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 
 const ROLE_IMAGE: Record<Role, string> = {
-  werewolf: '/role-werewolf.png',
-  seer:     '/role-seer.png',
-  doctor:   '/role-doctor.png',
-  villager: '/role-villager.png',
+  werewolf:  '/role-werewolf.png',
+  seer:      '/role-seer.png',
+  doctor:    '/role-doctor.png',
+  villager:  '/role-villager.png',
+  hunter:    '/role-hunter.png',
+  witch:     '/role-witch.png',
+  bodyguard: '/role-bodyguard.png',
 };
 
 type Phase = 'enter' | 'spread' | 'shuffle' | 'pick' | 'flip' | 'revealed';

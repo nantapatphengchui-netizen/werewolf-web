@@ -1,10 +1,13 @@
 import type { Role } from '@/types/game';
 
 const ROLE_IMAGE: Record<Role, string> = {
-  werewolf: '/role-werewolf.png',
-  seer:     '/role-seer.png',
-  doctor:   '/role-doctor.png',
-  villager: '/role-villager.png',
+  werewolf:  '/role-werewolf.png',
+  seer:      '/role-seer.png',
+  doctor:    '/role-doctor.png',
+  villager:  '/role-villager.png',
+  hunter:    '/role-hunter.png',
+  witch:     '/role-witch.png',
+  bodyguard: '/role-bodyguard.png',
 };
 
 export function RoleCardArt({ role }: { role: Role }) {
