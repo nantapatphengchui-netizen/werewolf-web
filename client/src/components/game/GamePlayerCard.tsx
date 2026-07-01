@@ -72,6 +72,107 @@ const EMBERS = [
   { left: '14%', top: '50%', color: '#ef4444', delay: '0.22s', dur: '0.68s', anim: 'ember-5' },
 ] as const;
 
+// ── Action icon config ────────────────────────────────────────────────────────
+
+const PULSE_COLORS: Record<CardActionType, string> = {
+  vote:    'rgba(251,191,36,0.18)',
+  kill:    'rgba(220,38,38,0.18)',
+  inspect: 'rgba(124,58,237,0.18)',
+  protect: 'rgba(16,185,129,0.18)',
+};
+
+const ACTION_GLOW_COLORS: Record<CardActionType, string> = {
+  vote:    '#fbbf24',
+  kill:    '#ef4444',
+  inspect: '#8b5cf6',
+  protect: '#10b981',
+};
+
+function ClawIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <path d="M11 6 Q9 13 11 24" stroke="#ef4444" strokeWidth="2.8" strokeLinecap="round"/>
+      <path d="M18 5 Q16 12 18 23" stroke="#ef4444" strokeWidth="2.8" strokeLinecap="round"/>
+      <path d="M25 6 Q23 13 25 24" stroke="#ef4444" strokeWidth="2.8" strokeLinecap="round"/>
+      <circle cx="11" cy="25.5" r="1.6" fill="#ef4444"/>
+      <circle cx="18" cy="24.5" r="1.6" fill="#ef4444"/>
+      <circle cx="25" cy="25.5" r="1.6" fill="#ef4444"/>
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <path d="M5 20 Q20 7 35 20 Q20 33 5 20Z" stroke="#8b5cf6" strokeWidth="1.8" fill="rgba(139,92,246,0.15)"/>
+      <circle cx="20" cy="20" r="7.5" fill="#8b5cf6" opacity="0.9"/>
+      <circle cx="20" cy="20" r="3.5" fill="rgba(10,5,20,0.80)"/>
+      <circle cx="22" cy="18" r="1.8" fill="rgba(255,255,255,0.70)"/>
+      <path d="M20 5v4M20 31v4M5 20h4M31 20h4" stroke="#8b5cf6" strokeWidth="1.2" strokeLinecap="round" opacity="0.65"/>
+    </svg>
+  );
+}
+
+function MedCrossIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <circle cx="20" cy="20" r="16" stroke="#10b981" strokeWidth="1.2" fill="rgba(16,185,129,0.10)" opacity="0.7"/>
+      <path d="M20 9v22M9 20h22" stroke="#10b981" strokeWidth="4.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <path d="M20 4L6 9.5v8.5c0 7.5 6 13.5 14 16 8-2.5 14-8.5 14-16V9.5L20 4Z" stroke="#3b82f6" strokeWidth="1.8" fill="rgba(59,130,246,0.14)"/>
+      <path d="M14 20l4.5 4.5 8-8" stroke="#3b82f6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function CrosshairIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <circle cx="20" cy="20" r="13" stroke="#ea580c" strokeWidth="1.5" fill="rgba(234,88,12,0.10)"/>
+      <circle cx="20" cy="20" r="6" stroke="#ea580c" strokeWidth="1" fill="none" opacity="0.6"/>
+      <circle cx="20" cy="20" r="2.5" fill="#ea580c"/>
+      <path d="M20 4v7M20 29v7M4 20h7M29 20h7" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function SkullIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <circle cx="20" cy="17" r="10" stroke="#9333ea" strokeWidth="1.5" fill="rgba(147,51,234,0.14)"/>
+      <circle cx="15.5" cy="15.5" r="3" fill="#9333ea"/>
+      <circle cx="24.5" cy="15.5" r="3" fill="#9333ea"/>
+      <path d="M15 23 Q20 27 25 23" stroke="#9333ea" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M14 30h12" stroke="#9333ea" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M18 30v4M22 30v4" stroke="#9333ea" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function VoteIcon() {
+  return (
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
+      <circle cx="20" cy="20" r="14" stroke="#fbbf24" strokeWidth="1.5" fill="rgba(251,191,36,0.10)"/>
+      <path d="M13 20l5 5 9-9" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function getActionIcon(role: Role | null | undefined, actionType: CardActionType) {
+  if (actionType === 'vote')    return <VoteIcon />;
+  if (actionType === 'inspect') return <EyeIcon />;
+  if (actionType === 'protect') return role === 'bodyguard' ? <ShieldIcon /> : <MedCrossIcon />;
+  if (role === 'hunter') return <CrosshairIcon />;
+  if (role === 'witch')  return <SkullIcon />;
+  return <ClawIcon />;
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -343,6 +444,21 @@ export function GamePlayerCard({
         </>
       )}
 
+      {/* ── Role action icon overlay ── */}
+      {isSelected && alive && onConfirmAction && actionType && (
+        <div
+          className="absolute inset-x-0 flex justify-center pointer-events-none"
+          style={{ top: '16%', zIndex: 15 }}
+        >
+          <div style={{
+            animation: 'card-icon-appear 0.40s cubic-bezier(0.34,1.56,0.64,1) forwards',
+            filter: `drop-shadow(0 0 8px ${ACTION_GLOW_COLORS[actionType]}) drop-shadow(0 0 20px ${ACTION_GLOW_COLORS[actionType]})`,
+          }}>
+            {getActionIcon(myRole, actionType)}
+          </div>
+        </div>
+      )}
+
       {/* ── State overlays ── */}
       {isInvalidTarget && (
         <div className="absolute inset-0 bg-black/55 pointer-events-none" />
@@ -351,10 +467,21 @@ export function GamePlayerCard({
         <div className="absolute inset-0 bg-black/42 pointer-events-none" />
       )}
       {isSelected && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ backgroundColor: ac?.selOverlay ?? 'rgba(251,191,36,0.06)' }}
-        />
+        onConfirmAction && alive && ac ? (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-xl"
+            style={{
+              backgroundColor: PULSE_COLORS[actionType!],
+              zIndex: 5,
+              animation: 'card-select-breathe 1.6s ease-in-out infinite',
+            }}
+          />
+        ) : (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ backgroundColor: ac?.selOverlay ?? 'rgba(251,191,36,0.06)' }}
+          />
+        )
       )}
 
       {/* ── Dead X ── */}
