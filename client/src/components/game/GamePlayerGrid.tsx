@@ -56,41 +56,55 @@ export function GamePlayerGrid({
     lgRows <= 3 ? 'lg:[grid-template-rows:repeat(3,minmax(0,1fr))]' :
                   'lg:[grid-template-rows:repeat(4,minmax(0,1fr))]';
 
+  // Center orphan cards in the last lg row
+  const lgOrphan  = n % lgCols;
+  const lgSpacer  = lgOrphan > 0 ? Math.floor((lgCols - lgOrphan) / 2) : 0;
+  const lgSpanClass =
+    lgSpacer === 2 ? 'lg:col-span-2' :
+    lgSpacer === 1 ? 'lg:col-span-1' : '';
+
+  const items: React.ReactNode[] = [];
+  players.forEach((player, index) => {
+    if (lgOrphan > 0 && lgSpacer > 0 && index === n - lgOrphan) {
+      items.push(<div key="__spacer__" className={`hidden ${lgSpanClass} lg:block`} />);
+    }
+
+    const suspicionCount  = (suspicionMap[player.id] ?? []).length;
+    const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
+    const showSuspectBtn  = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
+    const showAskBtn      = showAskBtns && player.isAlive && player.id !== currentPlayerId;
+    const isSelected      = player.id === selectedTargetId;
+
+    items.push(
+      <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
+        <GamePlayerCard
+          player={player}
+          index={index}
+          isCurrentPlayer={player.id === currentPlayerId}
+          isWerewolfTeammate={werewolfIds.includes(player.id) && player.id !== currentPlayerId}
+          voteCount={publicVotes?.tally[player.id]}
+          actionSubmitted={player.id === currentPlayerId ? currentPlayerSubmitted : false}
+          myRole={player.id === currentPlayerId ? myRole : undefined}
+          seerRevealedRole={seerRevealedMap[player.id]}
+          isValidTarget={validTargetIds.includes(player.id)}
+          isSelected={isSelected}
+          onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
+          suspicionCount={suspicionCount}
+          isSuspectedByMe={isSuspectedByMe}
+          showSuspectBtn={showSuspectBtn}
+          onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
+          actionType={actionType}
+          onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
+          showAskBtn={showAskBtn}
+          onAsk={showAskBtn && onAsk ? () => onAsk(player.id) : undefined}
+        />
+      </div>
+    );
+  });
+
   return (
     <div className={`w-full lg:h-full grid grid-cols-3 sm:grid-cols-4 ${lgColClass} gap-2 sm:gap-2.5 ${lgRowClass}`}>
-      {players.map((player, index) => {
-        const suspicionCount  = (suspicionMap[player.id] ?? []).length;
-        const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
-        const showSuspectBtn  = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
-        const showAskBtn      = showAskBtns && player.isAlive && player.id !== currentPlayerId;
-        const isSelected      = player.id === selectedTargetId;
-
-        return (
-          <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
-            <GamePlayerCard
-              player={player}
-              index={index}
-              isCurrentPlayer={player.id === currentPlayerId}
-              isWerewolfTeammate={werewolfIds.includes(player.id) && player.id !== currentPlayerId}
-              voteCount={publicVotes?.tally[player.id]}
-              actionSubmitted={player.id === currentPlayerId ? currentPlayerSubmitted : false}
-              myRole={player.id === currentPlayerId ? myRole : undefined}
-              seerRevealedRole={seerRevealedMap[player.id]}
-              isValidTarget={validTargetIds.includes(player.id)}
-              isSelected={isSelected}
-              onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
-              suspicionCount={suspicionCount}
-              isSuspectedByMe={isSuspectedByMe}
-              showSuspectBtn={showSuspectBtn}
-              onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
-              actionType={actionType}
-              onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
-              showAskBtn={showAskBtn}
-              onAsk={showAskBtn && onAsk ? () => onAsk(player.id) : undefined}
-            />
-          </div>
-        );
-      })}
+      {items}
     </div>
   );
 }

@@ -83,6 +83,28 @@ interface Props {
   onAsk?: () => void;
 }
 
+// ── Corner ornaments ──────────────────────────────────────────────────────────
+
+function CardCorners({ color, opacity }: { color: string; opacity: number }) {
+  const p = { stroke: color, strokeWidth: '1.5', fill: 'none', strokeLinecap: 'round' as const };
+  return (
+    <>
+      <svg viewBox="0 0 14 14" className="absolute top-0.5 left-0.5 w-3 h-3 pointer-events-none z-20" style={{ opacity }}>
+        <path d="M1 6V1H6" {...p} />
+      </svg>
+      <svg viewBox="0 0 14 14" className="absolute top-0.5 right-0.5 w-3 h-3 pointer-events-none z-20" style={{ opacity }}>
+        <path d="M8 1H13V6" {...p} />
+      </svg>
+      <svg viewBox="0 0 14 14" className="absolute bottom-0.5 left-0.5 w-3 h-3 pointer-events-none z-20" style={{ opacity }}>
+        <path d="M1 8V13H6" {...p} />
+      </svg>
+      <svg viewBox="0 0 14 14" className="absolute bottom-0.5 right-0.5 w-3 h-3 pointer-events-none z-20" style={{ opacity }}>
+        <path d="M8 13H13V8" {...p} />
+      </svg>
+    </>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function GamePlayerCard({
@@ -175,6 +197,29 @@ export function GamePlayerCard({
   const showDayActions = (showSuspectBtn || showAskBtn) && alive && !isSelected;
   const checkColor     = ac?.checkColor ?? '#fbbf24';
 
+  // ── Corner ornament color ─────────────────────────────────────────────────────
+  let cornerColor   = 'rgba(161,98,7,0.80)';
+  let cornerOpacity = 0.55;
+  if (!alive) {
+    cornerColor   = 'rgba(100,40,40,0.60)';
+    cornerOpacity = 0.30;
+  } else if (isSelected) {
+    cornerColor   = ac?.selBorder ?? 'rgba(251,191,36,0.92)';
+    cornerOpacity = 0.90;
+  } else if (isValidTarget) {
+    cornerColor   = ac?.validBorder ?? 'rgba(217,119,6,0.72)';
+    cornerOpacity = 0.72;
+  } else if (isCurrentPlayer) {
+    cornerColor   =
+      myRole === 'werewolf' ? 'rgba(220,38,38,0.85)' :
+      myRole === 'seer'     ? 'rgba(139,92,246,0.85)' :
+      myRole === 'doctor'   ? 'rgba(52,211,153,0.85)' : 'rgba(251,191,36,0.85)';
+    cornerOpacity = 0.80;
+  } else if (isWerewolfTeammate) {
+    cornerColor   = 'rgba(220,38,38,0.70)';
+    cornerOpacity = 0.60;
+  }
+
   return (
     <div
       ref={cardRef}
@@ -184,6 +229,9 @@ export function GamePlayerCard({
       style={{ border, boxShadow }}
       className={`relative w-full h-full overflow-hidden rounded-xl select-none transition-all duration-200 ${cursor}`}
     >
+      {/* ── Corner ornaments ── */}
+      <CardCorners color={cornerColor} opacity={cornerOpacity} />
+
       {/* ── Background image ── */}
       {shownRole ? (
         <img

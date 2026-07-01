@@ -70,6 +70,24 @@ const PHASE_HUD_COLOR: Record<string, string> = {
   night: '#a78bfa', day: '#fbbf24', voting: '#f87171', ended: '#fbbf24',
 };
 
+const PHASE_ATMOSPHERE: Record<string, string> = {
+  night:  'rgba(8,0,30,0.48)',
+  day:    'rgba(30,15,0,0.30)',
+  voting: 'rgba(30,0,0,0.42)',
+};
+
+const PHASE_HUD_GLOW: Record<string, string> = {
+  night:  '0 4px 32px rgba(0,0,0,0.75), 0 0 24px rgba(109,40,217,0.14)',
+  day:    '0 4px 32px rgba(0,0,0,0.75), 0 0 24px rgba(180,83,9,0.12)',
+  voting: '0 4px 32px rgba(0,0,0,0.75), 0 0 24px rgba(185,28,28,0.14)',
+};
+
+const PHASE_BAR_ACCENT: Record<string, string> = {
+  night:  'rgba(109,40,217,0.60)',
+  day:    'rgba(180,83,9,0.60)',
+  voting: 'rgba(185,28,28,0.60)',
+};
+
 const DISCUSSION_PROMPTS = [
   'Who seemed most suspicious last round?',
   'Who changed their story since dawn?',
@@ -171,16 +189,19 @@ function CheckIcon({ color }: { color: string }) {
 
 // ── ActionBar ─────────────────────────────────────────────────────────────────
 
-const BAR_BASE: React.CSSProperties = {
-  backgroundColor: 'rgba(3,5,7,0.94)',
-  border: '1px solid rgba(146,64,14,0.50)',
-  borderRadius: '10px',
-  padding: '8px 12px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  minHeight: '50px',
-};
+function barStyle(phase: string): React.CSSProperties {
+  return {
+    backgroundColor: 'rgba(3,5,7,0.96)',
+    border: '1px solid rgba(146,64,14,0.45)',
+    borderTop: `2px solid ${PHASE_BAR_ACCENT[phase] ?? 'rgba(146,64,14,0.50)'}`,
+    borderRadius: '10px',
+    padding: '10px 14px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    minHeight: '56px',
+  };
+}
 
 interface ActionBarProps {
   phase: string;
@@ -208,7 +229,7 @@ function ActionBar({
   if (phase === 'night') {
     if (isActionSubmitted) {
       return (
-        <div style={BAR_BASE}>
+        <div style={barStyle(phase)}>
           <CheckIcon color="#4ade80" />
           <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>
             Action submitted — awaiting all night actions…
@@ -218,7 +239,7 @@ function ActionBar({
     }
     if (!imAlive) {
       return (
-        <div style={BAR_BASE}>
+        <div style={barStyle(phase)}>
           <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
             You have perished. Watch the night from the shadows.
           </p>
@@ -227,7 +248,7 @@ function ActionBar({
     }
     if (!nc) {
       return (
-        <div style={BAR_BASE}>
+        <div style={barStyle(phase)}>
           <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
             Night falls. You close your eyes and wait for dawn.
           </p>
@@ -235,7 +256,7 @@ function ActionBar({
       );
     }
     return (
-      <div style={BAR_BASE}>
+      <div style={barStyle(phase)}>
         <div
           className="flex-1 flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all duration-200"
           style={selectedTarget
@@ -274,7 +295,7 @@ function ActionBar({
   // ── Day ──
   if (phase === 'day') {
     return (
-      <div style={BAR_BASE}>
+      <div style={barStyle(phase)}>
         {!imAlive ? (
           <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>You have perished.</p>
         ) : (
@@ -301,7 +322,7 @@ function ActionBar({
   if (phase === 'voting') {
     if (!imAlive) {
       return (
-        <div style={BAR_BASE}>
+        <div style={barStyle(phase)}>
           <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
             You are eliminated. Watch the vote unfold.
           </p>
@@ -310,7 +331,7 @@ function ActionBar({
     }
     if (isActionSubmitted) {
       return (
-        <div style={BAR_BASE}>
+        <div style={barStyle(phase)}>
           <CheckIcon color="#4ade80" />
           <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>
             Vote cast · {votedCount} / {totalAlive} voted
@@ -319,7 +340,7 @@ function ActionBar({
       );
     }
     return (
-      <div style={BAR_BASE}>
+      <div style={barStyle(phase)}>
         <div
           className="flex-1 flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all duration-200"
           style={selectedTarget
@@ -448,15 +469,21 @@ export function GameView({
   return (
     <div className="relative z-10 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
 
+      {/* ── Phase atmosphere tint ── */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-all duration-1000"
+        style={{ backgroundColor: PHASE_ATMOSPHERE[room.phase] ?? 'transparent', zIndex: 0 }}
+      />
+
       {/* ── Game over overlay ── */}
       {room.phase === 'ended' && (
         <GameOverScreen room={room} playerId={playerId} onLeave={onLeave} onRestart={onRestart} onReturnToLobby={onReturnToLobby} />
       )}
 
       {/* ── Top HUD ──────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-3 pt-3 pb-2">
+      <div className="shrink-0 px-3 pt-3 pb-2 relative z-10">
         <div
-          style={{ backgroundColor: 'rgba(3,5,7,0.94)', border: '1px solid rgba(146,64,14,0.50)', borderRadius: '10px', boxShadow: '0 4px 28px rgba(0,0,0,0.7)' }}
+          style={{ backgroundColor: 'rgba(3,5,7,0.96)', border: '1px solid rgba(146,64,14,0.55)', borderRadius: '10px', boxShadow: PHASE_HUD_GLOW[room.phase] ?? '0 4px 32px rgba(0,0,0,0.75)' }}
           className="flex items-center gap-2 px-3 py-2"
         >
           {/* Room code */}
@@ -471,9 +498,9 @@ export function GameView({
           <div className="w-px h-4 shrink-0" style={{ backgroundColor: 'rgba(146,64,14,0.35)' }} />
 
           {/* Phase + round */}
-          <div className="flex items-center gap-1.5 shrink-0" style={{ color: phaseHudColor }}>
+          <div className="flex items-center gap-1.5 shrink-0" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
             {PHASE_ICON[room.phase]}
-            <span className="font-cinzel text-xs tracking-widest uppercase">
+            <span className="font-cinzel text-xs tracking-widest uppercase font-semibold">
               {room.phase === 'ended' ? 'Game Over' : `${room.phase} · R${room.round}`}
             </span>
           </div>
@@ -578,32 +605,40 @@ export function GameView({
       </div>
 
       {/* ── Banner area ───────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-3 space-y-1.5 pb-1">
+      <div className="shrink-0 px-3 space-y-1.5 pb-1 relative z-10">
 
         {/* Last announcement */}
         {room.lastAnnouncement && (
-          <div className="px-3 py-1.5 rounded-lg text-center" style={{ backgroundColor: 'rgba(25,14,2,0.80)', border: '1px solid rgba(180,83,9,0.30)' }}>
-            <p className="text-[11px] italic leading-snug" style={{ color: '#fde68a' }}>{room.lastAnnouncement}</p>
+          <div
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
+            style={{ backgroundColor: 'rgba(20,8,0,0.88)', border: '1px solid rgba(180,83,9,0.40)', borderLeft: '3px solid rgba(217,119,6,0.70)', boxShadow: '0 2px 12px rgba(0,0,0,0.50)' }}
+          >
+            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5 shrink-0" fill="rgba(180,83,9,0.80)">
+              <path d="M10 2a6 6 0 0 0-6 6c0 2.5 1.5 4.7 3.7 5.6V15h4.6v-1.4A6 6 0 0 0 10 2zm-1 11v1h2v-1H9zm1-9a4 4 0 0 1 4 4 4 4 0 0 1-2.6 3.7l-.4.1V13h-2v-1.2l-.4-.1A4 4 0 0 1 6 8a4 4 0 0 1 4-4z"/>
+            </svg>
+            <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{room.lastAnnouncement}</p>
           </div>
         )}
 
         {/* Phase banner */}
         {instructionText && banner && (
           <div
-            className="flex items-center gap-3 px-3 py-2 rounded-lg"
-            style={{ backgroundColor: banner.bg, borderLeft: `3px solid ${banner.borderColor}`, paddingLeft: '12px' }}
+            className="flex items-center gap-3 rounded-lg"
+            style={{ backgroundColor: banner.bg, borderLeft: `3px solid ${banner.borderColor}`, border: `1px solid ${banner.borderColor}44`, borderLeftWidth: '3px', padding: '10px 14px', boxShadow: `0 2px 16px rgba(0,0,0,0.45), inset 0 0 40px rgba(0,0,0,0.20)` }}
           >
-            <div style={{ color: banner.textColor }} className="flex items-center gap-1.5 shrink-0">
-              {PHASE_ICON[room.phase]}
-              <span className="font-cinzel text-[10px] uppercase tracking-widest font-semibold hidden sm:inline">
+            <div style={{ color: banner.textColor }} className="flex items-center gap-2 shrink-0">
+              <span className="w-5 h-5 flex items-center justify-center">
+                {PHASE_ICON[room.phase]}
+              </span>
+              <span className="font-cinzel text-[11px] uppercase tracking-widest font-bold hidden sm:inline">
                 {room.phase} · R{room.round}
               </span>
             </div>
-            <div className="w-px h-3 shrink-0 hidden sm:block" style={{ backgroundColor: banner.borderColor }} />
-            <p className="text-[11px] flex-1 leading-snug" style={{ color: banner.instrColor }}>{instructionText}</p>
+            <div className="w-px h-4 shrink-0 hidden sm:block" style={{ backgroundColor: banner.borderColor }} />
+            <p className="text-[11px] flex-1 leading-snug font-medium" style={{ color: banner.instrColor }}>{instructionText}</p>
             {selectedPlayerName && (
-              <span className="shrink-0 text-[11px] font-cinzel uppercase tracking-wider" style={{ color: banner.textColor }}>
-                → {selectedPlayerName}
+              <span className="shrink-0 text-[11px] font-cinzel uppercase tracking-wider font-bold" style={{ color: banner.textColor, textShadow: `0 0 10px ${banner.textColor}88` }}>
+                ▸ {selectedPlayerName}
               </span>
             )}
           </div>
@@ -642,7 +677,7 @@ export function GameView({
       </div>
 
       {/* ── Player grid — full width ──────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 px-3 overflow-y-auto">
+      <div className="flex-1 min-h-0 px-3 overflow-y-auto relative z-10">
         <GamePlayerGrid
           players={room.players}
           currentPlayerId={playerId}
@@ -665,7 +700,7 @@ export function GameView({
       </div>
 
       {/* ── Action bar ────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-3 pb-3 pt-2">
+      <div className="shrink-0 px-3 pb-3 pt-2 relative z-10">
         <ActionBar
           phase={room.phase}
           imAlive={imAlive}
