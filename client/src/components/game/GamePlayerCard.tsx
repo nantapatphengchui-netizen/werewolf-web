@@ -197,7 +197,6 @@ export function GamePlayerCard({
     subLabel = { text: 'Away', color: '#57534e' };
   }
 
-  const showDayActions = (showSuspectBtn || showAskBtn) && alive && !isSelected;
   const checkColor     = ac?.checkColor ?? '#fbbf24';
 
   // ── Corner ornament color ─────────────────────────────────────────────────────
@@ -392,8 +391,8 @@ export function GamePlayerCard({
           {player.name}
         </p>
 
-        {/* Sub-label: hidden when day actions or confirm button take its space */}
-        {subLabel && !showDayActions && !isSelected && (
+        {/* Sub-label: hidden when confirm button takes its space */}
+        {subLabel && !isSelected && (
           isCurrentPlayer && alive ? (
             <div className="flex justify-center mt-1">
               <span
@@ -417,42 +416,6 @@ export function GamePlayerCard({
               {subLabel.text}
             </p>
           )
-        )}
-
-        {/* Day quick actions: Suspect + Ask (hidden when card is selected) */}
-        {showDayActions && (
-          <div className="flex gap-0.5 mt-1">
-            {showSuspectBtn && (
-              <button
-                onClick={e => { e.stopPropagation(); onMarkSuspicion?.(); }}
-                style={{
-                  flex: 1,
-                  backgroundColor: isSuspectedByMe ? 'rgba(120,53,0,0.85)' : 'rgba(0,0,0,0.55)',
-                  border:          isSuspectedByMe ? '1px solid rgba(217,119,6,0.70)' : '1px solid rgba(120,65,10,0.40)',
-                  color:           isSuspectedByMe ? '#fcd34d' : '#92400e',
-                  paddingTop: '5px', paddingBottom: '5px',
-                }}
-                className="rounded text-[8px] font-cinzel uppercase tracking-widest transition-all duration-150 hover:brightness-125"
-              >
-                {isSuspectedByMe ? 'Suspected' : 'Suspect'}
-              </button>
-            )}
-            {showAskBtn && (
-              <button
-                onClick={e => { e.stopPropagation(); onAsk?.(); }}
-                style={{
-                  flex: 1,
-                  backgroundColor: 'rgba(46,16,101,0.35)',
-                  border: '1px solid rgba(109,40,217,0.40)',
-                  color: '#8b5cf6',
-                  paddingTop: '5px', paddingBottom: '5px',
-                }}
-                className="rounded text-[8px] font-cinzel uppercase tracking-widest transition-all duration-150 hover:brightness-125"
-              >
-                Ask
-              </button>
-            )}
-          </div>
         )}
 
         {/* Cancel + Confirm buttons: shown on selected card before submission */}
