@@ -1019,14 +1019,14 @@ export function GameView({
       {/* ── Emoji reaction buttons ── */}
       {(room.phase === 'day' || room.phase === 'voting') && imAlive && (
         <div className="shrink-0 px-3 pb-1 relative z-10 flex justify-center gap-2">
-          {['😱','🐺','👀','🔪','🙏','😂'].map(emoji => (
+          {(['shock','wolf','eyes','knife','pray','laugh'] as const).map(key => (
             <button
-              key={emoji}
-              onClick={() => socket?.emit('send_reaction', { emoji })}
-              className="text-lg w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88]"
+              key={key}
+              onClick={() => socket?.emit('send_reaction', { emoji: key })}
+              className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88] overflow-hidden"
               style={{ backgroundColor: 'rgba(0,0,0,0.55)', border: '1px solid rgba(120,65,10,0.30)' }}
             >
-              {emoji}
+              <img src={`/emoji-${key}.png`} alt={key} className="w-7 h-7 object-contain" draggable={false} />
             </button>
           ))}
         </div>

@@ -465,17 +465,18 @@ export function GamePlayerCard({
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
           style={{ zIndex: 28 }}
         >
-          <span
+          <img
+            src={`/emoji-${reaction.emoji}.png`}
+            alt={reaction.emoji}
+            draggable={false}
             style={{
-              fontSize: 'clamp(3.5rem, 18vw, 10rem)',
-              lineHeight: 1,
+              width: '82%',
+              height: '82%',
+              objectFit: 'contain',
               animation: 'reaction-float 2.6s ease-out forwards',
-              filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.80))',
-              display: 'block',
+              filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.85))',
             }}
-          >
-            {reaction.emoji}
-          </span>
+          />
         </div>
       )}
 
