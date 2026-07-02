@@ -713,6 +713,22 @@ export function GameView({
             </div>
           )}
 
+          {/* Host: call the vote (day) */}
+          {isHost && room.phase === 'day' && (
+            <button
+              onClick={onAdvanceDay}
+              className="shrink-0 px-3.5 py-1.5 text-[11px] font-cinzel font-bold uppercase tracking-widest rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(146,64,14,0.94) 0%, rgba(110,48,0,0.94) 100%)',
+                border: '1px solid rgba(217,119,6,0.7)',
+                color: '#fde68a',
+                boxShadow: '0 0 14px rgba(217,119,6,0.3), inset 0 1px 0 rgba(255,220,150,0.15)',
+              }}
+            >
+              {T('bar.day.callVote')}
+            </button>
+          )}
+
           <div className="flex-1" />
 
           {/* Role badge — opens role drawer */}
@@ -854,24 +870,6 @@ export function GameView({
               <path d="M10 2a6 6 0 0 0-6 6c0 2.5 1.5 4.7 3.7 5.6V15h4.6v-1.4A6 6 0 0 0 10 2zm-1 11v1h2v-1H9zm1-9a4 4 0 0 1 4 4 4 4 0 0 1-2.6 3.7l-.4.1V13h-2v-1.2l-.4-.1A4 4 0 0 1 6 8a4 4 0 0 1 4-4z"/>
             </svg>
             <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{M(room.lastAnnouncement)}</p>
-          </div>
-        )}
-
-        {/* Host: call the vote (day) — lives at the top so the grid can fill the bottom */}
-        {isHost && room.phase === 'day' && (
-          <div className="flex justify-center">
-            <button
-              onClick={onAdvanceDay}
-              className="px-8 py-2 text-[12px] font-cinzel font-bold tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(146,64,14,0.94) 0%, rgba(110,48,0,0.94) 100%)',
-                border: '1px solid rgba(217,119,6,0.65)',
-                color: '#fde68a',
-                boxShadow: '0 0 18px rgba(217,119,6,0.3), inset 0 1px 0 rgba(255,220,150,0.15)',
-              }}
-            >
-              {T('bar.day.callVote')}
-            </button>
           </div>
         )}
 
