@@ -1,5 +1,6 @@
 import type { RoomState } from '@/types/game';
 import { DarkPanel } from '@/components/ui/DarkPanel';
+import { formatMessage } from '@/i18n';
 
 interface Props {
   room: RoomState;
@@ -49,7 +50,7 @@ export function GameStatusPanel({ room }: Props) {
         <div className="bg-amber-950/15 border border-amber-800/25 rounded-lg px-3 py-2.5">
           <p className="text-amber-700/60 text-[9px] uppercase tracking-widest mb-1">Latest</p>
           <p className="text-amber-400/80 text-xs leading-relaxed italic">
-            {room.lastAnnouncement}
+            {formatMessage(room.lastAnnouncement)}
           </p>
         </div>
       )}

@@ -2,12 +2,14 @@
 
 import { useRef } from 'react';
 import type { GameEvent } from '@/types/game';
+import { useMessage } from '@/i18n';
 
 interface Props {
   events: GameEvent[];
 }
 
 export function EventLog({ events }: Props) {
+  const M = useMessage();
   const seenIdsRef = useRef<Set<string>>(new Set());
 
   if (events.length === 0) return null;
@@ -33,7 +35,7 @@ export function EventLog({ events }: Props) {
                     : i <= 2 ? '#ca8a04'
                     : '#a16207',
                 }}>
-                  {ev.text}
+                  {M(ev)}
                 </span>
               </div>
             );

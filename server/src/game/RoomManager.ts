@@ -1,4 +1,4 @@
-import type { Player, RoomState, GamePhase, Role, GameEvent } from '../types/game';
+import type { Player, RoomState, GamePhase, Role, GameEvent, GameMessage } from '../types/game';
 import { assignRoles } from './roles/roleAssigner';
 
 const MIN_PLAYERS = 5;
@@ -278,8 +278,8 @@ export class RoomManager {
     this.bodyguardLastProtected.delete(room.code);
     room.players.forEach(p => this.seerResults.delete(p.id));
 
-    this.addEvent(room, 'The game has begun. Roles have been assigned.');
-    this.addEvent(room, 'Night falls upon the village. All close their eyes.');
+    this.addEvent(room, 'evt.gameBegun');
+    this.addEvent(room, 'evt.nightFalls');
     return { room, roleMap };
   }
 
@@ -434,9 +434,9 @@ export class RoomManager {
       if (!target) return { ok: false, error: 'Invalid target.' };
       target.isAlive = false;
       target.revealedRole = this.roleMap.get(targetId);
-      this.addEvent(room, `Hunter's final shot: ${target.name} falls.`);
+      this.addEvent(room, 'evt.hunterShotHit', { name: target.name });
     } else {
-      this.addEvent(room, 'The Hunter chose not to fire a final shot.');
+      this.addEvent(room, 'evt.hunterShotSkip');
     }
 
     const winner = this.checkWin(room);
@@ -444,7 +444,7 @@ export class RoomManager {
       room.phase  = 'ended';
       room.winner = winner;
       room.phaseEndAt = null;
-      this.addEvent(room, winner === 'village' ? 'The village triumphed. All werewolves are gone.' : 'The werewolves claim the village.');
+      this.addEvent(room, winner === 'village' ? 'evt.villageWon' : 'evt.wolvesWon');
       this.revealAllRoles(room);
     } else {
       // Start the phase timer (phase is already set to day or night by prior resolution)
@@ -460,7 +460,7 @@ export class RoomManager {
     const room = this.rooms.get(roomCode);
     if (!room || !room.hunterPendingShot) return { ok: false };
     room.hunterPendingShot = null;
-    this.addEvent(room, 'The Hunter\'s shot was not fired (time expired).');
+    this.addEvent(room, 'evt.hunterShotExpired');
     if (room.phase !== 'ended') {
       room.phaseEndAt          = Date.now() + PHASE_DURATIONS[room.phase];
       room.timerPaused         = false;
@@ -620,20 +620,25 @@ export class RoomManager {
     const winner = this.checkWin(room);
 
     const survivedAttack = intendedKillId !== null && wolfKillId === null;
-    const deadDesc = killedNames.length === 0
-      ? (survivedAttack ? 'Someone narrowly survived the night. No one was eliminated.' : 'No one was harmed.')
-      : killedNames.length === 1
-        ? `${killedNames[0]} was found dead at dawn. Their role remains unknown.`
-        : `${killedNames.join(' and ')} were found dead at dawn. Their roles remain unknown.`;
+    const deadNames = killedNames.join(', ');
+    const nightAnn = (hunter: boolean): GameMessage => {
+      if (killedNames.length === 0) return { code: survivedAttack ? 'ann.dawnSurvived' : 'ann.dawnNoDeath' };
+      if (killedNames.length === 1) return { code: hunter ? 'ann.dawnOneDeadHunter' : 'ann.dawnOneDead', params: { name: killedNames[0] } };
+      return { code: hunter ? 'ann.dawnManyDeadHunter' : 'ann.dawnManyDead', params: { names: deadNames } };
+    };
+    const addDeadEvent = () => {
+      if (killedNames.length) this.addEvent(room, 'evt.foundDead', { names: deadNames });
+      else this.addEvent(room, 'evt.quietNight');
+    };
 
     if (winner) {
       // Game over — no hunter shot
       room.phase  = 'ended';
       room.winner = winner;
       room.phaseEndAt = null;
-      room.lastAnnouncement = `Dawn breaks. ${deadDesc}`;
-      this.addEvent(room, killedNames.length ? `${killedNames.join(', ')} found dead at dawn.` : 'A quiet night passed. No one was harmed.');
-      this.addEvent(room, winner === 'village' ? 'The village triumphed. All werewolves are gone.' : 'The werewolves claim the village.');
+      room.lastAnnouncement = nightAnn(false);
+      addDeadEvent();
+      this.addEvent(room, winner === 'village' ? 'evt.villageWon' : 'evt.wolvesWon');
       this.revealAllRoles(room);
       return { seerResult };
     }
@@ -643,9 +648,9 @@ export class RoomManager {
     room.phase         = 'day';
     room.suspicionMap  = {};
     room.trustMap      = {};
-    room.lastAnnouncement = `Dawn breaks. ${deadDesc}${hunterPendingInfo ? ' The Hunter\'s eyes still burn — a final shot is coming.' : ''}`;
-    this.addEvent(room, killedNames.length ? `${killedNames.join(', ')} found dead at dawn.` : 'A quiet night passed. No one was harmed.');
-    this.addEvent(room, 'Dawn breaks. The village wakes to discuss.');
+    room.lastAnnouncement = nightAnn(!!hunterPendingInfo);
+    addDeadEvent();
+    this.addEvent(room, 'evt.dawnDiscuss');
 
     if (hunterPendingInfo) {
       room.hunterPendingShot = hunterPendingInfo.hunterId;
@@ -682,7 +687,7 @@ export class RoomManager {
     room.timerPaused  = false;
     room.pausedTimeRemaining = null;
     this.dayVotes.delete(room.code);
-    this.addEvent(room, 'The village gathers to cast their votes.');
+    this.addEvent(room, 'evt.gatherVotes');
     return { ok: true, room };
   }
 
@@ -796,20 +801,24 @@ export class RoomManager {
     }
 
     room.publicVotes = null;
-    const winner   = this.checkWin(room);
-    const roleLabel = eliminated?.revealedRole
-      ? `the ${eliminated.revealedRole.charAt(0).toUpperCase() + eliminated.revealedRole.slice(1)}`
-      : 'an unknown role';
+    const winner = this.checkWin(room);
+    const exileParams = eliminated
+      ? { name: eliminated.name, role: eliminated.revealedRole ?? 'villager' }
+      : null;
+    const addExileEvent = () => {
+      if (exileParams) this.addEvent(room, 'evt.exiled', exileParams);
+      else this.addEvent(room, 'evt.voteTied');
+    };
 
     if (winner) {
       room.phase   = 'ended';
       room.winner  = winner;
       room.phaseEndAt = null;
-      room.lastAnnouncement = eliminated
-        ? `The village has spoken. ${eliminated.name} has been exiled — they were ${roleLabel}.`
-        : 'The votes were cast. The village could not agree.';
-      this.addEvent(room, eliminated ? `${eliminated.name} was exiled (${roleLabel}).` : 'The vote was tied. No one was exiled.');
-      this.addEvent(room, winner === 'village' ? 'The village triumphed. All werewolves are gone.' : 'The werewolves claim the village.');
+      room.lastAnnouncement = exileParams
+        ? { code: 'ann.exiledWin', params: exileParams }
+        : { code: 'ann.noAgreement' };
+      addExileEvent();
+      this.addEvent(room, winner === 'village' ? 'evt.villageWon' : 'evt.wolvesWon');
       this.revealAllRoles(room);
       return undefined;
     }
@@ -823,20 +832,18 @@ export class RoomManager {
       const availableTargetIds = room.players.filter(p => p.isAlive).map(p => p.id);
       room.hunterPendingShot = eliminatedId!;
       room.phaseEndAt        = null; // timer starts after hunter resolves
-      room.lastAnnouncement  = eliminated
-        ? `${eliminated.name} was exiled (${roleLabel}). Their eyes burn — the Hunter's shot is not spent.`
-        : 'The vote was tied. No one was exiled.';
-      this.addEvent(room, `${eliminated!.name} was exiled (${roleLabel}).`);
-      this.addEvent(room, 'The Hunter readies one final shot before falling.');
+      room.lastAnnouncement  = { code: 'ann.exiledHunter', params: exileParams! };
+      addExileEvent();
+      this.addEvent(room, 'evt.hunterReadies');
       return { hunterId: eliminatedId!, availableTargetIds };
     }
 
     room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
-    room.lastAnnouncement = eliminated
-      ? `${eliminated.name} has been exiled (${roleLabel}). Night falls once more.`
-      : 'The vote ended in a tie. No one was exiled. Night falls.';
-    this.addEvent(room, eliminated ? `${eliminated.name} was exiled (${roleLabel}).` : 'The vote was tied. No one was exiled.');
-    this.addEvent(room, 'Night falls once more. All close their eyes.');
+    room.lastAnnouncement = exileParams
+      ? { code: 'ann.exiledNight', params: exileParams }
+      : { code: 'ann.tieNight' };
+    addExileEvent();
+    this.addEvent(room, 'evt.nightFallsAgain');
     return undefined;
   }
 
@@ -886,7 +893,7 @@ export class RoomManager {
     this.playerRoomMap.delete(targetPid);
     this.roleMap.delete(targetPid);
     this.seerResults.delete(targetPid);
-    this.addEvent(room, `${target.name} was removed from the room by the host.`);
+    this.addEvent(room, 'evt.playerKicked', { name: target.name });
     return { ok: true, room, kickedSocketId };
   }
 
@@ -897,7 +904,7 @@ export class RoomManager {
     if (room.phase !== 'lobby') return { ok: false, error: 'Can only lock the room in lobby.' };
     if (room.isLocked) return { ok: true, room };
     room.isLocked = true;
-    this.addEvent(room, 'The room has been locked by the host. No new players can join.');
+    this.addEvent(room, 'evt.roomLocked');
     return { ok: true, room };
   }
 
@@ -907,7 +914,7 @@ export class RoomManager {
     const room = check.room;
     if (!room.isLocked) return { ok: true, room };
     room.isLocked = false;
-    this.addEvent(room, 'The room has been unlocked by the host.');
+    this.addEvent(room, 'evt.roomUnlocked');
     return { ok: true, room };
   }
 
@@ -1061,7 +1068,7 @@ export class RoomManager {
     room.pausedTimeRemaining = Math.max(0, room.phaseEndAt - Date.now());
     room.phaseEndAt          = null;
     room.timerPaused         = true;
-    this.addEvent(room, 'The phase timer has been paused by the host.');
+    this.addEvent(room, 'evt.timerPaused');
     return { ok: true, room };
   }
 
@@ -1074,7 +1081,7 @@ export class RoomManager {
     room.phaseEndAt          = Date.now() + remaining;
     room.timerPaused         = false;
     room.pausedTimeRemaining = null;
-    this.addEvent(room, 'The phase timer has been resumed by the host.');
+    this.addEvent(room, 'evt.timerResumed');
     return { ok: true, room };
   }
 
@@ -1090,7 +1097,7 @@ export class RoomManager {
       if (!room.phaseEndAt) return { ok: false, error: 'No timer running.' };
       room.phaseEndAt += extraMs;
     }
-    this.addEvent(room, `The host extended the phase timer by ${extraSeconds} seconds.`);
+    this.addEvent(room, 'evt.timerExtended', { seconds: extraSeconds });
     return { ok: true, room };
   }
 
@@ -1100,15 +1107,15 @@ export class RoomManager {
     const room = check.room;
     if (room.hunterPendingShot) return { ok: false, error: 'Cannot end the phase while the Hunter\'s shot is pending.' };
     if (room.phase === 'night') {
-      this.addEvent(room, 'The host ended the night phase early.');
+      this.addEvent(room, 'evt.hostEndedNight');
       return this.forceNightResolve(room.code);
     }
     if (room.phase === 'day') {
-      this.addEvent(room, 'The host called a vote early.');
+      this.addEvent(room, 'evt.hostCalledVote');
       return this.forceAdvanceDay(room.code);
     }
     if (room.phase === 'voting') {
-      this.addEvent(room, 'The host closed the vote early.');
+      this.addEvent(room, 'evt.hostClosedVote');
       return { ...this.forceResolveVoting(room.code) };
     }
     return { ok: false, error: 'Not in an active game phase.' };
@@ -1157,8 +1164,8 @@ export class RoomManager {
     this.witchPoisonUsed.delete(room.code);
     this.bodyguardLastProtected.delete(room.code);
     room.players.forEach(p => this.seerResults.delete(p.id));
-    this.addEvent(room, 'A new game has begun. Roles have been reassigned.');
-    this.addEvent(room, 'Night falls upon the village. All close their eyes.');
+    this.addEvent(room, 'evt.newGame');
+    this.addEvent(room, 'evt.nightFalls');
     return { room, roleMap };
   }
 
@@ -1209,8 +1216,8 @@ export class RoomManager {
     for (const player of room.players) player.revealedRole = this.roleMap.get(player.id);
   }
 
-  private addEvent(room: RoomState, text: string): void {
-    room.eventLog.push({ id: makeEventId(), text, timestamp: Date.now() });
+  private addEvent(room: RoomState, code: string, params?: Record<string, string | number>): void {
+    room.eventLog.push({ id: makeEventId(), code, params, timestamp: Date.now() });
     if (room.eventLog.length > MAX_EVENT_LOG) room.eventLog = room.eventLog.slice(room.eventLog.length - MAX_EVENT_LOG);
   }
 }

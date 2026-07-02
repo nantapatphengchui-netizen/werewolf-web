@@ -9,7 +9,7 @@ import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
 import { LangToggle } from '@/components/ui/LangToggle';
-import { useT } from '@/i18n';
+import { useT, useMessage } from '@/i18n';
 import { RolePanel } from './RolePanel';
 import { RoleRevealOverlay } from './RoleRevealOverlay';
 import { GamePlayerGrid } from './GamePlayerGrid';
@@ -428,6 +428,7 @@ export function GameView({
   onMarkSuspicion, onMarkTrust, onDayReaction, onToggleGuidedDay,
 }: Props) {
   const T = useT();
+  const M = useMessage();
   const socket = useSocket();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
@@ -804,7 +805,7 @@ export function GameView({
             <svg viewBox="0 0 20 20" className="w-3.5 h-3.5 shrink-0" fill="rgba(180,83,9,0.80)">
               <path d="M10 2a6 6 0 0 0-6 6c0 2.5 1.5 4.7 3.7 5.6V15h4.6v-1.4A6 6 0 0 0 10 2zm-1 11v1h2v-1H9zm1-9a4 4 0 0 1 4 4 4 4 0 0 1-2.6 3.7l-.4.1V13h-2v-1.2l-.4-.1A4 4 0 0 1 6 8a4 4 0 0 1 4-4z"/>
             </svg>
-            <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{room.lastAnnouncement}</p>
+            <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{M(room.lastAnnouncement)}</p>
           </div>
         )}
 

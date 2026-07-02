@@ -2,7 +2,7 @@
 
 import type { RoomState } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
-import { useT } from '@/i18n';
+import { useT, useMessage } from '@/i18n';
 
 interface Props {
   room: RoomState;
@@ -35,6 +35,7 @@ function WolfWinIcon() {
 
 export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToLobby }: Props) {
   const T = useT();
+  const M = useMessage();
   const isVillageWin = room.winner === 'village';
   const isHost = room.hostId === playerId;
 
@@ -60,7 +61,7 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
 
           {room.lastAnnouncement && (
             <p className="mt-3 text-amber-600/70 text-xs italic leading-relaxed border-t border-amber-900/30 pt-3">
-              {room.lastAnnouncement}
+              {M(room.lastAnnouncement)}
             </p>
           )}
         </div>

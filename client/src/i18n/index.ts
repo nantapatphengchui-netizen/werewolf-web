@@ -50,3 +50,24 @@ export function useT() {
   return (key: string, params?: Record<string, string | number>) =>
     t(key, params, lang);
 }
+
+// ── Server-generated messages (event log / announcements) ─────────────────────
+// A param named `role` holds a Role key and is translated to its localized name.
+
+export function formatMessage(
+  msg: { code: string; params?: Record<string, string | number> } | null | undefined,
+  lang?: Lang,
+): string {
+  if (!msg) return '';
+  let params = msg.params;
+  if (params && typeof params.role === 'string') {
+    params = { ...params, role: t(`role.${params.role}.name`, undefined, lang) };
+  }
+  return t(msg.code, params, lang);
+}
+
+export function useMessage() {
+  const lang = useLangStore((s) => s.lang);
+  return (msg: { code: string; params?: Record<string, string | number> } | null | undefined) =>
+    formatMessage(msg, lang);
+}

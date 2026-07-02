@@ -17,9 +17,16 @@ export interface PublicVotes {
   tally: Record<string, number>;
 }
 
+/** i18n-friendly message: a translation key + interpolation params. */
+export interface GameMessage {
+  code: string;
+  params?: Record<string, string | number>;
+}
+
 export interface GameEvent {
   id: string;
-  text: string;
+  code: string;
+  params?: Record<string, string | number>;
   timestamp: number;
 }
 
@@ -32,7 +39,7 @@ export interface RoomState {
   minPlayers: number;
   createdAt: number;
   round: number;
-  lastAnnouncement: string | null;
+  lastAnnouncement: GameMessage | null;
   winner: 'village' | 'werewolf' | null;
   publicVotes: PublicVotes | null;
   phaseEndAt: number | null;
