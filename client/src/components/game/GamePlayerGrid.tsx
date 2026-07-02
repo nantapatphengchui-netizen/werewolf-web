@@ -53,13 +53,17 @@ export function GamePlayerGrid({
 }: Props) {
   const n = players.length;
 
-  const lgCols = n >= 9 ? 5 : n >= 5 ? 4 : 3;
+  // Column count chosen so the grid fills evenly (no ragged empty corner) and
+  // cards stay portrait-ish. Keyed by player count (min 5, max 12).
+  const LG_COLS: Record<number, number> = { 5: 3, 6: 3, 7: 4, 8: 4, 9: 3, 10: 5, 11: 4, 12: 6 };
+  const lgCols = LG_COLS[n] ?? (n < 5 ? Math.max(1, n) : 5);
   const lgRows = Math.ceil(n / lgCols);
 
-  const lgColClass =
-    lgCols === 5 ? 'lg:grid-cols-5' :
-    lgCols === 4 ? 'lg:grid-cols-4' :
-                   'lg:grid-cols-3';
+  const LG_COL_CLASS: Record<number, string> = {
+    1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3',
+    4: 'lg:grid-cols-4', 5: 'lg:grid-cols-5', 6: 'lg:grid-cols-6',
+  };
+  const lgColClass = LG_COL_CLASS[lgCols] ?? 'lg:grid-cols-5';
 
   const lgRowClass =
     lgRows <= 2 ? 'lg:[grid-template-rows:repeat(2,minmax(0,1fr))]' :
