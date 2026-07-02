@@ -96,6 +96,11 @@
   50%      { opacity: 0.85; }
 }
 
+@keyframes you-glow {
+  0%, 100% { box-shadow: 0 0 14px 0 rgba(var(--you-rgb, 217,119,6), 0.30); }
+  50%      { box-shadow: 0 0 28px 4px rgba(var(--you-rgb, 217,119,6), 0.50); }
+}
+
 /* ── Turn prompt ────────────────────────────────────────────────────────────── */
 
 @keyframes turn-prompt-glow {

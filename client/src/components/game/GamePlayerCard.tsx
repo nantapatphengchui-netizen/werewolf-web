@@ -297,6 +297,7 @@ export function GamePlayerCard({
   } else if (isCurrentPlayer) {
     border    = `2px solid rgba(${myRoleRgb},0.75)`;
     boxShadow = `0 0 20px rgba(${myRoleRgb},0.28)`;
+    cardAnimation = 'you-glow 3.2s ease-in-out infinite';
   } else if (isWerewolfTeammate) {
     border    = '1px solid rgba(185,28,28,0.60)';
     boxShadow = '0 0 10px rgba(185,28,28,0.18)';
@@ -373,7 +374,7 @@ export function GamePlayerCard({
       onClick={isValidTarget || isSelected ? onClick : undefined}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ border, boxShadow, animation: cardAnimation }}
+      style={{ border, boxShadow, animation: cardAnimation, ['--you-rgb' as string]: myRoleRgb } as React.CSSProperties}
       className={`relative w-full h-full overflow-hidden rounded-xl select-none transition-all duration-200 ${cursor}`}
     >
       {/* ── Corner ornaments ── */}
@@ -658,6 +659,11 @@ export function GamePlayerCard({
 
       {/* ── Nameplate ── */}
       <div className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 z-10">
+        {/* Accent divider */}
+        <div
+          className="mx-auto mb-1 h-px w-7"
+          style={{ background: `linear-gradient(90deg, transparent, ${cornerColor}, transparent)`, opacity: alive ? 0.85 : 0.4 }}
+        />
         <p
           className="text-[11px] font-cinzel tracking-wider uppercase truncate text-center leading-tight"
           style={{ color: !alive ? '#57534e' : '#f7e7b0', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}
