@@ -523,6 +523,8 @@ export function GameView({
     if (isHunterPending) {
       return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
     }
+    // Someone else is the pending Hunter — everything is frozen until they shoot
+    if (room.hunterPendingShot) return [];
     if (isActionSubmitted || !imAlive) return [];
     // Witch poison mode: all alive players except self
     if (witchPoisonMode && myRole === 'witch' && room.phase === 'night') {

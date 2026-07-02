@@ -528,6 +528,9 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     const pid  = socket.data.playerId;
     const room = rooms.getRoomByPlayer(pid);
     if (!room) return;
+    if (room.phase !== 'day' && room.phase !== 'voting') return;
+    const sender = room.players.find(p => p.id === pid);
+    if (!sender?.isAlive) return;
     const ALLOWED = ['shock','wolf','eyes','knife','pray','laugh'];
     if (!ALLOWED.includes(emoji)) return;
     io.to(room.code).emit('reaction', { playerId: pid, emoji });

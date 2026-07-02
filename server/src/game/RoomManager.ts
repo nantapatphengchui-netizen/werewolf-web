@@ -289,6 +289,7 @@ export class RoomManager {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.phase !== 'night') return { ok: false, error: 'Not night phase.' };
+    if (room.hunterPendingShot) return { ok: false, error: 'Waiting for the Hunter\'s final shot.' };
 
     const myRole = this.roleMap.get(persistentId);
     const me     = room.players.find(p => p.id === persistentId);
@@ -351,6 +352,7 @@ export class RoomManager {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.phase !== 'night') return { ok: false, error: 'Not night phase.' };
+    if (room.hunterPendingShot) return { ok: false, error: 'Waiting for the Hunter\'s final shot.' };
     if (this.roleMap.get(persistentId) !== 'witch') return { ok: false, error: 'You are not the Witch.' };
 
     const me = room.players.find(p => p.id === persistentId);
@@ -528,11 +530,10 @@ export class RoomManager {
     // Wolf victim: killed only if not protected by doctor OR bodyguard, OR saved by witch
     let wolfKillId: string | null = null;
     if (intendedKillId) {
-      const doctorSaved   = intendedKillId === doctorProtectedId;
+      const doctorSaved    = intendedKillId === doctorProtectedId;
       const bodyguardSaved = intendedKillId === guardProtectedId;
-      const witchSaved    = witchAct?.save && witchAct;
-      // witch saves if they chose save AND the tentative victim matches intendedKillId (and it wasn't already protected)
-      const witchSavedTarget = witchAct?.save && intendedKillId !== doctorProtectedId && intendedKillId !== guardProtectedId;
+      // Witch saves only if they chose to AND the victim wasn't already protected
+      const witchSavedTarget = witchAct?.save && !doctorSaved && !bodyguardSaved;
       if (!doctorSaved && !bodyguardSaved && !witchSavedTarget) wolfKillId = intendedKillId;
     }
 
@@ -620,6 +621,7 @@ export class RoomManager {
     if (!room) return { ok: false, error: 'Not in a room.' };
     if (room.hostId !== persistentId) return { ok: false, error: 'Only the host can call a vote.' };
     if (room.phase !== 'day') return { ok: false, error: 'Not day phase.' };
+    if (room.hunterPendingShot) return { ok: false, error: 'Waiting for the Hunter\'s final shot.' };
     return this.transitionToVoting(room);
   }
 
@@ -1052,6 +1054,7 @@ export class RoomManager {
     const check = this.requireHost(hostPid);
     if (!check.ok) return { ok: false, error: check.error };
     const room = check.room;
+    if (room.hunterPendingShot) return { ok: false, error: 'Cannot end the phase while the Hunter\'s shot is pending.' };
     if (room.phase === 'night') {
       this.addEvent(room, 'The host ended the night phase early.');
       return this.forceNightResolve(room.code);
@@ -1102,6 +1105,7 @@ export class RoomManager {
     room.pausedTimeRemaining = null;
     room.eventLog         = [];
     room.suspicionMap     = {};
+    room.trustMap         = {};
     room.hunterPendingShot = null;
     this.clearNightMaps(room.code);
     this.dayVotes.delete(room.code);
@@ -1143,6 +1147,7 @@ export class RoomManager {
     room.timerPaused      = false;
     room.pausedTimeRemaining = null;
     room.suspicionMap     = {};
+    room.trustMap         = {};
     room.hunterPendingShot = null;
   }
 
