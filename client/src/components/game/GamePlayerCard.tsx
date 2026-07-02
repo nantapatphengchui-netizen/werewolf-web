@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import type { Player, Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { RoleSkillIcon } from './RoleSkillIcon';
 import { useT } from '@/i18n';
 
 const ROLE_IMAGE: Record<Role, string> = {
@@ -653,18 +654,17 @@ export function GamePlayerCard({
         {/* Sub-label: hidden when confirm button takes its space */}
         {subLabel && !isSelected && (
           isCurrentPlayer && alive ? (
-            <div className="flex justify-center mt-1">
+            <div className="flex items-center justify-center gap-1 mt-0.5">
+              {myRole && <RoleSkillIcon role={myRole} size={10} color={subLabel.color} />}
               <span
-                className="px-1.5 py-px rounded-full text-[8px] font-cinzel font-bold uppercase tracking-[0.12em] truncate"
+                className="text-[8px] font-cinzel font-bold uppercase tracking-[0.16em] truncate"
                 style={{
-                  backgroundColor: `rgba(${myRoleRgb},0.20)`,
-                  border: `1px solid rgba(${myRoleRgb},0.55)`,
                   color: subLabel.color,
-                  textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-                  maxWidth: '90%',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.95)',
+                  maxWidth: '78%',
                 }}
               >
-                {subLabel.text}
+                {myRole ? T(`role.${myRole}.name`) : subLabel.text}
               </span>
             </div>
           ) : (
