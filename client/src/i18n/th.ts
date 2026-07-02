@@ -1,4 +1,19 @@
 export const th: Record<string, string> = {
+  // ── Landing / lobby form ───────────────────────────────────────────────────
+  'landing.online':          'ออนไลน์',
+  'landing.tagline':         'เกมแห่งการหลอกลวง',
+  'landing.connecting':      'กำลังเชื่อมต่อเซิร์ฟเวอร์…',
+  'landing.createRoom':      'สร้างห้อง',
+  'landing.joinRoom':        'เข้าร่วมห้อง',
+  'landing.yourName':        'ชื่อของคุณ',
+  'landing.namePlaceholder': 'กรอกชื่อของคุณ…',
+  'landing.roomCode':        'รหัสห้อง',
+  'landing.back':            '← กลับ',
+  'landing.playersRequired': 'ต้องมีผู้เล่น 5–12 คนจึงจะเริ่มได้',
+  'landing.creating':        'กำลังสร้าง…',
+  'landing.joining':         'กำลังเข้าร่วม…',
+  'landing.waitConnect':     'กำลังเชื่อมต่อ…',
+
   // ── Phases ─────────────────────────────────────────────────────────────────
   'phase.lobby':  'ห้องรอ',
   'phase.night':  'กลางคืน',

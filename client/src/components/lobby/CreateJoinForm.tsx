@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DarkPanel } from '@/components/ui/DarkPanel';
+import { LangToggle } from '@/components/ui/LangToggle';
+import { useT } from '@/i18n';
 
 type Mode = 'select' | 'create' | 'join';
 
@@ -20,18 +22,27 @@ export function CreateJoinForm({
   isConnected,
   onClearError,
 }: Props) {
+  const T = useT();
   const [mode, setMode] = useState<Mode>('select');
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Any server error means our submit didn't take — re-enable the form.
+  useEffect(() => { if (error) setSubmitting(false); }, [error]);
+  // If the socket drops mid-submit, stop showing the pending state.
+  useEffect(() => { if (!isConnected) setSubmitting(false); }, [isConnected]);
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (playerName.trim()) onCreateRoom(playerName.trim());
+    if (!isConnected || submitting) return;
+    if (playerName.trim()) { setSubmitting(true); onCreateRoom(playerName.trim()); }
   };
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (playerName.trim() && roomCode.trim()) onJoinRoom(roomCode.trim(), playerName.trim());
+    if (!isConnected || submitting) return;
+    if (playerName.trim() && roomCode.trim()) { setSubmitting(true); onJoinRoom(roomCode.trim(), playerName.trim()); }
   };
 
   const goBack = () => {
@@ -40,23 +51,32 @@ export function CreateJoinForm({
     onClearError();
   };
 
+  const Spinner = () => (
+    <span className="inline-block w-3.5 h-3.5 border-2 border-amber-200/40 border-t-amber-100 rounded-full animate-spin align-middle" />
+  );
+
   return (
-    <DarkPanel className="p-8 w-full max-w-sm mx-auto">
+    <DarkPanel className="relative p-8 w-full max-w-sm mx-auto">
+      {/* Language toggle — top-right */}
+      <div className="absolute top-3 right-3">
+        <LangToggle />
+      </div>
+
       {/* Title */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-3 mb-1">
           <span className="block h-px w-8 bg-amber-800/60" />
-          <span className="text-amber-700 text-xs tracking-[0.4em] uppercase">Online</span>
+          <span className="text-amber-700 text-xs tracking-[0.4em] uppercase">{T('landing.online')}</span>
           <span className="block h-px w-8 bg-amber-800/60" />
         </div>
         <h1 className="font-cinzel text-5xl font-bold text-amber-300 tracking-widest drop-shadow-[0_0_12px_rgba(217,119,6,0.4)]">
           WEREWOLF
         </h1>
         <p className="text-amber-800 text-xs tracking-[0.35em] uppercase mt-1">
-          A Game of Deception
+          {T('landing.tagline')}
         </p>
         {!isConnected && (
-          <p className="mt-3 text-amber-700/60 text-xs animate-pulse">Connecting to server...</p>
+          <p className="mt-3 text-amber-700/60 text-xs animate-pulse">{T('landing.connecting')}</p>
         )}
       </div>
 
@@ -67,13 +87,13 @@ export function CreateJoinForm({
             onClick={() => setMode('create')}
             className="w-full py-3 bg-amber-800/70 hover:bg-amber-700/70 border border-amber-600/50 text-amber-100 font-semibold rounded tracking-widest uppercase text-sm transition-all duration-150 active:scale-95"
           >
-            Create Room
+            {T('landing.createRoom')}
           </button>
           <button
             onClick={() => setMode('join')}
             className="w-full py-3 bg-transparent hover:bg-amber-950/50 border border-amber-800/50 hover:border-amber-700/60 text-amber-400 font-semibold rounded tracking-widest uppercase text-sm transition-all duration-150 active:scale-95"
           >
-            Join Room
+            {T('landing.joinRoom')}
           </button>
         </div>
       )}
@@ -83,14 +103,14 @@ export function CreateJoinForm({
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label className="block text-amber-600 text-xs uppercase tracking-widest mb-1.5">
-              Your Name
+              {T('landing.yourName')}
             </label>
             <input
               type="text"
               value={playerName}
               onChange={(e) => { setPlayerName(e.target.value); onClearError(); }}
               maxLength={20}
-              placeholder="Enter your name..."
+              placeholder={T('landing.namePlaceholder')}
               autoFocus
               className="w-full bg-black/40 border border-amber-900/60 focus:border-amber-600/80 text-amber-100 placeholder-amber-900/70 rounded px-4 py-2.5 outline-none transition-colors text-sm"
             />
@@ -104,17 +124,19 @@ export function CreateJoinForm({
 
           <button
             type="submit"
-            disabled={!playerName.trim()}
-            className="w-full py-3 bg-amber-800/70 hover:bg-amber-700/70 disabled:opacity-40 disabled:cursor-not-allowed border border-amber-600/50 text-amber-100 font-semibold rounded tracking-widest uppercase text-sm transition-all duration-150 active:scale-95"
+            disabled={!playerName.trim() || !isConnected || submitting}
+            className="w-full py-3 bg-amber-800/70 hover:bg-amber-700/70 disabled:opacity-40 disabled:cursor-not-allowed border border-amber-600/50 text-amber-100 font-semibold rounded tracking-widest uppercase text-sm transition-all duration-150 active:scale-95 flex items-center justify-center gap-2"
           >
-            Create Room
+            {submitting ? <><Spinner /> {T('landing.creating')}</>
+              : !isConnected ? T('landing.waitConnect')
+              : T('landing.createRoom')}
           </button>
           <button
             type="button"
             onClick={goBack}
             className="w-full py-2 text-amber-800 hover:text-amber-600 text-xs uppercase tracking-widest transition-colors"
           >
-            ← Back
+            {T('landing.back')}
           </button>
         </form>
       )}
@@ -124,7 +146,7 @@ export function CreateJoinForm({
         <form onSubmit={handleJoin} className="space-y-4">
           <div>
             <label className="block text-amber-600 text-xs uppercase tracking-widest mb-1.5">
-              Room Code
+              {T('landing.roomCode')}
             </label>
             <input
               type="text"
@@ -138,14 +160,14 @@ export function CreateJoinForm({
           </div>
           <div>
             <label className="block text-amber-600 text-xs uppercase tracking-widest mb-1.5">
-              Your Name
+              {T('landing.yourName')}
             </label>
             <input
               type="text"
               value={playerName}
               onChange={(e) => { setPlayerName(e.target.value); onClearError(); }}
               maxLength={20}
-              placeholder="Enter your name..."
+              placeholder={T('landing.namePlaceholder')}
               className="w-full bg-black/40 border border-amber-900/60 focus:border-amber-600/80 text-amber-100 placeholder-amber-900/70 rounded px-4 py-2.5 outline-none transition-colors text-sm"
             />
           </div>
@@ -158,23 +180,25 @@ export function CreateJoinForm({
 
           <button
             type="submit"
-            disabled={!playerName.trim() || roomCode.length < 4}
-            className="w-full py-3 bg-amber-800/70 hover:bg-amber-700/70 disabled:opacity-40 disabled:cursor-not-allowed border border-amber-600/50 text-amber-100 font-semibold rounded tracking-widest uppercase text-sm transition-all duration-150 active:scale-95"
+            disabled={!playerName.trim() || roomCode.length < 4 || !isConnected || submitting}
+            className="w-full py-3 bg-amber-800/70 hover:bg-amber-700/70 disabled:opacity-40 disabled:cursor-not-allowed border border-amber-600/50 text-amber-100 font-semibold rounded tracking-widest uppercase text-sm transition-all duration-150 active:scale-95 flex items-center justify-center gap-2"
           >
-            Join Room
+            {submitting ? <><Spinner /> {T('landing.joining')}</>
+              : !isConnected ? T('landing.waitConnect')
+              : T('landing.joinRoom')}
           </button>
           <button
             type="button"
             onClick={goBack}
             className="w-full py-2 text-amber-800 hover:text-amber-600 text-xs uppercase tracking-widest transition-colors"
           >
-            ← Back
+            {T('landing.back')}
           </button>
         </form>
       )}
 
       <p className="text-center text-amber-900/70 text-xs mt-6">
-        5–12 players required to start
+        {T('landing.playersRequired')}
       </p>
     </DarkPanel>
   );

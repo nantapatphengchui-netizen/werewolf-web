@@ -1,4 +1,19 @@
 export const en: Record<string, string> = {
+  // ── Landing / lobby form ───────────────────────────────────────────────────
+  'landing.online':          'Online',
+  'landing.tagline':         'A Game of Deception',
+  'landing.connecting':      'Connecting to server…',
+  'landing.createRoom':      'Create Room',
+  'landing.joinRoom':        'Join Room',
+  'landing.yourName':        'Your Name',
+  'landing.namePlaceholder': 'Enter your name…',
+  'landing.roomCode':        'Room Code',
+  'landing.back':            '← Back',
+  'landing.playersRequired': '5–12 players required to start',
+  'landing.creating':        'Creating…',
+  'landing.joining':         'Joining…',
+  'landing.waitConnect':     'Connecting…',
+
   // ── Phases ─────────────────────────────────────────────────────────────────
   'phase.lobby':  'Lobby',
   'phase.night':  'Night',
