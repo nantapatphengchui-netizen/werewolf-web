@@ -47,7 +47,6 @@ export default function RoomPage() {
     hostPauseTimer, hostResumeTimer, hostExtendTimer, hostEndPhase,
     hostRestartGame, hostReturnToLobby,
     hostAddBot, hostFillBots, hostRemoveBots,
-    markSuspicion, markTrust, dayReaction,
   } = useRoom();
   const myRole      = useGameStore(s => s.myRole);
   const werewolfIds = useGameStore(s => s.werewolfIds);
@@ -112,9 +111,6 @@ export default function RoomPage() {
             onHostEndPhase={hostEndPhase}
             onHostRestartGame={hostRestartGame}
             onHostReturnToLobby={hostReturnToLobby}
-            onMarkSuspicion={markSuspicion}
-            onMarkTrust={markTrust}
-            onDayReaction={dayReaction}
           />
         </main>
       )}

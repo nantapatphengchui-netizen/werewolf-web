@@ -131,11 +131,6 @@ export const th: Record<string, string> = {
   'action.save':     'ช่วยชีวิต',
   'action.poison':   'วางยา',
 
-  // ── Social actions (card buttons) ─────────────────────────────────────────
-  'social.suspect':  'สงสัย',
-  'social.trust':    'ไว้ใจ',
-  'social.ask':      'ขอพูด',
-
   // ── Action bar — night ─────────────────────────────────────────────────────
   'bar.night.submitted': 'ส่งคำสั่งแล้ว — รอผู้อื่น…',
   'bar.night.perished':  'คุณสิ้นชีวิตแล้ว ดูต่อจากเงามืด',
@@ -187,12 +182,6 @@ export const th: Record<string, string> = {
   'hunter.skipShot':     'ข้ามการยิง',
   'hunter.skip':         'ข้าม',
 
-  // ── Hot seat ───────────────────────────────────────────────────────────────
-  'hotSeat.banner': 'Hot Seat: {{names}} — ให้พวกเขาพูดก่อนโหวต',
-
-  // ── Reactions / day ────────────────────────────────────────────────────────
-  'reaction.askToSpeak': '{{from}} ขอให้ {{to}} พูด',
-
   // ── Game over ──────────────────────────────────────────────────────────────
   'gameover.villageWins':   'หมู่บ้านชนะ',
   'gameover.wolvesWin':     'หมาป่าชนะ',
@@ -224,10 +213,6 @@ export const th: Record<string, string> = {
   'host.pauseTimer':    '⏸ หยุดชั่วคราว',
   'host.resumeTimer':   '▶ เล่นต่อ',
   'host.endPhase':      'จบ{{phase}}ก่อนเวลา',
-  'host.guidedDayOn':   '◆ กลางวันชี้แนะ: เปิด',
-  'host.guidedDayOff':  '◇ กลางวันชี้แนะ: ปิด',
-  'host.guidedDayDesc': 'แสดง Hot Seat สำหรับผู้ต้องสงสัยมากที่สุด',
-  'host.dayMode':       'โหมดกลางวัน',
   'host.game':          'เกม',
   'host.toLobby':       'กลับห้องรอ',
   'host.restart':       'เริ่มเกมใหม่',
@@ -275,10 +260,8 @@ export const th: Record<string, string> = {
   'hud.eventLog':      'บันทึกเหตุการณ์',
 
   // ── Card ──────────────────────────────────────────────────────────────────
-  'card.youBanner':   '◆ คุณ ◆',
   'card.eliminated':  'ถูกกำจัด',
   'card.away':        'ไม่อยู่',
-  'card.youRole':     'คุณ · {{role}}',
 
   // ── Event log (server-generated) ───────────────────────────────────────────
   'evt.gameBegun':        'เกมเริ่มขึ้นแล้ว บทบาทถูกแจกเรียบร้อย',

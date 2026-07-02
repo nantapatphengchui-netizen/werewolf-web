@@ -146,8 +146,7 @@ export class RoomManager {
       maxPlayers: MAX_PLAYERS, minPlayers: MIN_PLAYERS, createdAt: Date.now(),
       round: 0, lastAnnouncement: null, winner: null, publicVotes: null,
       phaseEndAt: null, readyPlayers: [], eventLog: [], isLocked: false,
-      timerPaused: false, pausedTimeRemaining: null, suspicionMap: {}, trustMap: {},
-      guidedDayEnabled: false, hunterPendingShot: null,
+      timerPaused: false, pausedTimeRemaining: null, hunterPendingShot: null,
     };
 
     this.rooms.set(code, room);
@@ -299,8 +298,6 @@ export class RoomManager {
     room.timerPaused    = false;
     room.pausedTimeRemaining = null;
     room.eventLog       = [];
-    room.suspicionMap   = {};
-    room.trustMap       = {};
     room.hunterPendingShot = null;
 
     this.clearNightMaps(room.code);
@@ -692,8 +689,6 @@ export class RoomManager {
     // ── Transition to day (with or without hunter pause) ──────────────────────
 
     room.phase         = 'day';
-    room.suspicionMap  = {};
-    room.trustMap      = {};
     room.lastAnnouncement = nightAnn(!!hunterPendingInfo);
     addDeadEvent();
     this.addEvent(room, 'evt.dawnDiscuss');
@@ -734,56 +729,6 @@ export class RoomManager {
     room.pausedTimeRemaining = null;
     this.dayVotes.delete(room.code);
     this.addEvent(room, 'evt.gatherVotes');
-    return { ok: true, room };
-  }
-
-  // ── Social deduction ─────────────────────────────────────────────────────────
-
-  markSuspicion(persistentId: string, targetId: string): { ok: boolean; error?: string; room?: RoomState } {
-    const room = this.getRoomByPlayer(persistentId);
-    if (!room) return { ok: false, error: 'Not in a room.' };
-    if (room.phase !== 'day') return { ok: false, error: 'Suspicion marks are only available during day phase.' };
-    const marker = room.players.find(p => p.id === persistentId);
-    if (!marker?.isAlive) return { ok: false, error: 'Only alive players can mark suspicion.' };
-    const target = room.players.find(p => p.id === targetId);
-    if (!target?.isAlive) return { ok: false, error: 'Cannot mark a dead player.' };
-    if (targetId === persistentId) return { ok: false, error: 'Cannot mark yourself as suspicious.' };
-    if (!room.suspicionMap) room.suspicionMap = {};
-    const markers      = room.suspicionMap[targetId] ?? [];
-    const alreadyMarked = markers.includes(persistentId);
-    if (alreadyMarked) {
-      const updated = markers.filter(id => id !== persistentId);
-      if (updated.length === 0) delete room.suspicionMap[targetId];
-      else room.suspicionMap[targetId] = updated;
-    } else {
-      const myMarkCount = Object.values(room.suspicionMap).filter(arr => arr.includes(persistentId)).length;
-      if (myMarkCount >= 2) return { ok: false, error: 'You can only mark up to 2 players as suspicious.' };
-      room.suspicionMap[targetId] = [...markers, persistentId];
-    }
-    return { ok: true, room };
-  }
-
-  markTrust(persistentId: string, targetId: string): { ok: boolean; error?: string; room?: RoomState } {
-    const room = this.getRoomByPlayer(persistentId);
-    if (!room) return { ok: false, error: 'Not in a room.' };
-    if (room.phase !== 'day') return { ok: false, error: 'Trust marks are only available during day phase.' };
-    const marker = room.players.find(p => p.id === persistentId);
-    if (!marker?.isAlive) return { ok: false, error: 'Only alive players can mark trust.' };
-    const target = room.players.find(p => p.id === targetId);
-    if (!target?.isAlive) return { ok: false, error: 'Cannot mark a dead player.' };
-    if (targetId === persistentId) return { ok: false, error: 'Cannot mark yourself as trusted.' };
-    if (!room.trustMap) room.trustMap = {};
-    // Remove any existing trust mark by this player (max 1 trust per day — toggle if same target)
-    for (const [tid, markers] of Object.entries(room.trustMap)) {
-      const filtered = markers.filter(id => id !== persistentId);
-      if (filtered.length === 0) delete room.trustMap[tid];
-      else room.trustMap[tid] = filtered;
-    }
-    // Check if we're toggling off the same target
-    const alreadyTrusted = (room.trustMap[targetId] ?? []).includes(persistentId);
-    if (!alreadyTrusted) {
-      room.trustMap[targetId] = [...(room.trustMap[targetId] ?? []), persistentId];
-    }
     return { ok: true, room };
   }
 
@@ -1193,8 +1138,6 @@ export class RoomManager {
     room.timerPaused      = false;
     room.pausedTimeRemaining = null;
     room.eventLog         = [];
-    room.suspicionMap     = {};
-    room.trustMap         = {};
     room.hunterPendingShot = null;
     this.clearNightMaps(room.code);
     this.dayVotes.delete(room.code);
@@ -1239,8 +1182,6 @@ export class RoomManager {
     room.phaseEndAt       = null;
     room.timerPaused      = false;
     room.pausedTimeRemaining = null;
-    room.suspicionMap     = {};
-    room.trustMap         = {};
     room.hunterPendingShot = null;
   }
 

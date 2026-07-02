@@ -48,9 +48,6 @@ export interface RoomState {
   isLocked: boolean;
   timerPaused: boolean;
   pausedTimeRemaining: number | null;
-  suspicionMap: Record<string, string[]>;
-  trustMap: Record<string, string[]>;
-  guidedDayEnabled: boolean;
   /** hunterId waiting to fire their final shot; null when not pending */
   hunterPendingShot: string | null;
 }

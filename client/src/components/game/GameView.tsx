@@ -43,9 +43,6 @@ interface Props {
   onHostEndPhase: () => void;
   onHostRestartGame: () => void;
   onHostReturnToLobby: () => void;
-  onMarkSuspicion: (targetId: string) => void;
-  onMarkTrust: (targetId: string) => void;
-  onDayReaction: (targetId: string) => void;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -483,7 +480,6 @@ export function GameView({
   onRestart, onReturnToLobby,
   onHostPauseTimer, onHostResumeTimer, onHostExtendTimer, onHostEndPhase,
   onHostRestartGame, onHostReturnToLobby,
-  onMarkSuspicion, onMarkTrust, onDayReaction,
 }: Props) {
   const T = useT();
   const M = useMessage();
@@ -519,7 +515,6 @@ export function GameView({
   const prevRoleRef  = useRef<Role | null>(myRole);
   const isHost       = room.hostId === playerId;
   const seerLog      = useGameStore(s => s.seerLog);
-  const dayReactions = useGameStore(s => s.dayReactions);
   const chatMessages = useGameStore(s => s.chatMessages);
 
   const seerRevealedMap = useMemo((): Record<string, Role> => {
@@ -994,21 +989,6 @@ export function GameView({
           </div>
         )}
 
-        {/* Day reactions */}
-        {dayReactions.length > 0 && room.phase === 'day' && (
-          <div className="flex flex-col gap-0.5 overflow-hidden" style={{ maxHeight: '78px' }}>
-            {dayReactions.map(r => (
-              <div key={r.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md" style={{ backgroundColor: 'rgba(46,16,101,0.30)', border: '1px solid rgba(109,40,217,0.28)' }}>
-                <svg viewBox="0 0 16 16" className="w-2.5 h-2.5 shrink-0" fill="#7c3aed">
-                  <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2v3l3-3h7a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/>
-                </svg>
-                <p className="text-[10px] truncate" style={{ color: '#a78bfa' }}>
-                  {T('reaction.askToSpeak', { from: r.fromName, to: r.targetName })}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Player grid — full width ──────────────────────────────────────── */}
@@ -1024,17 +1004,9 @@ export function GameView({
           validTargetIds={validTargetIds}
           selectedTargetId={selectedTarget}
           onPlayerCardClick={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : onPlayerCardClick}
-          suspicionMap={room.phase === 'day' || room.phase === 'voting' ? room.suspicionMap : {}}
-          canMarkSuspicion={room.phase === 'day' && imAlive}
-          onMarkSuspicion={onMarkSuspicion}
-          trustMap={room.phase === 'day' ? room.trustMap : {}}
-          canMarkTrust={room.phase === 'day' && imAlive}
-          onMarkTrust={onMarkTrust}
           actionType={actionType}
           onConfirmAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : handleCardConfirm}
           onCancelAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : () => setSelectedTarget(null)}
-          showAskBtns={room.phase === 'day' && imAlive}
-          onAsk={onDayReaction}
           reactionsMap={reactionsMap}
         />
       </div>

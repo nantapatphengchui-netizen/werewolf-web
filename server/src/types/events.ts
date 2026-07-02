@@ -8,7 +8,6 @@ export interface ServerToClientEvents {
   seer_result:        (payload: { round: number; targetId: string; targetName: string; role: Role }) => void;
   error:              (payload: { message: string }) => void;
   kicked:             () => void;
-  day_reaction_sent:  (payload: { fromId: string; fromName: string; targetId: string; targetName: string }) => void;
   /** Emoji reaction broadcast — sender + emoji */
   reaction:           (payload: { playerId: string; emoji: string }) => void;
   /** Chat message — 'public' goes to the room, 'wolf' only to living werewolves */
@@ -53,10 +52,6 @@ export interface ClientToServerEvents {
   host_end_phase:      () => void;
   host_restart_game:   () => void;
   host_return_to_lobby:() => void;
-  // Social deduction actions
-  day_mark_suspicion:  (payload: { targetId: string }) => void;
-  day_mark_trust:      (payload: { targetId: string }) => void;
-  day_reaction:        (payload: { targetId: string }) => void;
   send_reaction:       (payload: { emoji: string }) => void;
   chat_send:           (payload: { text: string }) => void;
 }

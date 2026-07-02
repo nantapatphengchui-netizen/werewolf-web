@@ -13,17 +13,9 @@ interface Props {
   validTargetIds?: string[];
   selectedTargetId?: string | null;
   onPlayerCardClick?: (playerId: string) => void;
-  suspicionMap?: Record<string, string[]>;
-  canMarkSuspicion?: boolean;
-  onMarkSuspicion?: (targetId: string) => void;
-  trustMap?: Record<string, string[]>;
-  canMarkTrust?: boolean;
-  onMarkTrust?: (targetId: string) => void;
   actionType?: CardActionType | null;
   onConfirmAction?: (playerId: string) => void;
   onCancelAction?: () => void;
-  showAskBtns?: boolean;
-  onAsk?: (targetId: string) => void;
   reactionsMap?: Record<string, { emoji: string; key: number }>;
 }
 
@@ -38,17 +30,9 @@ export function GamePlayerGrid({
   validTargetIds = [],
   selectedTargetId = null,
   onPlayerCardClick,
-  suspicionMap = {},
-  canMarkSuspicion = false,
-  onMarkSuspicion,
-  trustMap = {},
-  canMarkTrust = false,
-  onMarkTrust,
   actionType = null,
   onConfirmAction,
   onCancelAction,
-  showAskBtns = false,
-  onAsk,
   reactionsMap = {},
 }: Props) {
   const n = players.length;
@@ -83,13 +67,6 @@ export function GamePlayerGrid({
       items.push(<div key="__spacer__" className={`hidden ${lgSpanClass} lg:block`} />);
     }
 
-    const suspicionCount  = (suspicionMap[player.id] ?? []).length;
-    const isSuspectedByMe = (suspicionMap[player.id] ?? []).includes(currentPlayerId);
-    const showSuspectBtn  = canMarkSuspicion && player.isAlive && player.id !== currentPlayerId;
-    const trustCount      = (trustMap[player.id] ?? []).length;
-    const isTrustedByMe   = (trustMap[player.id] ?? []).includes(currentPlayerId);
-    const showTrustBtn    = canMarkTrust && player.isAlive && player.id !== currentPlayerId;
-    const showAskBtn      = showAskBtns && player.isAlive && player.id !== currentPlayerId;
     const isSelected      = player.id === selectedTargetId;
 
     items.push(
@@ -109,19 +86,9 @@ export function GamePlayerGrid({
           isValidTarget={validTargetIds.includes(player.id)}
           isSelected={isSelected}
           onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
-          suspicionCount={suspicionCount}
-          isSuspectedByMe={isSuspectedByMe}
-          showSuspectBtn={showSuspectBtn}
-          onMarkSuspicion={showSuspectBtn && onMarkSuspicion ? () => onMarkSuspicion(player.id) : undefined}
-          trustCount={trustCount}
-          isTrustedByMe={isTrustedByMe}
-          showTrustBtn={showTrustBtn}
-          onMarkTrust={showTrustBtn && onMarkTrust ? () => onMarkTrust(player.id) : undefined}
           actionType={actionType}
           onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
           onCancelAction={onCancelAction}
-          showAskBtn={showAskBtn}
-          onAsk={showAskBtn && onAsk ? () => onAsk(player.id) : undefined}
           reaction={reactionsMap[player.id]}
         />
       </div>

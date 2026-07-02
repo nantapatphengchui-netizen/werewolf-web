@@ -190,19 +190,9 @@ interface Props {
   isValidTarget?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
-  suspicionCount?: number;
-  isSuspectedByMe?: boolean;
-  showSuspectBtn?: boolean;
-  onMarkSuspicion?: () => void;
-  trustCount?: number;
-  isTrustedByMe?: boolean;
-  showTrustBtn?: boolean;
-  onMarkTrust?: () => void;
   actionType?: CardActionType | null;
   onConfirmAction?: () => void;
   onCancelAction?: () => void;
-  showAskBtn?: boolean;
-  onAsk?: () => void;
   reaction?: { emoji: string; key: number };
 }
 
@@ -261,9 +251,7 @@ export function GamePlayerCard({
   player, index, isCurrentPlayer, isWerewolfTeammate,
   voteCount, actionSubmitted, myRole, seerRevealedRole,
   isValidTarget = false, isSelected = false, onClick,
-  suspicionCount = 0, isSuspectedByMe = false, showSuspectBtn = false, onMarkSuspicion,
-  trustCount = 0, isTrustedByMe = false, showTrustBtn = false, onMarkTrust,
-  actionType = null, onConfirmAction, onCancelAction, showAskBtn = false, onAsk, reaction,
+  actionType = null, onConfirmAction, onCancelAction, reaction,
 }: Props) {
   const T = useT();
   const cardRef = useRef<HTMLDivElement>(null);

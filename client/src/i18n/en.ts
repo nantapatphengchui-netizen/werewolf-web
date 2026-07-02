@@ -131,11 +131,6 @@ export const en: Record<string, string> = {
   'action.save':      'Save',
   'action.poison':    'Poison',
 
-  // ── Social actions (card buttons) ─────────────────────────────────────────
-  'social.suspect':  'Suspect',
-  'social.trust':    'Trust',
-  'social.ask':      'Ask',
-
   // ── Action bar — night ─────────────────────────────────────────────────────
   'bar.night.submitted': 'Action submitted — awaiting others…',
   'bar.night.perished':  'You have perished. Watch the night from the shadows.',
@@ -187,12 +182,6 @@ export const en: Record<string, string> = {
   'hunter.skipShot':     'Skip Shot',
   'hunter.skip':         'Skip',
 
-  // ── Hot seat ───────────────────────────────────────────────────────────────
-  'hotSeat.banner': 'Hot Seat: {{names}} — let them speak before the vote.',
-
-  // ── Reactions / day ────────────────────────────────────────────────────────
-  'reaction.askToSpeak': '{{from}} asks {{to}} to speak',
-
   // ── Game over ──────────────────────────────────────────────────────────────
   'gameover.villageWins':   'VILLAGE WINS',
   'gameover.wolvesWin':     'WOLVES WIN',
@@ -224,10 +213,6 @@ export const en: Record<string, string> = {
   'host.pauseTimer':    '⏸ Pause Timer',
   'host.resumeTimer':   '▶ Resume Timer',
   'host.endPhase':      'End {{phase}} Early',
-  'host.guidedDayOn':   '◆ Guided Day: ON',
-  'host.guidedDayOff':  '◇ Guided Day: OFF',
-  'host.guidedDayDesc': 'Shows Hot Seat banner for top suspects and structures the day discussion.',
-  'host.dayMode':       'Day Mode',
   'host.game':          'Game',
   'host.toLobby':       'Return to Lobby',
   'host.restart':       'Restart Game',
@@ -259,10 +244,8 @@ export const en: Record<string, string> = {
   'hud.eventLog':      'Event Log',
 
   // ── Card ───────────────────────────────────────────────────────────────────
-  'card.youBanner':   '◆ YOU ◆',
   'card.eliminated':  'Eliminated',
   'card.away':        'Away',
-  'card.youRole':     'You · {{role}}',
 
   // ── Confirm dialogs ────────────────────────────────────────────────────────
   'confirm.restart.title':  'Restart Game',

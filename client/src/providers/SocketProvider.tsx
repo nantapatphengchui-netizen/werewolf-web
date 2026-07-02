@@ -37,8 +37,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const setConnected         = useGameStore(s => s.setConnected);
   const clearGameState       = useGameStore(s => s.clearGameState);
   const clearRoom            = useGameStore(s => s.clearRoom);
-  const addDayReaction       = useGameStore(s => s.addDayReaction);
-  const clearDayReactions    = useGameStore(s => s.clearDayReactions);
   const addChatMessage       = useGameStore(s => s.addChatMessage);
   const setWitchNightInfo    = useGameStore(s => s.setWitchNightInfo);
   const setWitchActionSubmitted = useGameStore(s => s.setWitchActionSubmitted);
@@ -65,7 +63,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('room_joined',  ({ room, playerId }) => setRoom(room, playerId));
     s.on('room_updated', ({ room }) => {
       if (room.phase === 'lobby') clearGameState();
-      if (room.phase !== 'day') clearDayReactions();
       // Clear witch info when night ends
       if (room.phase !== 'night') { setWitchNightInfo(null); setWitchActionSubmitted(false); }
       updateRoom(room);
@@ -76,9 +73,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     });
     s.on('role_assigned',  ({ role, werewolfIds }) => setMyRole(role, werewolfIds));
     s.on('seer_result',    ({ round, targetId, targetName, role }) => addSeerResult({ round, targetId, targetName, role }));
-    s.on('day_reaction_sent', ({ fromName, targetName }) => {
-      addDayReaction({ id: `${fromName}-${Date.now()}`, fromName, targetName });
-    });
     s.on('witch_night_info', ({ attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed }) => {
       setWitchNightInfo({ attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed });
     });

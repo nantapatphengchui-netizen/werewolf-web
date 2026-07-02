@@ -8,7 +8,6 @@ export interface ServerToClientEvents {
   seer_result:          (payload: { round: number; targetId: string; targetName: string; role: Role }) => void;
   error:                (payload: { message: string }) => void;
   kicked:               () => void;
-  day_reaction_sent:    (payload: { fromId: string; fromName: string; targetId: string; targetName: string }) => void;
   reaction:             (payload: { playerId: string; emoji: string }) => void;
   chat_message:         (payload: { id: string; channel: 'public' | 'wolf'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
   hunter_shot_pending:  (payload: { hunterId: string; availableTargetIds: string[] }) => void;
@@ -47,10 +46,6 @@ export interface ClientToServerEvents {
   host_end_phase:       () => void;
   host_restart_game:    () => void;
   host_return_to_lobby: () => void;
-  // Social deduction actions
-  day_mark_suspicion:      (payload: { targetId: string }) => void;
-  day_mark_trust:          (payload: { targetId: string }) => void;
-  day_reaction:            (payload: { targetId: string }) => void;
   send_reaction:           (payload: { emoji: string }) => void;
   chat_send:               (payload: { text: string }) => void;
 }
