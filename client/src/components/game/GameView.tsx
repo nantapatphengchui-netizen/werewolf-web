@@ -287,14 +287,6 @@ function TurnShell({ accent, children }: { accent: string; children: React.React
   );
 }
 
-function UpArrow({ color }: { color: string }) {
-  return (
-    <svg viewBox="0 0 16 16" className="w-4 h-4 shrink-0" fill="none" style={{ animation: 'turn-arrow-bounce 1.1s ease-in-out infinite' }}>
-      <path d="M8 3v10M4 7l4-4 4 4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 interface ActionBarProps {
   phase: string;
   imAlive: boolean;
@@ -358,16 +350,13 @@ function ActionBar({
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <UpArrow color={roleAccent} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-cinzel font-bold uppercase tracking-[0.28em]" style={{ color: roleAccent }}>
-                {T('turn.yourTurn')}
-              </p>
-              <p className="text-[12px] font-cinzel truncate" style={{ color: '#f5e6c8' }}>
-                {T(myRole ? `instr.night.${myRole}` : 'bar.night.select')}
-              </p>
-            </div>
+          <div className="text-center">
+            <p className="text-[9px] font-cinzel font-bold uppercase tracking-[0.28em]" style={{ color: roleAccent }}>
+              {T('turn.yourTurn')}
+            </p>
+            <p className="text-[12px] font-cinzel truncate" style={{ color: '#f5e6c8' }}>
+              {T(myRole ? `instr.night.${myRole}` : 'bar.night.select')}
+            </p>
           </div>
         )}
       </TurnShell>
@@ -886,6 +875,21 @@ export function GameView({
           </div>
         )}
 
+        {/* Night action prompt — at the top so the grid fills the bottom */}
+        {room.phase === 'night' && !isHunterPending && (
+          <ActionBar
+            phase={room.phase}
+            imAlive={imAlive}
+            isActionSubmitted={isActionSubmitted}
+            selectedTarget={selectedTarget}
+            selectedPlayerName={selectedPlayerName}
+            nc={nc}
+            myRole={myRole}
+            roleAccent={roleInfo?.accentColor ?? '#d97706'}
+            T={T}
+          />
+        )}
+
         {/* Hunter pending — this player is the hunter */}
         {isHunterPending && (
           <div
@@ -1048,22 +1052,6 @@ export function GameView({
         </div>
       )}
 
-      {/* ── Night turn-prompt bar (day/voting have no bottom bar → grid fills) ── */}
-      {!isHunterPending && room.phase === 'night' && (
-        <div className="shrink-0 px-3 pb-3 pt-1.5 relative z-10">
-          <ActionBar
-            phase={room.phase}
-            imAlive={imAlive}
-            isActionSubmitted={isActionSubmitted}
-            selectedTarget={selectedTarget}
-            selectedPlayerName={selectedPlayerName}
-            nc={nc}
-            myRole={myRole}
-            roleAccent={roleInfo?.accentColor ?? '#d97706'}
-            T={T}
-          />
-        </div>
-      )}
 
       {/* ── Drawers ──────────────────────────────────────────────────────── */}
 
