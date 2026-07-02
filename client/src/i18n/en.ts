@@ -14,6 +14,20 @@ export const en: Record<string, string> = {
   'landing.joining':         'Joining…',
   'landing.waitConnect':     'Connecting…',
 
+  // ── How to play ────────────────────────────────────────────────────────────
+  'howto.button':         'How to Play',
+  'howto.title':          'How to Play',
+  'howto.objectiveTitle': 'Objective',
+  'howto.villageGoal':    'The Village wins by finding and eliminating every werewolf.',
+  'howto.wolfGoal':       'The Werewolves win once they equal or outnumber the remaining villagers.',
+  'howto.flowTitle':      'How a Round Works',
+  'howto.nightDesc':      'Special roles act in secret — werewolves choose a victim, the Seer inspects, protectors shield.',
+  'howto.dayDesc':        'Everyone wakes, learns who died, and debates who the werewolves might be.',
+  'howto.votingDesc':     'The village votes to exile one suspect. A tie means no one is exiled.',
+  'howto.rolesTitle':     'Roles',
+  'howto.tip':            'Tip: Watch behaviour, catch inconsistencies, and trust no one too easily.',
+  'howto.close':          'Got it',
+
   // ── Phases ─────────────────────────────────────────────────────────────────
   'phase.lobby':  'Lobby',
   'phase.night':  'Night',

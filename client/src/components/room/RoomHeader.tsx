@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
 import { LangToggle } from '@/components/ui/LangToggle';
+import { HowToPlay } from '@/components/game/HowToPlay';
 import { useT } from '@/i18n';
 
 interface Props {
@@ -17,6 +19,7 @@ interface Props {
 
 export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnected, onLeave }: Props) {
   const T = useT();
+  const [showHowTo, setShowHowTo] = useState(false);
   const needed    = minPlayers - playerCount;
   const hasEnough = playerCount >= minPlayers;
 
@@ -80,6 +83,18 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
 
         <LangToggle />
 
+        <button
+          onClick={() => setShowHowTo(true)}
+          title={T('howto.button')}
+          className="p-1.5 border border-amber-800/45 rounded-lg text-amber-500 hover:text-amber-300 transition-colors"
+        >
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="8" cy="8" r="6.5" />
+            <path strokeLinecap="round" d="M6.1 6.1a2 2 0 0 1 3.8.6c0 1.3-1.9 1.7-1.9 1.7" />
+            <circle cx="8" cy="11.5" r="0.5" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+
         <div className="h-4 w-px bg-amber-800/40 hidden sm:block" />
 
         <button
@@ -89,6 +104,8 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
           {T('lobby.leave')}
         </button>
       </div>
+
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
     </div>
   );
 }

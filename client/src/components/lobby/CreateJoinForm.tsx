@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { DarkPanel } from '@/components/ui/DarkPanel';
 import { LangToggle } from '@/components/ui/LangToggle';
+import { HowToPlay } from '@/components/game/HowToPlay';
 import { useT } from '@/i18n';
 
 type Mode = 'select' | 'create' | 'join';
@@ -27,6 +28,7 @@ export function CreateJoinForm({
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showHowTo, setShowHowTo] = useState(false);
 
   // Any server error means our submit didn't take — re-enable the form.
   useEffect(() => { if (error) setSubmitting(false); }, [error]);
@@ -200,6 +202,21 @@ export function CreateJoinForm({
       <p className="text-center text-amber-900/70 text-xs mt-6">
         {T('landing.playersRequired')}
       </p>
+
+      {/* How to play */}
+      <button
+        onClick={() => setShowHowTo(true)}
+        className="mx-auto mt-3 flex items-center gap-1.5 text-amber-700 hover:text-amber-500 text-[11px] uppercase tracking-widest transition-colors"
+      >
+        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="12" r="10" />
+          <path strokeLinecap="round" d="M9.2 9.2a2.8 2.8 0 0 1 5.4.9c0 1.9-2.8 2.5-2.8 2.5" />
+          <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none" />
+        </svg>
+        {T('howto.button')}
+      </button>
+
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
     </DarkPanel>
   );
 }

@@ -17,6 +17,7 @@ import { EventLog } from './EventLog';
 import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
+import { HowToPlay } from './HowToPlay';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -435,6 +436,7 @@ export function GameView({
   const [logOpen, setLogOpen]     = useState(false);
   const [roleOpen, setRoleOpen]   = useState(false);
   const [hostOpen, setHostOpen]   = useState(false);
+  const [howToOpen, setHowToOpen] = useState(false);
   const [showRoleReveal, setShowRoleReveal] = useState(false);
   const [phaseTransition, setPhaseTransition] = useState<'night' | 'day' | 'voting' | null>(null);
   const phaseTransTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -759,6 +761,20 @@ export function GameView({
               </svg>
             </button>
           )}
+
+          {/* How to play icon */}
+          <button
+            onClick={() => setHowToOpen(true)}
+            title={T('howto.button')}
+            className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125"
+            style={{ border: '1px solid rgba(120,65,10,0.40)', borderRadius: '7px' }}
+          >
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="#d97706" strokeWidth="1.5">
+              <circle cx="8" cy="8" r="6.5" />
+              <path strokeLinecap="round" d="M6.1 6.1a2 2 0 0 1 3.8.6c0 1.3-1.9 1.7-1.9 1.7" />
+              <circle cx="8" cy="11.5" r="0.5" fill="#d97706" stroke="none" />
+            </svg>
+          </button>
 
           {/* Event log icon */}
           <button
@@ -1112,6 +1128,9 @@ export function GameView({
           onDismiss={() => setShowRoleReveal(false)}
         />
       )}
+
+      {/* How to play */}
+      {howToOpen && <HowToPlay onClose={() => setHowToOpen(false)} />}
     </div>
   );
 }
