@@ -5,6 +5,7 @@ const MIN_PLAYERS = 5;
 const MAX_PLAYERS = 12;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_EVENT_LOG = 30;
+const MAX_CHAT_LOG  = 60;
 
 export const PHASE_DURATIONS: Record<string, number> = {
   night:  45_000,
@@ -69,6 +70,15 @@ export type WitchNightInfo = {
   poisonPotionUsed: boolean;
 };
 
+export interface ChatMessage {
+  id: string;
+  channel: 'public' | 'wolf';
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+}
+
 /** Full serialisable snapshot of all game state (for Redis persistence). */
 export interface PersistSnapshot {
   rooms: RoomState[];
@@ -84,6 +94,7 @@ export interface PersistSnapshot {
   witchAction: [string, { save: boolean; poisonTargetId: string | null }][];
   witchPhase1Done: [string, boolean][];
   dayVotes: [string, [string, string][]][];
+  chatLog: [string, ChatMessage[]][];
 }
 
 // ── RoomManager ───────────────────────────────────────────────────────────────
@@ -114,6 +125,9 @@ export class RoomManager {
 
   // Seer inspection history (for reconnect replay), keyed by seer's persistentId
   private seerResults = new Map<string, SeerResultData[]>();
+
+  // Recent chat, keyed by roomCode — capped ring buffer for reconnect/restart replay
+  private chatLog = new Map<string, ChatMessage[]>();
 
   // ── Socket tracking ──────────────────────────────────────────────────────────
 
@@ -184,6 +198,7 @@ export class RoomManager {
       this.rooms.delete(roomCode);
       this.clearNightMaps(roomCode);
       this.dayVotes.delete(roomCode);
+      this.chatLog.delete(roomCode);
       return { roomCode, room: null };
     }
 
@@ -290,6 +305,7 @@ export class RoomManager {
 
     this.clearNightMaps(room.code);
     this.dayVotes.delete(room.code);
+    this.chatLog.delete(room.code);
     this.witchSaveUsed.delete(room.code);
     this.witchPoisonUsed.delete(room.code);
     this.bodyguardLastProtected.delete(room.code);
@@ -306,6 +322,19 @@ export class RoomManager {
     const room = this.rooms.get(roomCode);
     if (!room) return [];
     return room.players.filter(p => this.roleMap.get(p.id) === 'werewolf').map(p => p.id);
+  }
+
+  /** Append a chat message to the room's capped ring buffer. */
+  addChatMessage(roomCode: string, msg: ChatMessage): void {
+    const log = this.chatLog.get(roomCode) ?? [];
+    log.push(msg);
+    if (log.length > MAX_CHAT_LOG) log.splice(0, log.length - MAX_CHAT_LOG);
+    this.chatLog.set(roomCode, log);
+  }
+
+  /** Recent chat for a room — replayed on reconnect (caller filters wolf-channel visibility). */
+  getChatLog(roomCode: string): ChatMessage[] {
+    return this.chatLog.get(roomCode) ?? [];
   }
 
   /** Seer's past inspection results — replayed to the seer on reconnect. */
@@ -1180,6 +1209,7 @@ export class RoomManager {
     this.witchSaveUsed.delete(room.code);
     this.witchPoisonUsed.delete(room.code);
     this.bodyguardLastProtected.delete(room.code);
+    this.chatLog.delete(room.code);
     room.players.forEach(p => this.seerResults.delete(p.id));
     this.addEvent(room, 'evt.newGame');
     this.addEvent(room, 'evt.nightFalls');
@@ -1204,6 +1234,7 @@ export class RoomManager {
     }
     this.clearNightMaps(room.code);
     this.dayVotes.delete(room.code);
+    this.chatLog.delete(room.code);
     this.witchSaveUsed.delete(room.code);
     this.witchPoisonUsed.delete(room.code);
     this.bodyguardLastProtected.delete(room.code);
@@ -1255,6 +1286,7 @@ export class RoomManager {
       witchAction:            flat(this.witchAction),
       witchPhase1Done:        flat(this.witchPhase1Done),
       dayVotes:               nested(this.dayVotes),
+      chatLog:                flat(this.chatLog),
     };
   }
 
@@ -1267,7 +1299,7 @@ export class RoomManager {
     this.nightVotes.clear();     this.seerChoices.clear();
     this.doctorChoices.clear();  this.bodyguardChoices.clear();
     this.witchAction.clear();    this.witchPhase1Done.clear();
-    this.dayVotes.clear();
+    this.dayVotes.clear();       this.chatLog.clear();
     this.socketToPlayer.clear(); this.playerToSocket.clear();
 
     for (const room of s.rooms) {
@@ -1289,6 +1321,7 @@ export class RoomManager {
     for (const [k, v] of s.witchAction)            this.witchAction.set(k, v);
     for (const [k, v] of s.witchPhase1Done)        this.witchPhase1Done.set(k, v);
     for (const [c, arr] of s.dayVotes)             this.dayVotes.set(c, new Map(arr));
+    for (const [c, arr] of s.chatLog ?? [])        this.chatLog.set(c, arr);
 
     return this.rooms.size;
   }

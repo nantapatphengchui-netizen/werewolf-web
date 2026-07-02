@@ -126,6 +126,13 @@ io.on('connection', socket => {
         poisonPotionUsed:   witchInfo.poisonPotionUsed,
       });
     }
+    // Replay recent chat — wolf-channel lines only to a living werewolf
+    const me = room.players.find(p => p.id === persistentId);
+    const isLivingWolf = !!me?.isAlive && role === 'werewolf';
+    for (const m of rooms.getChatLog(room.code)) {
+      if (m.channel === 'wolf' && !isLivingWolf) continue;
+      socket.emit('chat_message', m);
+    }
     cancelHostTransfer(room.code);
     io.to(room.code).emit('room_updated', { room });
     if (NODE_ENV !== 'production') {

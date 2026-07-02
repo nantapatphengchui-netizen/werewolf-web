@@ -577,18 +577,22 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
       // Only living werewolves may talk at night — private wolf channel
       if (!sender.isAlive || rooms.getRole(pid) !== 'werewolf') return;
       chatThrottle.set(socket.id, now);
+      const msg = { channel: 'wolf' as const, ...base };
+      rooms.addChatMessage(room.code, msg);
       for (const wolfId of rooms.getWerewolfIds(room.code)) {
         const wolf = room.players.find(p => p.id === wolfId);
         if (!wolf?.isAlive) continue;
         const wsid = rooms.getSocketId(wolfId);
         const wsock = wsid ? io.sockets.sockets.get(wsid) : undefined;
-        wsock?.emit('chat_message', { channel: 'wolf', ...base });
+        wsock?.emit('chat_message', msg);
       }
     } else if (room.phase === 'day' || room.phase === 'voting') {
       // Public discussion — only the living may speak; everyone (incl. dead) sees it
       if (!sender.isAlive) return;
       chatThrottle.set(socket.id, now);
-      io.to(room.code).emit('chat_message', { channel: 'public', ...base });
+      const msg = { channel: 'public' as const, ...base };
+      rooms.addChatMessage(room.code, msg);
+      io.to(room.code).emit('chat_message', msg);
     }
   });
 
