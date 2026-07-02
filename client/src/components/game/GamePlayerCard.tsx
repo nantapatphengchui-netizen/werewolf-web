@@ -157,10 +157,12 @@ function SkullIcon() {
 }
 
 function VoteIcon() {
+  // Gavel — the village's judgment, distinct from the confirm check
   return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <circle cx="20" cy="20" r="14" stroke="#fbbf24" strokeWidth="1.5" fill="rgba(251,191,36,0.10)"/>
-      <path d="M13 20l5 5 9-9" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none" stroke="#fbbf24" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 18 L16 10" strokeWidth="6.5" />
+      <path d="M14.5 14.5 L28 28" strokeWidth="2.8" />
+      <path d="M21 33 H34" strokeWidth="3.6" />
     </svg>
   );
 }
@@ -583,11 +585,6 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── Slot number ── */}
-      <span className="absolute top-1.5 left-1.5 z-10 text-[9px] font-cinzel tabular-nums leading-none" style={{ color: 'rgba(161,98,7,0.90)' }}>
-        {index + 1}
-      </span>
-
       {/* ── Top-right: wolf badge or connection dot ── */}
       <div className="absolute top-1.5 right-1.5 z-10">
         {isWerewolfTeammate && alive ? (
@@ -630,28 +627,6 @@ export function GamePlayerCard({
               </span>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── Social badges (suspicion + trust) ── */}
-      {(suspicionCount > 0 || trustCount > 0) && !voteCount && alive && (
-        <div className="absolute top-[40%] left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
-          {suspicionCount > 0 && (
-            <div className="flex items-center gap-0.5 h-[16px] rounded-full px-1.5" style={{ backgroundColor: 'rgba(120,53,0,0.97)', border: '1px solid rgba(217,119,6,0.65)' }}>
-              <svg viewBox="0 0 12 12" className="w-2 h-2" fill="#fbbf24">
-                <path d="M6 1L7.5 4.5H11L8.5 6.5L9.5 10L6 8L2.5 10L3.5 6.5L1 4.5H4.5Z" />
-              </svg>
-              <span className="text-[9px] font-bold leading-none" style={{ color: '#fcd34d' }}>{suspicionCount}</span>
-            </div>
-          )}
-          {trustCount > 0 && (
-            <div className="flex items-center gap-0.5 h-[16px] rounded-full px-1.5" style={{ backgroundColor: 'rgba(6,53,37,0.97)', border: '1px solid rgba(52,211,153,0.65)' }}>
-              <svg viewBox="0 0 12 12" className="w-2 h-2" fill="#4ade80">
-                <path d="M2 6l3 3 5-5" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <span className="text-[9px] font-bold leading-none" style={{ color: '#86efac' }}>{trustCount}</span>
-            </div>
-          )}
         </div>
       )}
 
