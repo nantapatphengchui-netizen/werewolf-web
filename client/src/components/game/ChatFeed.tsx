@@ -5,6 +5,8 @@ import type { ChatMessage } from '@/store/gameStore';
 import type { GameEvent } from '@/types/game';
 import { useT, useMessage } from '@/i18n';
 
+const REACTIONS = ['shock', 'wolf', 'eyes', 'knife', 'pray', 'laugh'] as const;
+
 interface Props {
   messages: ChatMessage[];
   events: GameEvent[];
@@ -13,6 +15,8 @@ interface Props {
   wolfMode: boolean;
   disabledReason: string;
   onSend: (text: string) => void;
+  showReactions?: boolean;
+  onReact?: (emoji: string) => void;
   onClose?: () => void; // present only in the mobile drawer
 }
 
@@ -20,7 +24,7 @@ type FeedItem =
   | { kind: 'log'; ts: number; ev: GameEvent }
   | { kind: 'chat'; ts: number; msg: ChatMessage };
 
-export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabledReason, onSend, onClose }: Props) {
+export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabledReason, onSend, showReactions, onReact, onClose }: Props) {
   const T = useT();
   const M = useMessage();
   const [draft, setDraft] = useState('');
@@ -120,8 +124,24 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
         <div ref={endRef} />
       </div>
 
+      {/* Emoji reactions */}
+      {showReactions && onReact && (
+        <div className="shrink-0 flex justify-center gap-1.5 px-2.5 pt-2" style={{ borderTop: `1px solid ${accent}22` }}>
+          {REACTIONS.map(key => (
+            <button
+              key={key}
+              onClick={() => onReact(key)}
+              className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88] overflow-hidden"
+              style={{ backgroundColor: 'rgba(0,0,0,0.4)', border: '1px solid rgba(120,65,10,0.28)' }}
+            >
+              <img src={`/emoji-${key}.png`} alt={key} className="w-6 h-6 object-contain" draggable={false} />
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
-      <div className="shrink-0 p-2.5" style={{ borderTop: `1px solid ${accent}33` }}>
+      <div className="shrink-0 p-2.5" style={showReactions && onReact ? undefined : { borderTop: `1px solid ${accent}33` }}>
         {canChat ? (
           <div className="flex items-center gap-2">
             <input

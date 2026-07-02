@@ -298,22 +298,20 @@ function UpArrow({ color }: { color: string }) {
 interface ActionBarProps {
   phase: string;
   imAlive: boolean;
-  isHost: boolean;
   isActionSubmitted: boolean;
   selectedTarget: string | null;
   selectedPlayerName: string | null;
   nc: NightCfg | null;
   myRole: Role | null;
   roleAccent: string;
-  onAdvanceDay: () => void;
   T: TFn;
 }
 
 function ActionBar({
-  phase, imAlive, isHost, isActionSubmitted,
+  phase, imAlive, isActionSubmitted,
   selectedTarget, selectedPlayerName, nc,
   myRole, roleAccent,
-  onAdvanceDay, T,
+  T,
 }: ActionBarProps) {
 
   // ── Night ──
@@ -376,26 +374,6 @@ function ActionBar({
     );
   }
 
-  // ── Day ── discussion happens in chat; only the host needs the "call vote" action
-  if (phase === 'day') {
-    if (!isHost) return null;
-    return (
-      <div className="flex justify-center">
-        <button
-          onClick={onAdvanceDay}
-          className="px-7 py-2.5 text-[12px] font-cinzel font-bold tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
-          style={{
-            background: 'linear-gradient(180deg, rgba(146,64,14,0.92) 0%, rgba(110,48,0,0.92) 100%)',
-            border: '1px solid rgba(217,119,6,0.65)',
-            color: '#fde68a',
-            boxShadow: '0 0 18px rgba(217,119,6,0.3), inset 0 1px 0 rgba(255,220,150,0.15)',
-          }}
-        >
-          {T('bar.day.callVote')}
-        </button>
-      </div>
-    );
-  }
 
   // ── Voting ── no bottom bar: cards are clickable, confirm is on-card,
   // vote seals show the tally, and the top countdown shows time remaining.
@@ -621,6 +599,8 @@ export function GameView({
           wolfMode={chatWolfMode}
           disabledReason={chatDisabledReason}
           onSend={(text) => socket?.emit('chat_send', { text })}
+          showReactions={(room.phase === 'day' || room.phase === 'voting') && imAlive}
+          onReact={(emoji) => socket?.emit('send_reaction', { emoji })}
         />
       </aside>
 
@@ -888,6 +868,24 @@ export function GameView({
           </div>
         )}
 
+        {/* Host: call the vote (day) — lives at the top so the grid can fill the bottom */}
+        {isHost && room.phase === 'day' && (
+          <div className="flex justify-center">
+            <button
+              onClick={onAdvanceDay}
+              className="px-8 py-2 text-[12px] font-cinzel font-bold tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(146,64,14,0.94) 0%, rgba(110,48,0,0.94) 100%)',
+                border: '1px solid rgba(217,119,6,0.65)',
+                color: '#fde68a',
+                boxShadow: '0 0 18px rgba(217,119,6,0.3), inset 0 1px 0 rgba(255,220,150,0.15)',
+              }}
+            >
+              {T('bar.day.callVote')}
+            </button>
+          </div>
+        )}
+
         {/* Hunter pending — this player is the hunter */}
         {isHunterPending && (
           <div
@@ -1050,35 +1048,18 @@ export function GameView({
         </div>
       )}
 
-      {/* ── Bottom command area: reactions + action bar as one unit ─────────── */}
-      {!isHunterPending && (
-        <div className="shrink-0 px-3 pb-3 pt-1.5 relative z-10 space-y-1.5">
-          {/* Emoji reactions (day / voting) */}
-          {(room.phase === 'day' || room.phase === 'voting') && imAlive && (
-            <div className="flex justify-center gap-1.5">
-              {(['shock','wolf','eyes','knife','pray','laugh'] as const).map(key => (
-                <button
-                  key={key}
-                  onClick={() => socket?.emit('send_reaction', { emoji: key })}
-                  className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88] overflow-hidden"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(120,65,10,0.28)' }}
-                >
-                  <img src={`/emoji-${key}.png`} alt={key} className="w-6 h-6 object-contain" draggable={false} />
-                </button>
-              ))}
-            </div>
-          )}
+      {/* ── Night turn-prompt bar (day/voting have no bottom bar → grid fills) ── */}
+      {!isHunterPending && room.phase === 'night' && (
+        <div className="shrink-0 px-3 pb-3 pt-1.5 relative z-10">
           <ActionBar
             phase={room.phase}
             imAlive={imAlive}
-            isHost={isHost}
             isActionSubmitted={isActionSubmitted}
             selectedTarget={selectedTarget}
             selectedPlayerName={selectedPlayerName}
             nc={nc}
             myRole={myRole}
             roleAccent={roleInfo?.accentColor ?? '#d97706'}
-            onAdvanceDay={onAdvanceDay}
             T={T}
           />
         </div>
@@ -1152,6 +1133,8 @@ export function GameView({
               wolfMode={chatWolfMode}
               disabledReason={chatDisabledReason}
               onSend={(text) => socket?.emit('chat_send', { text })}
+              showReactions={(room.phase === 'day' || room.phase === 'voting') && imAlive}
+              onReact={(emoji) => socket?.emit('send_reaction', { emoji })}
               onClose={() => setChatOpen(false)}
             />
           </div>
