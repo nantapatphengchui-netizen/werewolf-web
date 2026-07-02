@@ -398,6 +398,20 @@ export function GamePlayerCard({
         />
       )}
 
+      {/* ── Moonlight rim on the hood (adds form to dark portraits) ── */}
+      {!burning && (
+        <div
+          className="absolute inset-x-0 top-0 h-1/2 pointer-events-none"
+          style={{ background: 'linear-gradient(to bottom, rgba(180,195,235,0.14) 0%, rgba(180,195,235,0.04) 30%, transparent 60%)', mixBlendMode: 'screen' }}
+        />
+      )}
+
+      {/* ── Inner frame highlight (crafted edge) ── */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-xl"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(255,240,210,0.10), inset 0 0 0 1px rgba(0,0,0,0.35), inset 0 -18px 30px rgba(0,0,0,0.45)' }}
+      />
+
       {/* ── Nameplate gradient ── */}
       <div
         className="absolute inset-0 pointer-events-none"

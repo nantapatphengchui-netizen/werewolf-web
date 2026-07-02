@@ -89,7 +89,11 @@ export function GamePlayerGrid({
     const isSelected      = player.id === selectedTargetId;
 
     items.push(
-      <div key={player.id} className="aspect-[3/4] lg:aspect-auto lg:min-h-0">
+      <div
+        key={player.id}
+        className="aspect-[3/4] lg:aspect-auto lg:min-h-0"
+        style={{ filter: 'drop-shadow(0 7px 16px rgba(0,0,0,0.55))' }}
+      >
         <GamePlayerCard
           player={player}
           index={index}

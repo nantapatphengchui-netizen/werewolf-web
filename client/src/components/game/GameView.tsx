@@ -21,6 +21,7 @@ import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
 import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
 import { ChatFeed } from './ChatFeed';
+import { SceneAtmosphere } from './SceneAtmosphere';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -707,6 +708,9 @@ export function GameView({
         className="absolute inset-0 pointer-events-none transition-all duration-1000"
         style={{ backgroundColor: PHASE_ATMOSPHERE[room.phase] ?? 'transparent', zIndex: 0 }}
       />
+
+      {/* ── Animated scene atmosphere (moonlight, fog, dust, vignette) ── */}
+      <SceneAtmosphere phase={room.phase} />
 
       {/* ── Game over overlay ── */}
       {room.phase === 'ended' && (

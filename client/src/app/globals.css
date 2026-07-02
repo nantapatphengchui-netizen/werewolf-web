@@ -82,6 +82,20 @@
   to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
 
+/* ── Scene atmosphere ───────────────────────────────────────────────────────── */
+
+@keyframes mote-drift {
+  0%   { transform: translate(0, 0);                     opacity: 0; }
+  15%  { opacity: var(--mote-o, 0.5); }
+  85%  { opacity: var(--mote-o, 0.5); }
+  100% { transform: translate(var(--mote-dx, 12px), -90px); opacity: 0; }
+}
+
+@keyframes moonlight-breathe {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.85; }
+}
+
 /* ── Turn prompt ────────────────────────────────────────────────────────────── */
 
 @keyframes turn-prompt-glow {
