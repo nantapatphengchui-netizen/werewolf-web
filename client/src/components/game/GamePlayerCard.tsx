@@ -191,6 +191,7 @@ interface Props {
   isSelected?: boolean;
   onClick?: () => void;
   actionType?: CardActionType | null;
+  actorRole?: Role | null;
   onConfirmAction?: () => void;
   onCancelAction?: () => void;
   reaction?: { emoji: string; key: number };
@@ -251,7 +252,7 @@ export function GamePlayerCard({
   player, index, isCurrentPlayer, isWerewolfTeammate,
   voteCount, actionSubmitted, myRole, seerRevealedRole,
   isValidTarget = false, isSelected = false, onClick,
-  actionType = null, onConfirmAction, onCancelAction, reaction,
+  actionType = null, actorRole, onConfirmAction, onCancelAction, reaction,
 }: Props) {
   const T = useT();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -521,7 +522,7 @@ export function GamePlayerCard({
             animation: 'card-icon-appear 0.40s cubic-bezier(0.34,1.56,0.64,1) forwards',
             filter: `drop-shadow(0 0 8px ${ACTION_GLOW_COLORS[actionType]}) drop-shadow(0 0 20px ${ACTION_GLOW_COLORS[actionType]})`,
           }}>
-            {getActionIcon(myRole, actionType)}
+            {getActionIcon(actorRole ?? myRole, actionType)}
           </div>
         </div>
       )}

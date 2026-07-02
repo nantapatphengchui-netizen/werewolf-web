@@ -87,6 +87,7 @@ export function GamePlayerGrid({
           isSelected={isSelected}
           onClick={onPlayerCardClick ? () => onPlayerCardClick(player.id) : undefined}
           actionType={actionType}
+          actorRole={myRole}
           onConfirmAction={onConfirmAction ? () => onConfirmAction(player.id) : undefined}
           onCancelAction={onCancelAction}
           reaction={reactionsMap[player.id]}
