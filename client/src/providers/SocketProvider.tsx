@@ -39,6 +39,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const clearRoom            = useGameStore(s => s.clearRoom);
   const addDayReaction       = useGameStore(s => s.addDayReaction);
   const clearDayReactions    = useGameStore(s => s.clearDayReactions);
+  const addChatMessage       = useGameStore(s => s.addChatMessage);
   const setWitchNightInfo    = useGameStore(s => s.setWitchNightInfo);
   const setWitchActionSubmitted = useGameStore(s => s.setWitchActionSubmitted);
 
@@ -81,6 +82,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('witch_night_info', ({ attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed }) => {
       setWitchNightInfo({ attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed });
     });
+    s.on('chat_message', (m) => addChatMessage(m));
     // hunter_shot_pending is handled in GameView via room.hunterPendingShot field
     s.on('error',  ({ message }) => setError(message));
     s.on('kicked', () => { clearRoom(); });

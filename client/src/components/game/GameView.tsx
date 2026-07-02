@@ -21,6 +21,7 @@ import { PhaseProgressBar } from './PhaseProgressBar';
 import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
 import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
+import { ChatPanel } from './ChatPanel';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -499,6 +500,8 @@ export function GameView({
   const [roleOpen, setRoleOpen]   = useState(false);
   const [hostOpen, setHostOpen]   = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
+  const [chatOpen, setChatOpen]   = useState(false);
+  const [chatSeen, setChatSeen]   = useState(0);
   const [showRoleReveal, setShowRoleReveal] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [seerReveal, setSeerReveal] = useState<{ targetName: string; role: Role; key: number } | null>(null);
@@ -524,6 +527,7 @@ export function GameView({
   const isHost       = room.hostId === playerId;
   const seerLog      = useGameStore(s => s.seerLog);
   const dayReactions = useGameStore(s => s.dayReactions);
+  const chatMessages = useGameStore(s => s.chatMessages);
 
   const seerRevealedMap = useMemo((): Record<string, Role> => {
     if (myRole !== 'seer') return {};
@@ -562,6 +566,11 @@ export function GameView({
     socket.on('reaction', handleReaction);
     return () => { socket.off('reaction', handleReaction); };
   }, [socket]);
+
+  // Keep the unread counter cleared while the chat drawer is open
+  useEffect(() => {
+    if (chatOpen) setChatSeen(chatMessages.length);
+  }, [chatOpen, chatMessages.length]);
 
   // Seer inspection reveal — pop a dramatic modal when a fresh result lands.
   // The round guard stops replayed history (on reconnect) from re-triggering old reveals.
@@ -670,6 +679,14 @@ export function GameView({
   const roleInfo           = myRole ? ROLE_INFO[myRole] : null;
   const nc         = isHunterPending ? NIGHT_CFG['hunter_shoot'] : (myRole ? (NIGHT_CFG[myRole] ?? null) : null);
   const votedCount = room.publicVotes?.hasVoted.length ?? 0;
+
+  // Chat
+  const chatWolfMode = room.phase === 'night' && myRole === 'werewolf' && imAlive;
+  const canChat = imAlive && (chatWolfMode || room.phase === 'day' || room.phase === 'voting');
+  const chatDisabledReason = !imAlive ? T('chat.disabledDead')
+    : room.phase === 'night' ? T('chat.disabledNight')
+    : T('chat.disabledDefault');
+  const unreadChat = chatOpen ? 0 : Math.max(0, chatMessages.length - chatSeen);
 
   return (
     <div className="relative z-10 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
@@ -853,6 +870,26 @@ export function GameView({
               </svg>
             </button>
           )}
+
+          {/* Chat icon */}
+          <button
+            onClick={() => setChatOpen(true)}
+            title={chatWolfMode ? T('chat.wolfTitle') : T('chat.title')}
+            className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125"
+            style={{ border: `1px solid ${chatWolfMode ? 'rgba(185,28,28,0.45)' : 'rgba(120,65,10,0.40)'}`, borderRadius: '7px', position: 'relative' }}
+          >
+            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke={chatWolfMode ? '#ef4444' : '#d97706'} strokeWidth="1.5">
+              <path strokeLinejoin="round" d="M14 8a5.5 5.5 0 0 1-7.9 5L2.5 14l1-3.6A5.5 5.5 0 1 1 14 8z" />
+            </svg>
+            {unreadChat > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-0.5 flex items-center justify-center rounded-full text-[8px] font-bold"
+                style={{ backgroundColor: chatWolfMode ? '#b91c1c' : '#92400e', color: '#fde68a' }}
+              >
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
+          </button>
 
           {/* How to play icon */}
           <button
@@ -1236,6 +1273,19 @@ export function GameView({
 
       {/* How to play */}
       {howToOpen && <HowToPlay onClose={() => setHowToOpen(false)} />}
+
+      {/* Chat */}
+      {chatOpen && (
+        <ChatPanel
+          messages={chatMessages}
+          playerId={playerId}
+          canChat={canChat}
+          wolfMode={chatWolfMode}
+          disabledReason={chatDisabledReason}
+          onSend={(text) => socket?.emit('chat_send', { text })}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
 
       {/* Seer inspection reveal */}
       {seerReveal && (

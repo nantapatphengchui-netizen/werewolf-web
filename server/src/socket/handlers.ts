@@ -12,6 +12,9 @@ const TEST_BOTS_ENABLED = process.env.ENABLE_TEST_BOTS === 'true';
 
 const botTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+// Per-socket timestamp of the last chat message, for throttling
+const chatThrottle = new Map<string, number>();
+
 function clearBotTimer(roomCode: string): void {
   const t = botTimers.get(roomCode);
   if (t !== undefined) { clearTimeout(t); botTimers.delete(roomCode); }
@@ -553,6 +556,42 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     io.to(room.code).emit('reaction', { playerId: pid, emoji });
   });
 
+  socket.on('chat_send', ({ text }) => {
+    const pid  = socket.data.playerId;
+    const room = rooms.getRoomByPlayer(pid);
+    if (!room) return;
+
+    // Light anti-spam throttle (400ms between messages per socket)
+    const now  = Date.now();
+    const last = chatThrottle.get(socket.id) ?? 0;
+    if (now - last < 400) return;
+
+    const clean = (text ?? '').replace(/\s+/g, ' ').trim().slice(0, 300);
+    if (!clean) return;
+    const sender = room.players.find(p => p.id === pid);
+    if (!sender) return;
+
+    const base = { id: Math.random().toString(36).slice(2, 10), senderId: pid, senderName: sender.name, text: clean, timestamp: now };
+
+    if (room.phase === 'night') {
+      // Only living werewolves may talk at night — private wolf channel
+      if (!sender.isAlive || rooms.getRole(pid) !== 'werewolf') return;
+      chatThrottle.set(socket.id, now);
+      for (const wolfId of rooms.getWerewolfIds(room.code)) {
+        const wolf = room.players.find(p => p.id === wolfId);
+        if (!wolf?.isAlive) continue;
+        const wsid = rooms.getSocketId(wolfId);
+        const wsock = wsid ? io.sockets.sockets.get(wsid) : undefined;
+        wsock?.emit('chat_message', { channel: 'wolf', ...base });
+      }
+    } else if (room.phase === 'day' || room.phase === 'voting') {
+      // Public discussion — only the living may speak; everyone (incl. dead) sees it
+      if (!sender.isAlive) return;
+      chatThrottle.set(socket.id, now);
+      io.to(room.code).emit('chat_message', { channel: 'public', ...base });
+    }
+  });
+
   // ── Test bot handlers ────────────────────────────────────────────────────────
 
   socket.on('host_add_bot', () => {
@@ -580,6 +619,7 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
   });
 
   socket.on('disconnect', () => {
+    chatThrottle.delete(socket.id);
     const result = rooms.markOffline(socket.id);
     if (result) {
       const { room, wasHost } = result;

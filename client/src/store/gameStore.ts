@@ -14,6 +14,15 @@ export interface DayReaction {
   targetName: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  channel: 'public' | 'wolf';
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface WitchNightInfo {
   attackedPlayerId:   string | null;
   attackedPlayerName: string | null;
@@ -28,6 +37,7 @@ interface GameStore {
   werewolfIds: string[];
   seerLog: SeerEntry[];
   dayReactions: DayReaction[];
+  chatMessages: ChatMessage[];
   witchNightInfo: WitchNightInfo | null;
   witchActionSubmitted: boolean;
   error: string | null;
@@ -39,6 +49,7 @@ interface GameStore {
   addSeerResult: (entry: SeerEntry) => void;
   addDayReaction: (r: DayReaction) => void;
   clearDayReactions: () => void;
+  addChatMessage: (m: ChatMessage) => void;
   setWitchNightInfo: (info: WitchNightInfo | null) => void;
   setWitchActionSubmitted: (v: boolean) => void;
   setError: (error: string | null) => void;
@@ -54,6 +65,7 @@ export const useGameStore = create<GameStore>((set) => ({
   werewolfIds: [],
   seerLog: [],
   dayReactions: [],
+  chatMessages: [],
   witchNightInfo: null,
   witchActionSubmitted: false,
   error: null,
@@ -72,16 +84,21 @@ export const useGameStore = create<GameStore>((set) => ({
     return { dayReactions: [...deduped.slice(-2), r] };
   }),
   clearDayReactions: () => set({ dayReactions: [] }),
+  addChatMessage: (m) => set(s => (
+    s.chatMessages.some(x => x.id === m.id)
+      ? s
+      : { chatMessages: [...s.chatMessages.slice(-199), m] }
+  )),
   setWitchNightInfo:     (witchNightInfo) => set({ witchNightInfo }),
   setWitchActionSubmitted: (witchActionSubmitted) => set({ witchActionSubmitted }),
   setError:     (error) => set({ error }),
   setConnected: (isConnected) => set({ isConnected }),
   clearGameState: () => set({
-    myRole: null, werewolfIds: [], seerLog: [], dayReactions: [],
+    myRole: null, werewolfIds: [], seerLog: [], dayReactions: [], chatMessages: [],
     witchNightInfo: null, witchActionSubmitted: false,
   }),
   clearRoom: () => set({
-    room: null, playerId: null, myRole: null, werewolfIds: [], seerLog: [], dayReactions: [],
+    room: null, playerId: null, myRole: null, werewolfIds: [], seerLog: [], dayReactions: [], chatMessages: [],
     witchNightInfo: null, witchActionSubmitted: false,
   }),
 }));

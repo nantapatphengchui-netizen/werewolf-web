@@ -11,6 +11,8 @@ export interface ServerToClientEvents {
   day_reaction_sent:  (payload: { fromId: string; fromName: string; targetId: string; targetName: string }) => void;
   /** Emoji reaction broadcast — sender + emoji */
   reaction:           (payload: { playerId: string; emoji: string }) => void;
+  /** Chat message — 'public' goes to the room, 'wolf' only to living werewolves */
+  chat_message:       (payload: { id: string; channel: 'public' | 'wolf'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
   /** Sent privately to the Hunter when their death triggers a final shot */
   hunter_shot_pending:(payload: { hunterId: string; availableTargetIds: string[] }) => void;
   /** Sent privately to the Witch after all other night actions resolve */
@@ -56,6 +58,7 @@ export interface ClientToServerEvents {
   day_mark_trust:      (payload: { targetId: string }) => void;
   day_reaction:        (payload: { targetId: string }) => void;
   send_reaction:       (payload: { emoji: string }) => void;
+  chat_send:           (payload: { text: string }) => void;
   // Host guided day
   host_toggle_guided_day: () => void;
 }

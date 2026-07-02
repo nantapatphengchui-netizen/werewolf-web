@@ -14,6 +14,18 @@ export const en: Record<string, string> = {
   'landing.joining':         'Joining…',
   'landing.waitConnect':     'Connecting…',
 
+  // ── Chat ───────────────────────────────────────────────────────────────────
+  'chat.title':            'Village Chat',
+  'chat.wolfTitle':        'Werewolf Chat',
+  'chat.you':              'You',
+  'chat.send':             'Send',
+  'chat.empty':            'No messages yet',
+  'chat.placeholder':      'Type a message…',
+  'chat.placeholderWolf':  'Talk to your fellow wolves…',
+  'chat.disabledNight':    'The village sleeps — only werewolves may talk at night',
+  'chat.disabledDead':     'The dead cannot speak',
+  'chat.disabledDefault':  "You can't chat right now",
+
   // ── Turn prompt / night atmosphere ─────────────────────────────────────────
   'turn.yourTurn':     'Your Turn',
   'turn.voteProgress': '{{voted}} / {{total}} have voted',
