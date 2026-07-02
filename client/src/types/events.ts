@@ -51,7 +51,6 @@ export interface ClientToServerEvents {
   day_mark_suspicion:      (payload: { targetId: string }) => void;
   day_mark_trust:          (payload: { targetId: string }) => void;
   day_reaction:            (payload: { targetId: string }) => void;
-  host_toggle_guided_day:  () => void;
   send_reaction:           (payload: { emoji: string }) => void;
   chat_send:               (payload: { text: string }) => void;
 }

@@ -46,7 +46,6 @@ interface Props {
   onMarkSuspicion: (targetId: string) => void;
   onMarkTrust: (targetId: string) => void;
   onDayReaction: (targetId: string) => void;
-  onToggleGuidedDay: () => void;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -489,7 +488,7 @@ export function GameView({
   onRestart, onReturnToLobby,
   onHostPauseTimer, onHostResumeTimer, onHostExtendTimer, onHostEndPhase,
   onHostRestartGame, onHostReturnToLobby,
-  onMarkSuspicion, onMarkTrust, onDayReaction, onToggleGuidedDay,
+  onMarkSuspicion, onMarkTrust, onDayReaction,
 }: Props) {
   const T = useT();
   const M = useMessage();
@@ -1000,31 +999,6 @@ export function GameView({
           </div>
         )}
 
-        {/* Hot Seat banner — guided day mode + top suspect(s) */}
-        {room.guidedDayEnabled && room.phase === 'day' && (() => {
-          const sorted = Object.entries(room.suspicionMap)
-            .map(([id, markers]) => ({ id, count: markers.length }))
-            .filter(e => e.count > 0)
-            .sort((a, b) => b.count - a.count);
-          const topCount = sorted[0]?.count ?? 0;
-          if (topCount < 2) return null;
-          const hotSeats = sorted.filter(e => e.count === topCount).slice(0, 2);
-          const names = hotSeats.map(e => room.players.find(p => p.id === e.id)?.name).filter(Boolean);
-          return (
-            <div
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
-              style={{ backgroundColor: 'rgba(25,4,4,0.90)', border: '1px solid rgba(239,68,68,0.40)', borderLeft: '3px solid rgba(239,68,68,0.75)', boxShadow: '0 2px 12px rgba(0,0,0,0.50)' }}
-            >
-              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 shrink-0" fill="rgba(239,68,68,0.85)">
-                <path d="M8 1L9.5 5.5H14L10.5 8.5L11.5 13L8 10.5L4.5 13L5.5 8.5L2 5.5H6.5Z"/>
-              </svg>
-              <p className="text-[11px] font-cinzel leading-snug flex-1" style={{ color: '#fca5a5' }}>
-                {T('hotSeat.banner', { names: names.join(' & ') })}
-              </p>
-            </div>
-          );
-        })()}
-
         {/* Day reactions */}
         {dayReactions.length > 0 && room.phase === 'day' && (
           <div className="flex flex-col gap-0.5 overflow-hidden" style={{ maxHeight: '78px' }}>
@@ -1250,12 +1224,10 @@ export function GameView({
           <HostGameControls
             phase={room.phase}
             timerPaused={room.timerPaused}
-            guidedDayEnabled={room.guidedDayEnabled}
             onPauseTimer={onHostPauseTimer}
             onResumeTimer={onHostResumeTimer}
             onExtendTimer={onHostExtendTimer}
             onEndPhase={onHostEndPhase}
-            onToggleGuidedDay={onToggleGuidedDay}
             onRestartGame={onHostRestartGame}
             onReturnToLobby={onHostReturnToLobby}
           />

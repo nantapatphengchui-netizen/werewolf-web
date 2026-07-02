@@ -130,10 +130,6 @@ export function useRoom() {
     socket?.emit('day_reaction', { targetId });
   }, [socket]);
 
-  const toggleGuidedDay = useCallback(() => {
-    socket?.emit('host_toggle_guided_day');
-  }, [socket]);
-
   const hostAddBot = useCallback(() => {
     socket?.emit('host_add_bot');
   }, [socket]);
@@ -176,7 +172,6 @@ export function useRoom() {
     markSuspicion,
     markTrust,
     dayReaction,
-    toggleGuidedDay,
     hostAddBot,
     hostFillBots,
     hostRemoveBots,

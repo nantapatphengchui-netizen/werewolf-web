@@ -9,12 +9,10 @@ import { useT } from '@/i18n';
 interface Props {
   phase: GamePhase;
   timerPaused: boolean;
-  guidedDayEnabled: boolean;
   onPauseTimer: () => void;
   onResumeTimer: () => void;
   onExtendTimer: (extraSeconds: number) => void;
   onEndPhase: () => void;
-  onToggleGuidedDay: () => void;
   onRestartGame: () => void;
   onReturnToLobby: () => void;
 }
@@ -50,8 +48,8 @@ function HostBtn({
 }
 
 export function HostGameControls({
-  phase, timerPaused, guidedDayEnabled,
-  onPauseTimer, onResumeTimer, onExtendTimer, onEndPhase, onToggleGuidedDay, onRestartGame, onReturnToLobby,
+  phase, timerPaused,
+  onPauseTimer, onResumeTimer, onExtendTimer, onEndPhase, onRestartGame, onReturnToLobby,
 }: Props) {
   const T = useT();
   const [confirming, setConfirming] = useState<ConfirmAction>(null);
@@ -128,20 +126,6 @@ export function HostGameControls({
           <HostBtn onClick={() => setConfirming('endPhase')}>
             {T('host.endPhase', { phase: phaseLabel })}
           </HostBtn>
-        </div>
-
-        {/* Divider */}
-        <div style={{ borderTop: '1px solid rgba(120,65,10,0.20)' }} />
-
-        {/* Day mode section */}
-        <div className="space-y-2">
-          <p className="text-[9px] uppercase tracking-widest font-cinzel" style={{ color: '#a16207' }}>{T('host.dayMode')}</p>
-          <HostBtn onClick={onToggleGuidedDay} active={guidedDayEnabled}>
-            {guidedDayEnabled ? T('host.guidedDayOn') : T('host.guidedDayOff')}
-          </HostBtn>
-          <p className="text-[9px] leading-snug" style={{ color: '#78716c' }}>
-            {T('host.guidedDayDesc')}
-          </p>
         </div>
 
         {/* Divider */}

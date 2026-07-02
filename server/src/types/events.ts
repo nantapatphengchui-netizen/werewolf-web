@@ -59,8 +59,6 @@ export interface ClientToServerEvents {
   day_reaction:        (payload: { targetId: string }) => void;
   send_reaction:       (payload: { emoji: string }) => void;
   chat_send:           (payload: { text: string }) => void;
-  // Host guided day
-  host_toggle_guided_day: () => void;
 }
 
 export interface InterServerEvents {

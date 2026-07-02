@@ -787,14 +787,6 @@ export class RoomManager {
     return { ok: true, room };
   }
 
-  toggleGuidedDay(persistentId: string): { ok: boolean; error?: string; room?: RoomState } {
-    const room = this.getRoomByPlayer(persistentId);
-    if (!room) return { ok: false, error: 'Not in a room.' };
-    if (room.hostId !== persistentId) return { ok: false, error: 'Only the host can toggle guided day.' };
-    room.guidedDayEnabled = !room.guidedDayEnabled;
-    return { ok: true, room };
-  }
-
   // ── Voting phase ─────────────────────────────────────────────────────────────
 
   submitVote(

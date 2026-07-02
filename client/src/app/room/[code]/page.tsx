@@ -47,7 +47,7 @@ export default function RoomPage() {
     hostPauseTimer, hostResumeTimer, hostExtendTimer, hostEndPhase,
     hostRestartGame, hostReturnToLobby,
     hostAddBot, hostFillBots, hostRemoveBots,
-    markSuspicion, markTrust, dayReaction, toggleGuidedDay,
+    markSuspicion, markTrust, dayReaction,
   } = useRoom();
   const myRole      = useGameStore(s => s.myRole);
   const werewolfIds = useGameStore(s => s.werewolfIds);
@@ -115,7 +115,6 @@ export default function RoomPage() {
             onMarkSuspicion={markSuspicion}
             onMarkTrust={markTrust}
             onDayReaction={dayReaction}
-            onToggleGuidedDay={toggleGuidedDay}
           />
         </main>
       )}
