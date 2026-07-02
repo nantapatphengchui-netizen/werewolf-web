@@ -14,6 +14,15 @@ export const en: Record<string, string> = {
   'landing.joining':         'Joining…',
   'landing.waitConnect':     'Connecting…',
 
+  // ── Turn prompt / night atmosphere ─────────────────────────────────────────
+  'turn.yourTurn':     'Your Turn',
+  'turn.voteProgress': '{{voted}} / {{total}} have voted',
+  'turn.tallyLive':    'Tallying the votes…',
+  'night.flavor.0':    'The wolves prowl in the darkness…',
+  'night.flavor.1':    'The Seer peers through the third eye…',
+  'night.flavor.2':    'The village sleeps, unaware…',
+  'night.flavor.3':    'Shadows move in silence…',
+
   // ── Seer reveal ────────────────────────────────────────────────────────────
   'seerReveal.title':        "The Seer's Vision",
   'seerReveal.subtitle':     'The third eye reveals the truth',

@@ -17,6 +17,7 @@ import { EventLog } from './EventLog';
 import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
+import { PhaseProgressBar } from './PhaseProgressBar';
 import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
 import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
@@ -194,32 +195,6 @@ const NIGHT_CFG: Record<string, NightCfg> = {
   },
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function getInstructionText(phase: string, myRole: Role | null, imAlive: boolean, isSubmitted: boolean): string {
-  if (phase === 'ended' || phase === 'lobby') return '';
-  if (isSubmitted) {
-    if (phase === 'night')  return 'Action submitted — awaiting other night actions…';
-    if (phase === 'voting') return 'Vote cast — awaiting other players…';
-  }
-  if (!imAlive) {
-    if (phase === 'night')  return 'You have perished. Watch the night from the shadows.';
-    if (phase === 'voting') return 'You are eliminated. Watch the vote.';
-    return 'You have perished.';
-  }
-  if (phase === 'night') {
-    if (myRole === 'werewolf')  return 'Click a player card to eliminate tonight.';
-    if (myRole === 'seer')      return 'Click a player card to reveal their identity.';
-    if (myRole === 'doctor')    return 'Click a player card to protect tonight.';
-    if (myRole === 'bodyguard') return 'Click a player card to guard tonight.';
-    if (myRole === 'witch')     return 'Wait for the wolves to strike — your choice comes after.';
-    return 'Night falls. The village sleeps.';
-  }
-  if (phase === 'day')    return 'Discuss and find the wolves among you.';
-  if (phase === 'voting') return 'Click a player card to cast your vote for exile.';
-  return '';
-}
-
 // ── Shared drawer overlay ─────────────────────────────────────────────────────
 
 function Drawer({ open, onClose, title, children }: {
@@ -276,6 +251,71 @@ function barStyle(phase: string): React.CSSProperties {
   };
 }
 
+type TFn = (key: string, params?: Record<string, string | number>) => string;
+
+/** Rotating atmospheric line shown while waiting through the night. */
+function NightFlavor({ T }: { T: TFn }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI(v => (v + 1) % 4), 3200);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <p
+      key={i}
+      className="text-[10px] font-cinzel italic text-center tracking-wide"
+      style={{ color: 'rgba(167,139,250,0.6)', animation: 'flavor-fade 3.2s ease-in-out' }}
+    >
+      {T(`night.flavor.${i}`)}
+    </p>
+  );
+}
+
+/** Live vote tally bar shown through the voting phase. */
+function VoteProgress({ voted, total, T }: { voted: number; total: number; T: TFn }) {
+  const pct = total > 0 ? Math.min(100, (voted / total) * 100) : 0;
+  return (
+    <div className="w-full mt-2">
+      <p className="text-[9px] font-cinzel uppercase tracking-widest mb-1 text-center" style={{ color: '#f87171' }}>
+        {T('turn.voteProgress', { voted, total })}
+      </p>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, backgroundColor: '#dc2626', boxShadow: '0 0 8px rgba(220,38,38,0.6)' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Prominent "your turn" shell with a breathing accent glow. */
+function TurnShell({ accent, children }: { accent: string; children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        backgroundColor: 'rgba(3,5,7,0.96)',
+        border: `1px solid ${accent}77`,
+        borderRadius: '10px',
+        padding: '10px 14px',
+        ['--turn-glow-a' as string]: `${accent}55`,
+        ['--turn-glow-b' as string]: `${accent}22`,
+        animation: 'turn-prompt-glow 2s ease-in-out infinite',
+      } as React.CSSProperties}
+    >
+      {children}
+    </div>
+  );
+}
+
+function UpArrow({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 16 16" className="w-4 h-4 shrink-0" fill="none" style={{ animation: 'turn-arrow-bounce 1.1s ease-in-out infinite' }}>
+      <path d="M8 3v10M4 7l4-4 4 4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 interface ActionBarProps {
   phase: string;
   imAlive: boolean;
@@ -284,15 +324,18 @@ interface ActionBarProps {
   selectedTarget: string | null;
   selectedPlayerName: string | null;
   nc: NightCfg | null;
+  myRole: Role | null;
+  roleAccent: string;
   votedCount: number;
   totalAlive: number;
   onAdvanceDay: () => void;
-  T: (key: string, params?: Record<string, string | number>) => string;
+  T: TFn;
 }
 
 function ActionBar({
   phase, imAlive, isHost, isActionSubmitted,
   selectedTarget, selectedPlayerName, nc,
+  myRole, roleAccent,
   votedCount, totalAlive,
   onAdvanceDay, T,
 }: ActionBarProps) {
@@ -301,51 +344,59 @@ function ActionBar({
   if (phase === 'night') {
     if (isActionSubmitted) {
       return (
-        <div style={barStyle(phase)}>
-          <CheckIcon color="#4ade80" />
-          <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>
-            {T('bar.night.submitted')}
-          </p>
+        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
+          <div className="flex items-center justify-center gap-2">
+            <CheckIcon color="#4ade80" />
+            <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>{T('bar.night.submitted')}</p>
+          </div>
+          <NightFlavor T={T} />
         </div>
       );
     }
     if (!imAlive) {
       return (
-        <div style={barStyle(phase)}>
-          <p className="text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>
-            {T('bar.night.perished')}
-          </p>
+        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
+          <p className="text-[11px] font-cinzel italic text-center" style={{ color: '#a8a29e' }}>{T('bar.night.perished')}</p>
+          <NightFlavor T={T} />
         </div>
       );
     }
-    // Witch is handled by the WitchNightPanel above the action bar
+    // Villager / role with no night action — the village sleeps
     if (!nc) {
       return (
-        <div style={barStyle(phase)}>
-          <p className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-            {T('bar.night.sleep')}
-          </p>
+        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
+          <p className="text-[11px] font-cinzel italic text-center" style={{ color: '#a8a29e' }}>{T('instr.night.villager')}</p>
+          <NightFlavor T={T} />
         </div>
       );
     }
+    // It's your turn to act
     return (
-      <div style={barStyle(phase)}>
+      <TurnShell accent={roleAccent}>
         {selectedTarget ? (
-          <>
+          <div className="flex items-center gap-3">
             <CheckIcon color={nc.selText} />
-            <span className="flex-1 text-[12px] font-cinzel uppercase tracking-wide" style={{ color: nc.selText }}>
+            <span className="flex-1 text-[13px] font-cinzel font-bold uppercase tracking-wide truncate" style={{ color: nc.selText }}>
               {selectedPlayerName}
             </span>
-            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: `${nc.selText}70` }}>
+            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: `${nc.selText}90` }}>
               {T('bar.night.confirmHint')}
             </span>
-          </>
+          </div>
         ) : (
-          <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-            {T('bar.night.select')}
-          </span>
+          <div className="flex items-center gap-3">
+            <UpArrow color={roleAccent} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-cinzel font-bold uppercase tracking-[0.28em]" style={{ color: roleAccent }}>
+                {T('turn.yourTurn')}
+              </p>
+              <p className="text-[12px] font-cinzel truncate" style={{ color: '#f5e6c8' }}>
+                {T(myRole ? `instr.night.${myRole}` : 'bar.night.select')}
+              </p>
+            </div>
+          </div>
         )}
-      </div>
+      </TurnShell>
     );
   }
 
@@ -379,41 +430,50 @@ function ActionBar({
   if (phase === 'voting') {
     if (!imAlive) {
       return (
-        <div style={barStyle(phase)}>
-          <p className="text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>
-            {T('bar.voting.perished')}
-          </p>
+        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '4px', alignItems: 'stretch' }}>
+          <p className="text-[11px] font-cinzel italic text-center" style={{ color: '#a8a29e' }}>{T('bar.voting.perished')}</p>
+          <VoteProgress voted={votedCount} total={totalAlive} T={T} />
         </div>
       );
     }
     if (isActionSubmitted) {
       return (
-        <div style={barStyle(phase)}>
-          <CheckIcon color="#4ade80" />
-          <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>
-            {T('bar.voting.submitted', { voted: votedCount, total: totalAlive })}
-          </p>
+        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '4px', alignItems: 'stretch' }}>
+          <div className="flex items-center justify-center gap-2">
+            <CheckIcon color="#4ade80" />
+            <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>{T('instr.voting.submitted')}</p>
+          </div>
+          <VoteProgress voted={votedCount} total={totalAlive} T={T} />
         </div>
       );
     }
     return (
-      <div style={barStyle(phase)}>
+      <TurnShell accent="#ef4444">
         {selectedTarget ? (
-          <>
-            <CheckIcon color="#fde68a" />
-            <span className="flex-1 text-[12px] font-cinzel uppercase tracking-wide" style={{ color: '#fde68a' }}>
+          <div className="flex items-center gap-3">
+            <CheckIcon color="#fca5a5" />
+            <span className="flex-1 text-[13px] font-cinzel font-bold uppercase tracking-wide truncate" style={{ color: '#fca5a5' }}>
               {selectedPlayerName}
             </span>
-            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: 'rgba(251,191,36,0.55)' }}>
+            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: 'rgba(248,113,113,0.85)' }}>
               {T('bar.voting.confirmHint')}
             </span>
-          </>
+          </div>
         ) : (
-          <span className="text-[11px] font-cinzel italic" style={{ color: '#57534e' }}>
-            {T('bar.voting.select')}
-          </span>
+          <div className="flex items-center gap-3">
+            <UpArrow color="#ef4444" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-cinzel font-bold uppercase tracking-[0.28em]" style={{ color: '#ef4444' }}>
+                {T('turn.yourTurn')}
+              </p>
+              <p className="text-[12px] font-cinzel truncate" style={{ color: '#f5e6c8' }}>
+                {T('instr.voting.select')}
+              </p>
+            </div>
+          </div>
         )}
-      </div>
+        <VoteProgress voted={votedCount} total={totalAlive} T={T} />
+      </TurnShell>
     );
   }
 
@@ -604,7 +664,6 @@ export function GameView({
     return null;
   })();
 
-  const instructionText    = getInstructionText(room.phase, myRole, imAlive, isActionSubmitted);
   const banner             = PHASE_BANNER_CFG[room.phase];
   const selectedPlayerName = selectedTarget ? (room.players.find(p => p.id === selectedTarget)?.name ?? null) : null;
   const phaseHudColor      = PHASE_HUD_COLOR[room.phase] ?? '#fbbf24';
@@ -842,6 +901,18 @@ export function GameView({
         </div>
       </div>
 
+      {/* ── Full-width phase countdown ───────────────────────────────────────── */}
+      {showTimer && (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
+        <div className="shrink-0 px-3 pb-1 relative z-10">
+          <PhaseProgressBar
+            phase={room.phase}
+            phaseEndAt={room.phaseEndAt}
+            paused={room.timerPaused}
+            pausedTimeRemaining={room.pausedTimeRemaining}
+          />
+        </div>
+      )}
+
       {/* ── Banner area ───────────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 space-y-1.5 pb-1 relative z-10">
 
@@ -1068,25 +1139,24 @@ export function GameView({
         </div>
       )}
 
-      {/* ── Emoji reaction buttons ── */}
-      {(room.phase === 'day' || room.phase === 'voting') && imAlive && (
-        <div className="shrink-0 px-3 pb-1 relative z-10 flex justify-center gap-2">
-          {(['shock','wolf','eyes','knife','pray','laugh'] as const).map(key => (
-            <button
-              key={key}
-              onClick={() => socket?.emit('send_reaction', { emoji: key })}
-              className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88] overflow-hidden"
-              style={{ backgroundColor: 'rgba(0,0,0,0.55)', border: '1px solid rgba(120,65,10,0.30)' }}
-            >
-              <img src={`/emoji-${key}.png`} alt={key} className="w-7 h-7 object-contain" draggable={false} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Action bar ────────────────────────────────────────────────────── */}
+      {/* ── Bottom command area: reactions + action bar as one unit ─────────── */}
       {!isHunterPending && (
-        <div className="shrink-0 px-3 pb-3 pt-2 relative z-10">
+        <div className="shrink-0 px-3 pb-3 pt-1.5 relative z-10 space-y-1.5">
+          {/* Emoji reactions (day / voting) */}
+          {(room.phase === 'day' || room.phase === 'voting') && imAlive && (
+            <div className="flex justify-center gap-1.5">
+              {(['shock','wolf','eyes','knife','pray','laugh'] as const).map(key => (
+                <button
+                  key={key}
+                  onClick={() => socket?.emit('send_reaction', { emoji: key })}
+                  className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-150 hover:scale-125 active:scale-[0.88] overflow-hidden"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(120,65,10,0.28)' }}
+                >
+                  <img src={`/emoji-${key}.png`} alt={key} className="w-6 h-6 object-contain" draggable={false} />
+                </button>
+              ))}
+            </div>
+          )}
           <ActionBar
             phase={room.phase}
             imAlive={imAlive}
@@ -1095,6 +1165,8 @@ export function GameView({
             selectedTarget={selectedTarget}
             selectedPlayerName={selectedPlayerName}
             nc={nc}
+            myRole={myRole}
+            roleAccent={roleInfo?.accentColor ?? '#d97706'}
             votedCount={votedCount}
             totalAlive={aliveCount}
             onAdvanceDay={onAdvanceDay}

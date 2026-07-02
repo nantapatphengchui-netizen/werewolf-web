@@ -14,6 +14,15 @@ export const th: Record<string, string> = {
   'landing.joining':         'กำลังเข้าร่วม…',
   'landing.waitConnect':     'กำลังเชื่อมต่อ…',
 
+  // ── Turn prompt / night atmosphere ─────────────────────────────────────────
+  'turn.yourTurn':     'ตาของคุณ',
+  'turn.voteProgress': 'ลงคะแนนแล้ว {{voted}} / {{total}} คน',
+  'turn.tallyLive':    'กำลังนับคะแนน…',
+  'night.flavor.0':    'หมาป่ากำลังออกล่าในความมืด…',
+  'night.flavor.1':    'ผู้หยั่งรู้เพ่งผ่านดวงตาที่สาม…',
+  'night.flavor.2':    'หมู่บ้านหลับใหลอย่างไม่รู้ตัว…',
+  'night.flavor.3':    'เงามืดเคลื่อนไหวอย่างเงียบงัน…',
+
   // ── Seer reveal ────────────────────────────────────────────────────────────
   'seerReveal.title':        'นิมิตของผู้หยั่งรู้',
   'seerReveal.subtitle':     'ดวงตาที่สามเผยความจริง',
