@@ -226,6 +226,33 @@ function CardCorners({ color, opacity }: { color: string; opacity: number }) {
   );
 }
 
+// ── Sealed action badge (a dark wax seal with a glowing rune-check) ────────────
+
+function SubmittedSeal() {
+  return (
+    <div
+      className="relative w-[22px] h-[22px] rounded-full flex items-center justify-center"
+      style={{
+        background: 'radial-gradient(circle at 40% 33%, rgba(22,30,22,0.97) 0%, rgba(6,12,7,0.98) 70%)',
+        border: '1px solid rgba(74,222,128,0.7)',
+        animation: 'seal-check-glow 2s ease-in-out infinite',
+      }}
+    >
+      <div className="absolute rounded-full" style={{ inset: '2px', border: '1px solid rgba(74,222,128,0.25)' }} />
+      <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
+        <path
+          d="M3 8l4 4 6-6"
+          stroke="#6ee7b7"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ filter: 'drop-shadow(0 0 3px rgba(74,222,128,0.9))' }}
+        />
+      </svg>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function GamePlayerCard({
@@ -642,21 +669,17 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── Submitted green check on target card ── */}
+      {/* ── Submitted seal on target card ── */}
       {isSelected && !onConfirmAction && alive && !isCurrentPlayer && (
-        <div className="absolute right-1.5 top-[38%] z-10 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(20,83,45,0.97)', border: '1px solid rgba(74,222,128,0.75)' }}>
-          <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
-            <path d="M3 8l4 4 6-6" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div className="absolute right-1.5 top-[38%] z-10">
+          <SubmittedSeal />
         </div>
       )}
 
-      {/* ── Own action submitted check ── */}
+      {/* ── Own action submitted seal ── */}
       {isCurrentPlayer && actionSubmitted && alive && (
-        <div className="absolute right-1.5 top-[38%] z-10 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(20,83,45,0.97)', border: '1px solid rgba(74,222,128,0.75)' }}>
-          <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
-            <path d="M3 8l4 4 6-6" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div className="absolute right-1.5 top-[38%] z-10">
+          <SubmittedSeal />
         </div>
       )}
 
