@@ -248,127 +248,6 @@ function barStyle(phase: string): React.CSSProperties {
   };
 }
 
-type TFn = (key: string, params?: Record<string, string | number>) => string;
-
-/** Rotating atmospheric line shown while waiting through the night. */
-function NightFlavor({ T }: { T: TFn }) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setI(v => (v + 1) % 4), 3200);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <p
-      key={i}
-      className="text-[10px] font-cinzel italic text-center tracking-wide"
-      style={{ color: 'rgba(167,139,250,0.6)', animation: 'flavor-fade 3.2s ease-in-out' }}
-    >
-      {T(`night.flavor.${i}`)}
-    </p>
-  );
-}
-
-/** Prominent "your turn" shell with a breathing accent glow. */
-function TurnShell({ accent, children }: { accent: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        backgroundColor: 'rgba(3,5,7,0.96)',
-        border: `1px solid ${accent}77`,
-        borderRadius: '10px',
-        padding: '10px 14px',
-        ['--turn-glow-a' as string]: `${accent}55`,
-        ['--turn-glow-b' as string]: `${accent}22`,
-        animation: 'turn-prompt-glow 2s ease-in-out infinite',
-      } as React.CSSProperties}
-    >
-      {children}
-    </div>
-  );
-}
-
-interface ActionBarProps {
-  phase: string;
-  imAlive: boolean;
-  isActionSubmitted: boolean;
-  selectedTarget: string | null;
-  selectedPlayerName: string | null;
-  nc: NightCfg | null;
-  myRole: Role | null;
-  roleAccent: string;
-  T: TFn;
-}
-
-function ActionBar({
-  phase, imAlive, isActionSubmitted,
-  selectedTarget, selectedPlayerName, nc,
-  myRole, roleAccent,
-  T,
-}: ActionBarProps) {
-
-  // ── Night ──
-  if (phase === 'night') {
-    if (isActionSubmitted) {
-      return (
-        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
-          <div className="flex items-center justify-center gap-2">
-            <CheckIcon color="#4ade80" />
-            <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>{T('bar.night.submitted')}</p>
-          </div>
-          <NightFlavor T={T} />
-        </div>
-      );
-    }
-    if (!imAlive) {
-      return (
-        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
-          <p className="text-[11px] font-cinzel italic text-center" style={{ color: '#a8a29e' }}>{T('bar.night.perished')}</p>
-          <NightFlavor T={T} />
-        </div>
-      );
-    }
-    // Villager / role with no night action — the village sleeps
-    if (!nc) {
-      return (
-        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '6px', alignItems: 'stretch' }}>
-          <p className="text-[11px] font-cinzel italic text-center" style={{ color: '#a8a29e' }}>{T('instr.night.villager')}</p>
-          <NightFlavor T={T} />
-        </div>
-      );
-    }
-    // It's your turn to act
-    return (
-      <TurnShell accent={roleAccent}>
-        {selectedTarget ? (
-          <div className="flex items-center gap-3">
-            <CheckIcon color={nc.selText} />
-            <span className="flex-1 text-[13px] font-cinzel font-bold uppercase tracking-wide truncate" style={{ color: nc.selText }}>
-              {selectedPlayerName}
-            </span>
-            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: `${nc.selText}90` }}>
-              {T('bar.night.confirmHint')}
-            </span>
-          </div>
-        ) : (
-          <div className="text-center">
-            <p className="text-[9px] font-cinzel font-bold uppercase tracking-[0.28em]" style={{ color: roleAccent }}>
-              {T('turn.yourTurn')}
-            </p>
-            <p className="text-[12px] font-cinzel truncate" style={{ color: '#f5e6c8' }}>
-              {T(myRole ? `instr.night.${myRole}` : 'bar.night.select')}
-            </p>
-          </div>
-        )}
-      </TurnShell>
-    );
-  }
-
-
-  // ── Voting ── no bottom bar: cards are clickable, confirm is on-card,
-  // vote seals show the tally, and the top countdown shows time remaining.
-  return null;
-}
-
 // ── GameView ──────────────────────────────────────────────────────────────────
 
 export function GameView({
@@ -729,6 +608,16 @@ export function GameView({
             </button>
           )}
 
+          {/* Night: compact turn status (glowing cards show the actual targets) */}
+          {room.phase === 'night' && !isHunterPending && imAlive && nc && (
+            <span
+              className={`shrink-0 text-[10px] font-cinzel font-bold uppercase tracking-widest ${isActionSubmitted ? '' : 'animate-pulse'}`}
+              style={{ color: isActionSubmitted ? '#4ade80' : (roleInfo?.accentColor ?? '#d97706') }}
+            >
+              {isActionSubmitted ? `✓ ${T('turn.waiting')}` : T('turn.yourTurn')}
+            </span>
+          )}
+
           <div className="flex-1" />
 
           {/* Role badge — opens role drawer */}
@@ -871,21 +760,6 @@ export function GameView({
             </svg>
             <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{M(room.lastAnnouncement)}</p>
           </div>
-        )}
-
-        {/* Night action prompt — at the top so the grid fills the bottom */}
-        {room.phase === 'night' && !isHunterPending && (
-          <ActionBar
-            phase={room.phase}
-            imAlive={imAlive}
-            isActionSubmitted={isActionSubmitted}
-            selectedTarget={selectedTarget}
-            selectedPlayerName={selectedPlayerName}
-            nc={nc}
-            myRole={myRole}
-            roleAccent={roleInfo?.accentColor ?? '#d97706'}
-            T={T}
-          />
         )}
 
         {/* Hunter pending — this player is the hunter */}
