@@ -368,8 +368,6 @@ export function GamePlayerCard({
     subLabel = { text: T('card.away'), color: '#57534e' };
   }
 
-  const checkColor = ac?.checkColor ?? '#fbbf24';
-
   let cornerColor   = 'rgba(161,98,7,0.80)';
   let cornerOpacity = 0.55;
   if (!alive) {
@@ -654,18 +652,6 @@ export function GamePlayerCard({
               <span className="text-[9px] font-bold leading-none" style={{ color: '#86efac' }}>{trustCount}</span>
             </div>
           )}
-        </div>
-      )}
-
-      {/* ── Selected check (action pending confirm) ── */}
-      {isSelected && onConfirmAction && alive && (
-        <div
-          className="absolute right-1.5 top-[38%] z-10 w-5 h-5 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.75)', border: `1px solid ${checkColor}88` }}
-        >
-          <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
-            <path d="M3 8l4 4 6-6" stroke={checkColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
         </div>
       )}
 
