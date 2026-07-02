@@ -26,6 +26,7 @@ function makeEventId(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
+/** Tally with random tie-break — used for the werewolves' nightly kill. */
 function tallyVotes(votes: Map<string, string>): string | null {
   if (votes.size === 0) return null;
   const counts = new Map<string, number>();
@@ -33,6 +34,16 @@ function tallyVotes(votes: Map<string, string>): string | null {
   const max = Math.max(...counts.values());
   const candidates = [...counts.entries()].filter(([, c]) => c === max).map(([id]) => id);
   return pickRandom(candidates);
+}
+
+/** Tally with NO tie-break — a tie yields null. Used for the village exile vote. */
+function tallyVotesStrict(votes: Map<string, string>): string | null {
+  if (votes.size === 0) return null;
+  const counts = new Map<string, number>();
+  for (const targetId of votes.values()) counts.set(targetId, (counts.get(targetId) ?? 0) + 1);
+  const max = Math.max(...counts.values());
+  const candidates = [...counts.entries()].filter(([, c]) => c === max).map(([id]) => id);
+  return candidates.length === 1 ? candidates[0] : null;
 }
 
 // ── Shared result types ───────────────────────────────────────────────────────
@@ -83,6 +94,9 @@ export class RoomManager {
 
   // Day votes
   private dayVotes = new Map<string, Map<string, string>>();       // roomCode → (pid → targetId)
+
+  // Seer inspection history (for reconnect replay), keyed by seer's persistentId
+  private seerResults = new Map<string, SeerResultData[]>();
 
   // ── Socket tracking ──────────────────────────────────────────────────────────
 
@@ -145,6 +159,7 @@ export class RoomManager {
     room.readyPlayers = room.readyPlayers.filter(id => id !== persistentId);
     this.playerRoomMap.delete(persistentId);
     this.roleMap.delete(persistentId);
+    this.seerResults.delete(persistentId);
     this.nightVotes.get(roomCode)?.delete(persistentId);
     this.dayVotes.get(roomCode)?.delete(persistentId);
 
@@ -261,6 +276,7 @@ export class RoomManager {
     this.witchSaveUsed.delete(room.code);
     this.witchPoisonUsed.delete(room.code);
     this.bodyguardLastProtected.delete(room.code);
+    room.players.forEach(p => this.seerResults.delete(p.id));
 
     this.addEvent(room, 'The game has begun. Roles have been assigned.');
     this.addEvent(room, 'Night falls upon the village. All close their eyes.');
@@ -273,6 +289,30 @@ export class RoomManager {
     const room = this.rooms.get(roomCode);
     if (!room) return [];
     return room.players.filter(p => this.roleMap.get(p.id) === 'werewolf').map(p => p.id);
+  }
+
+  /** Seer's past inspection results — replayed to the seer on reconnect. */
+  getSeerHistory(persistentId: string): SeerResultData[] {
+    if (this.roleMap.get(persistentId) !== 'seer') return [];
+    return this.seerResults.get(persistentId) ?? [];
+  }
+
+  /** If this player is a Witch with a still-pending night decision, rebuild their prompt. */
+  getPendingWitchInfo(persistentId: string): WitchNightInfo | null {
+    const roomCode = this.playerRoomMap.get(persistentId);
+    if (!roomCode) return null;
+    const room = this.rooms.get(roomCode);
+    if (!room || room.phase !== 'night') return null;
+    if (room.hunterPendingShot) return null;
+    if (this.roleMap.get(persistentId) !== 'witch') return null;
+    const me = room.players.find(p => p.id === persistentId);
+    if (!me?.isAlive) return null;
+    // Only if the prompt was already sent this night and the witch has not yet acted
+    if (!this.witchPhase1Done.get(roomCode)) return null;
+    if (this.witchAction.has(roomCode)) return null;
+    const saveUsed   = this.witchSaveUsed.get(roomCode)   ?? false;
+    const poisonUsed = this.witchPoisonUsed.get(roomCode) ?? false;
+    return this.buildWitchNightInfo(room, persistentId, saveUsed, poisonUsed);
   }
 
   // ── Night phase ──────────────────────────────────────────────────────────────
@@ -569,6 +609,9 @@ export class RoomManager {
       const role   = this.roleMap.get(seerTargetId);
       if (seer && target && role) {
         seerResult = { seerId: seer.id, targetId: seerTargetId, targetName: target.name, role, round: room.round };
+        const hist = this.seerResults.get(seer.id) ?? [];
+        hist.push(seerResult);
+        this.seerResults.set(seer.id, hist);
       }
     }
 
@@ -745,7 +788,7 @@ export class RoomManager {
     room.timerPaused         = false;
     room.pausedTimeRemaining = null;
 
-    const eliminatedId = votes ? tallyVotes(votes) : null;
+    const eliminatedId = votes ? tallyVotesStrict(votes) : null;
     const eliminated   = eliminatedId ? room.players.find(p => p.id === eliminatedId) : null;
     if (eliminated) {
       eliminated.isAlive     = false;
@@ -842,6 +885,7 @@ export class RoomManager {
     room.readyPlayers = room.readyPlayers.filter(id => id !== targetPid);
     this.playerRoomMap.delete(targetPid);
     this.roleMap.delete(targetPid);
+    this.seerResults.delete(targetPid);
     this.addEvent(room, `${target.name} was removed from the room by the host.`);
     return { ok: true, room, kickedSocketId };
   }
@@ -1112,6 +1156,7 @@ export class RoomManager {
     this.witchSaveUsed.delete(room.code);
     this.witchPoisonUsed.delete(room.code);
     this.bodyguardLastProtected.delete(room.code);
+    room.players.forEach(p => this.seerResults.delete(p.id));
     this.addEvent(room, 'A new game has begun. Roles have been reassigned.');
     this.addEvent(room, 'Night falls upon the village. All close their eyes.');
     return { room, roleMap };
@@ -1129,6 +1174,7 @@ export class RoomManager {
   private clearRoomGameState(room: RoomState): void {
     for (const player of room.players) {
       this.roleMap.delete(player.id);
+      this.seerResults.delete(player.id);
       delete player.revealedRole;
       player.isAlive = true;
     }

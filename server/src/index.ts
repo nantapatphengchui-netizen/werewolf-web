@@ -92,6 +92,22 @@ io.on('connection', socket => {
         werewolfIds: role === 'werewolf' ? werewolfIds : [],
       });
     }
+    // Replay the Seer's inspection history so their notebook survives a reconnect
+    if (role === 'seer') {
+      for (const sr of rooms.getSeerHistory(persistentId)) {
+        socket.emit('seer_result', { round: sr.round, targetId: sr.targetId, targetName: sr.targetName, role: sr.role });
+      }
+    }
+    // Re-send a still-pending Witch decision so they can still act after reconnecting
+    const witchInfo = rooms.getPendingWitchInfo(persistentId);
+    if (witchInfo) {
+      socket.emit('witch_night_info', {
+        attackedPlayerId:   witchInfo.attackedPlayerId,
+        attackedPlayerName: witchInfo.attackedPlayerName,
+        savePotionUsed:     witchInfo.savePotionUsed,
+        poisonPotionUsed:   witchInfo.poisonPotionUsed,
+      });
+    }
     cancelHostTransfer(room.code);
     io.to(room.code).emit('room_updated', { room });
     if (NODE_ENV !== 'production') {
