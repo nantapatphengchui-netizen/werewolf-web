@@ -18,6 +18,8 @@ import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
 import { HowToPlay } from './HowToPlay';
+import { SeerRevealModal } from './SeerRevealModal';
+import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -438,6 +440,15 @@ export function GameView({
   const [hostOpen, setHostOpen]   = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
   const [showRoleReveal, setShowRoleReveal] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [seerReveal, setSeerReveal] = useState<{ targetName: string; role: Role; key: number } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (text: string, tone: ToastTone = 'default') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ text, tone, key: Date.now() });
+    toastTimerRef.current = setTimeout(() => setToast(null), 2200);
+  };
   const [phaseTransition, setPhaseTransition] = useState<'night' | 'day' | 'voting' | null>(null);
   const phaseTransTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [reactionsMap, setReactionsMap] = useState<Record<string, { emoji: string; key: number }>>({});
@@ -492,6 +503,20 @@ export function GameView({
     return () => { socket.off('reaction', handleReaction); };
   }, [socket]);
 
+  // Seer inspection reveal — pop a dramatic modal when a fresh result lands.
+  // The round guard stops replayed history (on reconnect) from re-triggering old reveals.
+  const shownSeerKeysRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (myRole !== 'seer' || seerLog.length === 0) return;
+    const latest = seerLog[seerLog.length - 1];
+    const key = `${latest.round}-${latest.targetId}`;
+    if (shownSeerKeysRef.current.has(key)) return;
+    shownSeerKeysRef.current.add(key);
+    if (latest.round === room.round) {
+      setSeerReveal({ targetName: latest.targetName, role: latest.role, key: Date.now() });
+    }
+  }, [seerLog, myRole, room.round]);
+
   useEffect(() => {
     if (prevRoleRef.current === null && myRole !== null) {
       setShowRoleReveal(true);
@@ -499,14 +524,22 @@ export function GameView({
     prevRoleRef.current = myRole;
   }, [myRole]);
 
-  const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); };
-  const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); };
-  const handleHunterShoot = (targetId: string | null) => { socket?.emit('hunter_shoot', { targetId }); setSelectedTarget(null); };
+  const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); showToast(T('toast.actionSubmitted')); };
+  const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); showToast(T('toast.voteCast')); };
+  const handleHunterShoot = (targetId: string | null) => {
+    socket?.emit('hunter_shoot', { targetId });
+    setSelectedTarget(null);
+    showToast(targetId ? T('toast.shotFired') : T('toast.shotSkipped'), targetId ? 'danger' : 'default');
+  };
   const handleWitchAction = (save: boolean, poisonTargetId: string | null) => {
     socket?.emit('witch_action', { save, poisonTargetId });
     setWitchActionSubmitted(true);
     setWitchPoisonMode(false);
     setSelectedTarget(null);
+    showToast(
+      save ? T('toast.witchSaved') : poisonTargetId ? T('toast.witchPoisoned') : T('toast.witchPassed'),
+      save ? 'safe' : poisonTargetId ? 'danger' : 'default',
+    );
   };
 
   const me         = room.players.find(p => p.id === playerId);
@@ -1131,6 +1164,19 @@ export function GameView({
 
       {/* How to play */}
       {howToOpen && <HowToPlay onClose={() => setHowToOpen(false)} />}
+
+      {/* Seer inspection reveal */}
+      {seerReveal && (
+        <SeerRevealModal
+          key={seerReveal.key}
+          targetName={seerReveal.targetName}
+          role={seerReveal.role}
+          onDismiss={() => setSeerReveal(null)}
+        />
+      )}
+
+      {/* Action feedback toast */}
+      {toast && <ActionToast toast={toast} />}
     </div>
   );
 }

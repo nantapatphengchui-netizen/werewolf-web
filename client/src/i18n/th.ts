@@ -14,6 +14,23 @@ export const th: Record<string, string> = {
   'landing.joining':         'กำลังเข้าร่วม…',
   'landing.waitConnect':     'กำลังเชื่อมต่อ…',
 
+  // ── Seer reveal ────────────────────────────────────────────────────────────
+  'seerReveal.title':        'นิมิตของผู้หยั่งรู้',
+  'seerReveal.subtitle':     'ดวงตาที่สามเผยความจริง',
+  'seerReveal.isWerewolf':   'คือหมาป่า!',
+  'seerReveal.isSafe':       'ไม่ใช่หมาป่า — ฝ่ายหมู่บ้าน',
+  'seerReveal.roleLabel':    'บทบาทที่แท้จริง',
+  'seerReveal.dismiss':      'รับทราบ',
+
+  // ── Action toasts ──────────────────────────────────────────────────────────
+  'toast.actionSubmitted': 'บันทึกการกระทำแล้ว',
+  'toast.voteCast':        'ลงคะแนนแล้ว',
+  'toast.witchSaved':      'ใช้ยาช่วยชีวิตแล้ว',
+  'toast.witchPoisoned':   'ใช้ยาพิษแล้ว',
+  'toast.witchPassed':     'เลือกไม่ทำอะไร',
+  'toast.shotFired':       'ยิงนัดสุดท้ายแล้ว',
+  'toast.shotSkipped':     'ข้ามการยิง',
+
   // ── Connection / reconnect ─────────────────────────────────────────────────
   'conn.reconnecting':     'กำลังเชื่อมต่อใหม่…',
   'conn.reconnectingDesc': 'รอสักครู่ — กำลังกู้เกมของคุณกลับมา',

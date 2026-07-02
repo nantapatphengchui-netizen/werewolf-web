@@ -14,6 +14,23 @@ export const en: Record<string, string> = {
   'landing.joining':         'Joining…',
   'landing.waitConnect':     'Connecting…',
 
+  // ── Seer reveal ────────────────────────────────────────────────────────────
+  'seerReveal.title':        "The Seer's Vision",
+  'seerReveal.subtitle':     'The third eye reveals the truth',
+  'seerReveal.isWerewolf':   'is a Werewolf!',
+  'seerReveal.isSafe':       'is not a Werewolf — Village side',
+  'seerReveal.roleLabel':    'True Role',
+  'seerReveal.dismiss':      'Understood',
+
+  // ── Action toasts ──────────────────────────────────────────────────────────
+  'toast.actionSubmitted': 'Action recorded',
+  'toast.voteCast':        'Vote cast',
+  'toast.witchSaved':      'Save potion used',
+  'toast.witchPoisoned':   'Poison used',
+  'toast.witchPassed':     'Chose to do nothing',
+  'toast.shotFired':       'Final shot fired',
+  'toast.shotSkipped':     'Shot skipped',
+
   // ── Connection / reconnect ─────────────────────────────────────────────────
   'conn.reconnecting':     'Reconnecting…',
   'conn.reconnectingDesc': 'Hang tight — restoring your game.',
