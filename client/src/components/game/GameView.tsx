@@ -13,7 +13,6 @@ import { useT, useMessage } from '@/i18n';
 import { RolePanel } from './RolePanel';
 import { RoleRevealOverlay } from './RoleRevealOverlay';
 import { GamePlayerGrid } from './GamePlayerGrid';
-import { EventLog } from './EventLog';
 import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
@@ -21,7 +20,7 @@ import { PhaseProgressBar } from './PhaseProgressBar';
 import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
 import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
-import { ChatPanel } from './ChatPanel';
+import { ChatFeed } from './ChatFeed';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -496,7 +495,6 @@ export function GameView({
   const socket = useSocket();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
-  const [logOpen, setLogOpen]     = useState(false);
   const [roleOpen, setRoleOpen]   = useState(false);
   const [hostOpen, setHostOpen]   = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
@@ -689,7 +687,20 @@ export function GameView({
   const unreadChat = chatOpen ? 0 : Math.max(0, chatMessages.length - chatSeen);
 
   return (
-    <div className="relative z-10 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
+    <div className="relative z-10 flex flex-col overflow-hidden lg:pr-80" style={{ height: '100dvh' }}>
+
+      {/* ── Chat + log sidebar (desktop, always visible) ── */}
+      <aside className="hidden lg:flex flex-col fixed right-0 top-0 bottom-0 w-80 z-20" style={{ borderLeft: '1px solid rgba(120,65,10,0.35)' }}>
+        <ChatFeed
+          messages={chatMessages}
+          events={room.eventLog}
+          playerId={playerId}
+          canChat={canChat}
+          wolfMode={chatWolfMode}
+          disabledReason={chatDisabledReason}
+          onSend={(text) => socket?.emit('chat_send', { text })}
+        />
+      </aside>
 
       {/* ── Phase atmosphere tint ── */}
       <div
@@ -871,11 +882,11 @@ export function GameView({
             </button>
           )}
 
-          {/* Chat icon */}
+          {/* Chat icon — mobile only (desktop shows the always-on sidebar) */}
           <button
             onClick={() => setChatOpen(true)}
             title={chatWolfMode ? T('chat.wolfTitle') : T('chat.title')}
-            className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125"
+            className="p-1.5 shrink-0 lg:hidden transition-all duration-150 hover:brightness-125"
             style={{ border: `1px solid ${chatWolfMode ? 'rgba(185,28,28,0.45)' : 'rgba(120,65,10,0.40)'}`, borderRadius: '7px', position: 'relative' }}
           >
             <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke={chatWolfMode ? '#ef4444' : '#d97706'} strokeWidth="1.5">
@@ -903,26 +914,6 @@ export function GameView({
               <path strokeLinecap="round" d="M6.1 6.1a2 2 0 0 1 3.8.6c0 1.3-1.9 1.7-1.9 1.7" />
               <circle cx="8" cy="11.5" r="0.5" fill="#d97706" stroke="none" />
             </svg>
-          </button>
-
-          {/* Event log icon */}
-          <button
-            onClick={() => setLogOpen(true)}
-            title="Event Log"
-            className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125"
-            style={{ border: '1px solid rgba(120,65,10,0.40)', borderRadius: '7px', position: 'relative' }}
-          >
-            <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="#d97706" strokeWidth="1.5">
-              <path strokeLinecap="round" d="M2 4h12M2 8h8M2 12h10" />
-            </svg>
-            {room.eventLog.length > 0 && (
-              <span
-                className="absolute -top-1 -right-1 w-3.5 h-3.5 flex items-center justify-center rounded-full text-[8px] font-bold"
-                style={{ backgroundColor: '#92400e', color: '#fbbf24' }}
-              >
-                {room.eventLog.length > 9 ? '9+' : room.eventLog.length}
-              </span>
-            )}
           </button>
 
           {/* Leave */}
@@ -1214,11 +1205,6 @@ export function GameView({
 
       {/* ── Drawers ──────────────────────────────────────────────────────── */}
 
-      {/* Event Log */}
-      <Drawer open={logOpen} onClose={() => setLogOpen(false)} title={T('hud.eventLog')}>
-        <EventLog events={room.eventLog} />
-      </Drawer>
-
       {/* Role Details */}
       <Drawer open={roleOpen} onClose={() => setRoleOpen(false)} title={T('hud.yourRole')}>
         <div className="p-3 flex flex-col gap-3">
@@ -1274,17 +1260,23 @@ export function GameView({
       {/* How to play */}
       {howToOpen && <HowToPlay onClose={() => setHowToOpen(false)} />}
 
-      {/* Chat */}
+      {/* Chat drawer — mobile only (desktop uses the sidebar) */}
       {chatOpen && (
-        <ChatPanel
-          messages={chatMessages}
-          playerId={playerId}
-          canChat={canChat}
-          wolfMode={chatWolfMode}
-          disabledReason={chatDisabledReason}
-          onSend={(text) => socket?.emit('chat_send', { text })}
-          onClose={() => setChatOpen(false)}
-        />
+        <div className="fixed inset-0 z-50 flex lg:hidden" onClick={() => setChatOpen(false)}>
+          <div className="flex-1 bg-black/50 backdrop-blur-[1px]" />
+          <div className="relative w-80 max-w-[85vw]" onClick={e => e.stopPropagation()}>
+            <ChatFeed
+              messages={chatMessages}
+              events={room.eventLog}
+              playerId={playerId}
+              canChat={canChat}
+              wolfMode={chatWolfMode}
+              disabledReason={chatDisabledReason}
+              onSend={(text) => socket?.emit('chat_send', { text })}
+              onClose={() => setChatOpen(false)}
+            />
+          </div>
+        </div>
       )}
 
       {/* Seer inspection reveal */}
