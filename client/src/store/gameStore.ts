@@ -62,7 +62,11 @@ export const useGameStore = create<GameStore>((set) => ({
   setRoom:    (room, playerId) => set({ room, playerId, error: null }),
   updateRoom: (room) => set({ room }),
   setMyRole:  (myRole, werewolfIds) => set({ myRole, werewolfIds }),
-  addSeerResult: (entry) => set(s => ({ seerLog: [...s.seerLog, entry] })),
+  addSeerResult: (entry) => set(s => {
+    // Ignore duplicates — the server replays the seer's history on reconnect
+    if (s.seerLog.some(e => e.round === entry.round && e.targetId === entry.targetId)) return s;
+    return { seerLog: [...s.seerLog, entry] };
+  }),
   addDayReaction: (r) => set(s => {
     const deduped = s.dayReactions.filter(x => !(x.fromName === r.fromName && x.targetName === r.targetName));
     return { dayReactions: [...deduped.slice(-2), r] };

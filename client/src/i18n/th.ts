@@ -14,6 +14,12 @@ export const th: Record<string, string> = {
   'landing.joining':         'กำลังเข้าร่วม…',
   'landing.waitConnect':     'กำลังเชื่อมต่อ…',
 
+  // ── Connection / reconnect ─────────────────────────────────────────────────
+  'conn.reconnecting':     'กำลังเชื่อมต่อใหม่…',
+  'conn.reconnectingDesc': 'รอสักครู่ — กำลังกู้เกมของคุณกลับมา',
+  'conn.loading':          'กำลังโหลด…',
+  'conn.leaveHome':        'กลับหน้าแรก',
+
   // ── How to play ────────────────────────────────────────────────────────────
   'howto.button':         'วิธีเล่น',
   'howto.title':          'วิธีเล่น',

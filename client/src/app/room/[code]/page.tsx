@@ -9,6 +9,7 @@ import { PlayerGrid } from '@/components/room/PlayerGrid';
 import { HostControls } from '@/components/room/HostControls';
 import { HostAdminPanel } from '@/components/room/HostAdminPanel';
 import { GameView } from '@/components/game/GameView';
+import { ConnectionOverlay } from '@/components/game/ConnectionOverlay';
 import { useAudioPhaseStore } from '@/store/audioPhaseStore';
 
 const PHASE_TINT: Record<string, string> = {
@@ -64,12 +65,22 @@ export default function RoomPage() {
     if (room) setAudioPhase(room.phase);
   }, [room?.phase, setAudioPhase]);
 
-  if (!room) return null;
-
   const handleLeave = () => {
     leaveRoom();
     router.replace('/');
   };
+
+  // No room yet: either a transient drop (show reconnecting) or the initial load
+  // before room_joined arrives (show loading). The effect above redirects home if
+  // we're connected but still have no room after a short grace period.
+  if (!room) {
+    return (
+      <>
+        <Background phase="lobby" />
+        <ConnectionOverlay mode={isConnected ? 'loading' : 'reconnecting'} onLeave={handleLeave} />
+      </>
+    );
+  }
 
   const isLobby = room.phase === 'lobby';
   const isHost  = room.hostId === playerId;

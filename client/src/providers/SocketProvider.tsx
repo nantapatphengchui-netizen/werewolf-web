@@ -56,6 +56,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     });
 
     s.on('connect',    () => setConnected(true));
+    // Clear the room on drop; the server's reconnect flow re-sends room_joined + role
+    // + seer/witch replay. If the server no longer knows us (e.g. it restarted), the
+    // room page redirects home instead of showing a stale board.
     s.on('disconnect', () => { setConnected(false); clearRoom(); });
 
     s.on('room_joined',  ({ room, playerId }) => setRoom(room, playerId));

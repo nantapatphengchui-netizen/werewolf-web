@@ -14,6 +14,12 @@ export const en: Record<string, string> = {
   'landing.joining':         'Joining…',
   'landing.waitConnect':     'Connecting…',
 
+  // ── Connection / reconnect ─────────────────────────────────────────────────
+  'conn.reconnecting':     'Reconnecting…',
+  'conn.reconnectingDesc': 'Hang tight — restoring your game.',
+  'conn.loading':          'Loading…',
+  'conn.leaveHome':        'Leave to Home',
+
   // ── How to play ────────────────────────────────────────────────────────────
   'howto.button':         'How to Play',
   'howto.title':          'How to Play',
