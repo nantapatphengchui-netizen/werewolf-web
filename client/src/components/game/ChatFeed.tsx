@@ -47,7 +47,7 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
   const accent = wolfMode ? '#ef4444' : '#d97706';
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'rgba(3,5,7,0.98)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'linear-gradient(180deg, rgba(11,9,6,0.98) 0%, rgba(3,4,6,0.98) 55%, rgba(6,5,10,0.98) 100%)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 shrink-0" style={{ borderBottom: `1px solid ${accent}33` }}>
         <div className="flex items-center gap-2">

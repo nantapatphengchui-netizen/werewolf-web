@@ -691,7 +691,10 @@ export function GameView({
     <div className="relative z-10 flex flex-col overflow-hidden lg:pr-80" style={{ height: '100dvh' }}>
 
       {/* ── Chat + log sidebar (desktop, always visible) ── */}
-      <aside className="hidden lg:flex flex-col fixed right-0 top-0 bottom-0 w-80 z-20" style={{ borderLeft: '1px solid rgba(120,65,10,0.35)' }}>
+      <aside
+        className="hidden lg:flex flex-col fixed right-0 top-0 bottom-0 w-80 z-20"
+        style={{ borderLeft: '1px solid rgba(146,64,14,0.45)', boxShadow: '-10px 0 30px rgba(0,0,0,0.55)' }}
+      >
         <ChatFeed
           messages={chatMessages}
           events={room.eventLog}
@@ -782,7 +785,13 @@ export function GameView({
       {/* ── Top HUD ──────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 pt-3 pb-2 relative z-10">
         <div
-          style={{ backgroundColor: 'rgba(3,5,7,0.96)', border: '1px solid rgba(146,64,14,0.55)', borderRadius: '10px', boxShadow: PHASE_HUD_GLOW[room.phase] ?? '0 4px 32px rgba(0,0,0,0.75)' }}
+          style={{
+            background: 'linear-gradient(180deg, rgba(14,11,7,0.97) 0%, rgba(3,5,7,0.97) 100%)',
+            border: '1px solid rgba(146,64,14,0.55)',
+            borderTop: `2px solid ${PHASE_BAR_ACCENT[room.phase] ?? 'rgba(146,64,14,0.6)'}`,
+            borderRadius: '10px',
+            boxShadow: `${PHASE_HUD_GLOW[room.phase] ?? '0 4px 32px rgba(0,0,0,0.75)'}, inset 0 1px 0 rgba(255,240,210,0.06)`,
+          }}
           className="flex items-center gap-2 px-3 py-2"
         >
           {/* Room code */}

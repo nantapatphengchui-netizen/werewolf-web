@@ -91,8 +91,7 @@ export function GamePlayerGrid({
     items.push(
       <div
         key={player.id}
-        className="aspect-[3/4] lg:aspect-auto lg:min-h-0"
-        style={{ filter: 'drop-shadow(0 7px 16px rgba(0,0,0,0.55))' }}
+        className="aspect-[3/4] lg:aspect-auto lg:min-h-0 relative transition-transform duration-200 ease-out hover:-translate-y-[3px] hover:z-20 [filter:drop-shadow(0_7px_16px_rgba(0,0,0,0.55))] hover:[filter:drop-shadow(0_16px_30px_rgba(0,0,0,0.72))]"
       >
         <GamePlayerCard
           player={player}
