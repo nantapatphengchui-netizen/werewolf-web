@@ -140,7 +140,7 @@ export const th: Record<string, string> = {
 
   // ── Action bar — day ──────────────────────────────────────────────────────
   'bar.day.discuss':    'พูดคุยกันในหมู่บ้าน',
-  'bar.day.callVote':   'เริ่มโหวต →',
+  'bar.day.callVote':   'เริ่มโหวต',
   'bar.day.waitHost':   'รอโฮสต์…',
   'bar.day.perished':   'คุณสิ้นชีวิตแล้ว',
 

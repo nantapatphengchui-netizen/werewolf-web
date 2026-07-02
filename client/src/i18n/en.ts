@@ -140,7 +140,7 @@ export const en: Record<string, string> = {
 
   // ── Action bar — day ──────────────────────────────────────────────────────
   'bar.day.discuss':  'Discuss with the village. Use card buttons to Suspect or Ask players.',
-  'bar.day.callVote': 'Call to Vote →',
+  'bar.day.callVote': 'Call to Vote',
   'bar.day.waitHost': 'Waiting for host…',
   'bar.day.perished': 'You have perished.',
 
