@@ -697,54 +697,6 @@ export function GamePlayerCard({
           )
         )}
 
-        {/* Social action buttons: Suspect / Trust / Ask — shown during day */}
-        {!isSelected && alive && !isCurrentPlayer && (showSuspectBtn || showTrustBtn || showAskBtn) && (
-          <div className="flex gap-1 mt-1">
-            {showSuspectBtn && (
-              <button
-                onClick={e => { e.stopPropagation(); onMarkSuspicion?.(); }}
-                className="flex-1 rounded text-[8px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125 active:scale-[0.95]"
-                style={{
-                  padding: '4px 2px',
-                  backgroundColor: isSuspectedByMe ? 'rgba(120,53,0,0.85)' : 'rgba(0,0,0,0.60)',
-                  border: isSuspectedByMe ? '1px solid rgba(217,119,6,0.75)' : '1px solid rgba(120,65,10,0.40)',
-                  color: isSuspectedByMe ? '#fcd34d' : '#78716c',
-                }}
-              >
-                {isSuspectedByMe ? '⚑' : '⚐'}
-              </button>
-            )}
-            {showTrustBtn && (
-              <button
-                onClick={e => { e.stopPropagation(); onMarkTrust?.(); }}
-                className="flex-1 rounded text-[8px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125 active:scale-[0.95]"
-                style={{
-                  padding: '4px 2px',
-                  backgroundColor: isTrustedByMe ? 'rgba(6,53,37,0.85)' : 'rgba(0,0,0,0.60)',
-                  border: isTrustedByMe ? '1px solid rgba(52,211,153,0.75)' : '1px solid rgba(120,65,10,0.40)',
-                  color: isTrustedByMe ? '#86efac' : '#57534e',
-                }}
-              >
-                ✓
-              </button>
-            )}
-            {showAskBtn && (
-              <button
-                onClick={e => { e.stopPropagation(); onAsk?.(); }}
-                className="flex-1 rounded text-[8px] font-cinzel uppercase tracking-wide transition-all duration-150 hover:brightness-125 active:scale-[0.95]"
-                style={{
-                  padding: '4px 2px',
-                  backgroundColor: 'rgba(0,0,0,0.60)',
-                  border: '1px solid rgba(109,40,217,0.35)',
-                  color: '#7c3aed',
-                }}
-              >
-                {T('social.ask')}
-              </button>
-            )}
-          </div>
-        )}
-
         {/* Cancel + Confirm buttons: shown on selected card before submission */}
         {isSelected && onConfirmAction && alive && (
           <div className="flex gap-1 mt-1.5">
