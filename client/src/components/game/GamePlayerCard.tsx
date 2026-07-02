@@ -579,10 +579,32 @@ export function GamePlayerCard({
         )}
       </div>
 
-      {/* ── Vote count ── */}
+      {/* ── Vote seal ── */}
       {typeof voteCount === 'number' && voteCount > 0 && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex items-center justify-center min-w-[28px] h-[22px] rounded-full px-2" style={{ backgroundColor: 'rgba(127,29,29,0.97)', border: '1px solid rgba(239,68,68,0.75)' }}>
-          <span className="font-bold leading-none text-sm" style={{ color: '#fca5a5' }}>{voteCount}</span>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+          <div key={voteCount} style={{ animation: 'vote-pop 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
+            <div
+              className="relative flex items-center justify-center rounded-full"
+              style={{
+                width: '2.6rem',
+                height: '2.6rem',
+                background: 'radial-gradient(circle at 40% 32%, rgba(190,34,34,0.98) 0%, rgba(120,14,14,0.98) 55%, rgba(70,8,8,0.98) 100%)',
+                border: '2px solid rgba(239,68,68,0.9)',
+                animation: 'vote-seal-glow 1.8s ease-in-out infinite',
+              }}
+            >
+              {/* Inner gold ring */}
+              <div className="absolute rounded-full" style={{ inset: '4px', border: '1px solid rgba(255,190,150,0.4)' }} />
+              {/* Notches (seal spikes) */}
+              <div className="absolute inset-0 rounded-full" style={{ boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.35)' }} />
+              <span
+                className="font-cinzel font-bold leading-none"
+                style={{ fontSize: '1.25rem', color: '#ffe4d6', textShadow: '0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(255,120,90,0.6)' }}
+              >
+                {voteCount}
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
