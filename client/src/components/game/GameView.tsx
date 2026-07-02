@@ -268,24 +268,6 @@ function NightFlavor({ T }: { T: TFn }) {
   );
 }
 
-/** Live vote tally bar shown through the voting phase. */
-function VoteProgress({ voted, total, T }: { voted: number; total: number; T: TFn }) {
-  const pct = total > 0 ? Math.min(100, (voted / total) * 100) : 0;
-  return (
-    <div className="w-full mt-2">
-      <p className="text-[9px] font-cinzel uppercase tracking-widest mb-1 text-center" style={{ color: '#f87171' }}>
-        {T('turn.voteProgress', { voted, total })}
-      </p>
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, backgroundColor: '#dc2626', boxShadow: '0 0 8px rgba(220,38,38,0.6)' }}
-        />
-      </div>
-    </div>
-  );
-}
-
 /** Prominent "your turn" shell with a breathing accent glow. */
 function TurnShell({ accent, children }: { accent: string; children: React.ReactNode }) {
   return (
@@ -323,8 +305,6 @@ interface ActionBarProps {
   nc: NightCfg | null;
   myRole: Role | null;
   roleAccent: string;
-  votedCount: number;
-  totalAlive: number;
   onAdvanceDay: () => void;
   T: TFn;
 }
@@ -333,7 +313,6 @@ function ActionBar({
   phase, imAlive, isHost, isActionSubmitted,
   selectedTarget, selectedPlayerName, nc,
   myRole, roleAccent,
-  votedCount, totalAlive,
   onAdvanceDay, T,
 }: ActionBarProps) {
 
@@ -418,57 +397,8 @@ function ActionBar({
     );
   }
 
-  // ── Voting ──
-  if (phase === 'voting') {
-    if (!imAlive) {
-      return (
-        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '4px', alignItems: 'stretch' }}>
-          <p className="text-[11px] font-cinzel italic text-center" style={{ color: '#a8a29e' }}>{T('bar.voting.perished')}</p>
-          <VoteProgress voted={votedCount} total={totalAlive} T={T} />
-        </div>
-      );
-    }
-    if (isActionSubmitted) {
-      return (
-        <div style={{ ...barStyle(phase), flexDirection: 'column', gap: '4px', alignItems: 'stretch' }}>
-          <div className="flex items-center justify-center gap-2">
-            <CheckIcon color="#4ade80" />
-            <p className="text-[11px] font-cinzel" style={{ color: '#4ade80' }}>{T('instr.voting.submitted')}</p>
-          </div>
-          <VoteProgress voted={votedCount} total={totalAlive} T={T} />
-        </div>
-      );
-    }
-    return (
-      <TurnShell accent="#ef4444">
-        {selectedTarget ? (
-          <div className="flex items-center gap-3">
-            <CheckIcon color="#fca5a5" />
-            <span className="flex-1 text-[13px] font-cinzel font-bold uppercase tracking-wide truncate" style={{ color: '#fca5a5' }}>
-              {selectedPlayerName}
-            </span>
-            <span className="shrink-0 text-[10px] font-cinzel italic" style={{ color: 'rgba(248,113,113,0.85)' }}>
-              {T('bar.voting.confirmHint')}
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <UpArrow color="#ef4444" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-cinzel font-bold uppercase tracking-[0.28em]" style={{ color: '#ef4444' }}>
-                {T('turn.yourTurn')}
-              </p>
-              <p className="text-[12px] font-cinzel truncate" style={{ color: '#f5e6c8' }}>
-                {T('instr.voting.select')}
-              </p>
-            </div>
-          </div>
-        )}
-        <VoteProgress voted={votedCount} total={totalAlive} T={T} />
-      </TurnShell>
-    );
-  }
-
+  // ── Voting ── no bottom bar: cards are clickable, confirm is on-card,
+  // vote seals show the tally, and the top countdown shows time remaining.
   return null;
 }
 
@@ -666,7 +596,6 @@ export function GameView({
   const phaseHudColor      = PHASE_HUD_COLOR[room.phase] ?? '#fbbf24';
   const roleInfo           = myRole ? ROLE_INFO[myRole] : null;
   const nc         = isHunterPending ? NIGHT_CFG['hunter_shoot'] : (myRole ? (NIGHT_CFG[myRole] ?? null) : null);
-  const votedCount = room.publicVotes?.hasVoted.length ?? 0;
 
   // Chat
   const chatWolfMode = room.phase === 'night' && myRole === 'werewolf' && imAlive;
@@ -1149,8 +1078,6 @@ export function GameView({
             nc={nc}
             myRole={myRole}
             roleAccent={roleInfo?.accentColor ?? '#d97706'}
-            votedCount={votedCount}
-            totalAlive={aliveCount}
             onAdvanceDay={onAdvanceDay}
             T={T}
           />
