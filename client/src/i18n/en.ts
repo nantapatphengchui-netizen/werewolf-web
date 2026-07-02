@@ -14,6 +14,15 @@ export const en: Record<string, string> = {
   'landing.joining':         'Joining…',
   'landing.waitConnect':     'Connecting…',
 
+  // ── Skill names ────────────────────────────────────────────────────────────
+  'skill.werewolf':  'Night Kill',
+  'skill.seer':      'Divine',
+  'skill.doctor':    'Heal',
+  'skill.bodyguard': 'Guard',
+  'skill.hunter':    'Revenge Shot',
+  'skill.witch':     'Potions',
+  'skill.villager':  'Investigate',
+
   // ── Chat ───────────────────────────────────────────────────────────────────
   'chat.title':            'Village Chat',
   'chat.wolfTitle':        'Werewolf Chat',

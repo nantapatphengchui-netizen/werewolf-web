@@ -2,6 +2,7 @@
 
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { RoleSkillIcon } from './RoleSkillIcon';
 import { useT } from '@/i18n';
 
 const ROLE_IMAGE: Record<Role, string> = {
@@ -147,6 +148,13 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
                       <p className="text-[11px] leading-snug mt-1" style={{ color: '#a8a29e' }}>
                         {T(`role.${role}.description`)}
                       </p>
+                      {/* Skill badge */}
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <RoleSkillIcon role={role} size={13} color={info.accentColor} />
+                        <span className="text-[9px] font-cinzel uppercase tracking-wide" style={{ color: `${info.accentColor}cc` }}>
+                          {T(`skill.${role}`)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );

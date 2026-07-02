@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { DarkPanel } from '@/components/ui/DarkPanel';
+import { RoleSkillIcon } from './RoleSkillIcon';
 import { useT } from '@/i18n';
 
 function WerewolfIcon({ color }: { color: string }) {
@@ -189,10 +190,23 @@ export function RolePanel({ myRole, werewolfIds, players, playerId }: Props) {
             </div>
           )}
           <div>
-            <p className="text-[9px] uppercase tracking-widest mb-1 font-cinzel" style={{ color: '#a16207' }}>{T('rolepanel.nightAction')}</p>
-            <p className="text-xs leading-snug" style={{ color: '#ca8a04' }}>
-              {info.nightAction ? T(`role.${myRole}.nightAction`) : T('rolepanel.noNightAction')}
-            </p>
+            <p className="text-[9px] uppercase tracking-widest mb-1.5 font-cinzel" style={{ color: '#a16207' }}>{T('rolepanel.nightAction')}</p>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: 'rgba(12,8,3,0.8)', border: `1px solid ${info.accentColor}44` }}
+              >
+                <RoleSkillIcon role={myRole} size={20} color={info.accentColor} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-cinzel font-bold uppercase tracking-wide" style={{ color: info.accentColor }}>
+                  {T(`skill.${myRole}`)}
+                </p>
+                <p className="text-[10px] leading-snug" style={{ color: '#ca8a04' }}>
+                  {info.nightAction ? T(`role.${myRole}.nightAction`) : T('rolepanel.noNightAction')}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

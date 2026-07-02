@@ -14,6 +14,15 @@ export const th: Record<string, string> = {
   'landing.joining':         'กำลังเข้าร่วม…',
   'landing.waitConnect':     'กำลังเชื่อมต่อ…',
 
+  // ── Skill names ────────────────────────────────────────────────────────────
+  'skill.werewolf':  'จู่โจมกลางคืน',
+  'skill.seer':      'หยั่งรู้',
+  'skill.doctor':    'รักษา',
+  'skill.bodyguard': 'คุ้มกัน',
+  'skill.hunter':    'ยิงสวน',
+  'skill.witch':     'ปรุงยา',
+  'skill.villager':  'สืบสวน',
+
   // ── Chat ───────────────────────────────────────────────────────────────────
   'chat.title':            'แชทหมู่บ้าน',
   'chat.wolfTitle':        'แชทหมาป่า',

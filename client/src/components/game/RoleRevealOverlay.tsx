@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
+import { RoleSkillIcon } from './RoleSkillIcon';
 import { useT } from '@/i18n';
 
 const ROLE_IMAGE: Record<Role, string> = {
@@ -266,14 +267,25 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         >
           {T(`role.${myRole}.description`)}
         </p>
+        {/* Skill badge */}
+        <div className="flex items-center justify-center gap-2 mb-1.5 mt-1">
+          <RoleSkillIcon role={myRole} size={20} color={roleInfo.accentColor} />
+          <span
+            className="text-[10px] sm:text-[11px] font-cinzel font-bold uppercase tracking-widest"
+            style={{ color: roleInfo.accentColor }}
+          >
+            {T(`skill.${myRole}`)}
+          </span>
+        </div>
         {roleInfo.nightAction && (
           <p
             className="text-[9px] sm:text-[10px] max-w-xs sm:max-w-sm leading-relaxed mb-5 italic"
             style={{ color: `${roleInfo.accentColor}70` }}
           >
-            ✦ {T(`role.${myRole}.nightAction`)}
+            {T(`role.${myRole}.nightAction`)}
           </p>
         )}
+        {!roleInfo.nightAction && <div className="mb-5" />}
         <button
           onClick={onDismiss}
           className="px-6 sm:px-8 py-2 sm:py-2.5 font-cinzel text-[10px] sm:text-[11px] uppercase tracking-widest rounded-lg transition-all duration-150 hover:brightness-125 active:scale-[0.97]"
