@@ -400,28 +400,23 @@ function ActionBar({
     );
   }
 
-  // ── Day ──
+  // ── Day ── discussion happens in chat; only the host needs the "call vote" action
   if (phase === 'day') {
+    if (!isHost) return null;
     return (
-      <div style={barStyle(phase)}>
-        {!imAlive ? (
-          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a8a29e' }}>{T('bar.day.perished')}</p>
-        ) : (
-          <p className="flex-1 text-[11px] font-cinzel italic" style={{ color: '#a16207' }}>
-            {T('bar.day.discuss')}
-          </p>
-        )}
-        {isHost ? (
-          <button
-            onClick={onAdvanceDay}
-            style={{ backgroundColor: 'rgba(120,53,0,0.85)', border: '1px solid rgba(217,119,6,0.60)', color: '#fde68a' }}
-            className="shrink-0 px-4 py-2 text-[11px] font-cinzel tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
-          >
-            {T('bar.day.callVote')}
-          </button>
-        ) : (
-          <p className="shrink-0 text-[10px] font-cinzel italic" style={{ color: '#a16207' }}>{T('bar.day.waitHost')}</p>
-        )}
+      <div className="flex justify-center">
+        <button
+          onClick={onAdvanceDay}
+          className="px-7 py-2.5 text-[12px] font-cinzel font-bold tracking-widest uppercase rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+          style={{
+            background: 'linear-gradient(180deg, rgba(146,64,14,0.92) 0%, rgba(110,48,0,0.92) 100%)',
+            border: '1px solid rgba(217,119,6,0.65)',
+            color: '#fde68a',
+            boxShadow: '0 0 18px rgba(217,119,6,0.3), inset 0 1px 0 rgba(255,220,150,0.15)',
+          }}
+        >
+          {T('bar.day.callVote')}
+        </button>
       </div>
     );
   }
