@@ -69,6 +69,23 @@ export type WitchNightInfo = {
   poisonPotionUsed: boolean;
 };
 
+/** Full serialisable snapshot of all game state (for Redis persistence). */
+export interface PersistSnapshot {
+  rooms: RoomState[];
+  roleMap: [string, Role][];
+  seerResults: [string, SeerResultData[]][];
+  bodyguardLastProtected: [string, string][];
+  witchSaveUsed: [string, boolean][];
+  witchPoisonUsed: [string, boolean][];
+  nightVotes: [string, [string, string][]][];
+  seerChoices: [string, string][];
+  doctorChoices: [string, string][];
+  bodyguardChoices: [string, string][];
+  witchAction: [string, { save: boolean; poisonTargetId: string | null }][];
+  witchPhase1Done: [string, boolean][];
+  dayVotes: [string, [string, string][]][];
+}
+
 // ── RoomManager ───────────────────────────────────────────────────────────────
 
 export class RoomManager {
@@ -1214,6 +1231,66 @@ export class RoomManager {
 
   private revealAllRoles(room: RoomState): void {
     for (const player of room.players) player.revealedRole = this.roleMap.get(player.id);
+  }
+
+  // ── Persistence ────────────────────────────────────────────────────────────
+
+  getAllRooms(): RoomState[] { return [...this.rooms.values()]; }
+
+  snapshotAll(): PersistSnapshot {
+    const flat  = <V>(m: Map<string, V>): [string, V][] => [...m.entries()];
+    const nested = (m: Map<string, Map<string, string>>): [string, [string, string][]][] =>
+      [...m.entries()].map(([c, inner]) => [c, [...inner.entries()]]);
+    return {
+      rooms:                  [...this.rooms.values()],
+      roleMap:                flat(this.roleMap),
+      seerResults:            flat(this.seerResults),
+      bodyguardLastProtected: flat(this.bodyguardLastProtected),
+      witchSaveUsed:          flat(this.witchSaveUsed),
+      witchPoisonUsed:        flat(this.witchPoisonUsed),
+      nightVotes:             nested(this.nightVotes),
+      seerChoices:            flat(this.seerChoices),
+      doctorChoices:          flat(this.doctorChoices),
+      bodyguardChoices:       flat(this.bodyguardChoices),
+      witchAction:            flat(this.witchAction),
+      witchPhase1Done:        flat(this.witchPhase1Done),
+      dayVotes:               nested(this.dayVotes),
+    };
+  }
+
+  restoreAll(s: PersistSnapshot): number {
+    // Wipe everything (including ephemeral socket maps — those rebuild on reconnect)
+    this.rooms.clear();          this.playerRoomMap.clear();
+    this.roleMap.clear();        this.seerResults.clear();
+    this.bodyguardLastProtected.clear();
+    this.witchSaveUsed.clear();  this.witchPoisonUsed.clear();
+    this.nightVotes.clear();     this.seerChoices.clear();
+    this.doctorChoices.clear();  this.bodyguardChoices.clear();
+    this.witchAction.clear();    this.witchPhase1Done.clear();
+    this.dayVotes.clear();
+    this.socketToPlayer.clear(); this.playerToSocket.clear();
+
+    for (const room of s.rooms) {
+      this.rooms.set(room.code, room);
+      for (const p of room.players) {
+        p.isConnected = false; // no live sockets after a restart; reconnect flips this
+        this.playerRoomMap.set(p.id, room.code);
+      }
+    }
+    for (const [k, v] of s.roleMap)                this.roleMap.set(k, v);
+    for (const [k, v] of s.seerResults)            this.seerResults.set(k, v);
+    for (const [k, v] of s.bodyguardLastProtected) this.bodyguardLastProtected.set(k, v);
+    for (const [k, v] of s.witchSaveUsed)          this.witchSaveUsed.set(k, v);
+    for (const [k, v] of s.witchPoisonUsed)        this.witchPoisonUsed.set(k, v);
+    for (const [c, arr] of s.nightVotes)           this.nightVotes.set(c, new Map(arr));
+    for (const [k, v] of s.seerChoices)            this.seerChoices.set(k, v);
+    for (const [k, v] of s.doctorChoices)          this.doctorChoices.set(k, v);
+    for (const [k, v] of s.bodyguardChoices)       this.bodyguardChoices.set(k, v);
+    for (const [k, v] of s.witchAction)            this.witchAction.set(k, v);
+    for (const [k, v] of s.witchPhase1Done)        this.witchPhase1Done.set(k, v);
+    for (const [c, arr] of s.dayVotes)             this.dayVotes.set(c, new Map(arr));
+
+    return this.rooms.size;
   }
 
   private addEvent(room: RoomState, code: string, params?: Record<string, string | number>): void {

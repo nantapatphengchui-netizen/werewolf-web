@@ -135,6 +135,22 @@ export function clearPhaseTimer(roomCode: string): void {
 
 const hunterTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+/** Arm (or re-arm) the 30s auto-skip timer for a pending hunter shot. */
+function scheduleHunterTimeout(roomCode: string, io: IO, rooms: RoomManager): void {
+  const existing = hunterTimers.get(roomCode);
+  if (existing !== undefined) clearTimeout(existing);
+
+  hunterTimers.set(roomCode, setTimeout(() => {
+    hunterTimers.delete(roomCode);
+    const result = rooms.skipHunterShot(roomCode);
+    if (result.ok && result.room) {
+      io.to(roomCode).emit('room_updated', { room: result.room });
+      if (result.room.phaseEndAt) schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
+      console.log(`[hunter] auto-skipped shot in ${roomCode}`);
+    }
+  }, 30_000));
+}
+
 function emitHunterPending(
   hunterId: string,
   availableTargetIds: string[],
@@ -148,20 +164,21 @@ function emitHunterPending(
   if (hunterSocket) {
     hunterSocket.emit('hunter_shot_pending', { hunterId, availableTargetIds });
   }
+  scheduleHunterTimeout(roomCode, io, rooms);
+}
 
-  // 30s auto-skip if hunter doesn't shoot
-  const existing = hunterTimers.get(roomCode);
-  if (existing !== undefined) clearTimeout(existing);
-
-  hunterTimers.set(roomCode, setTimeout(() => {
-    hunterTimers.delete(roomCode);
-    const result = rooms.skipHunterShot(roomCode);
-    if (result.ok && result.room) {
-      io.to(roomCode).emit('room_updated', { room: result.room });
-      if (result.room.phaseEndAt) schedulePhaseTimer(roomCode, result.room.phase, result.room.phaseEndAt, io, rooms);
-      console.log(`[hunter] auto-skipped shot in ${roomCode}`);
+/** After a restart, re-arm phase and hunter timers from restored room state. */
+export function resumeTimers(io: IO, rooms: RoomManager): void {
+  for (const room of rooms.getAllRooms()) {
+    if (room.hunterPendingShot) {
+      scheduleHunterTimeout(room.code, io, rooms);
+      continue;
     }
-  }, 30_000));
+    if (!room.timerPaused && room.phaseEndAt &&
+        (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting')) {
+      schedulePhaseTimer(room.code, room.phase, room.phaseEndAt, io, rooms);
+    }
+  }
 }
 
 function clearHunterTimer(roomCode: string): void {

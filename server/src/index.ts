@@ -9,7 +9,8 @@ import type {
   SocketData,
 } from './types/events';
 import { RoomManager } from './game/RoomManager';
-import { registerHandlers, cancelHostTransfer } from './socket/handlers';
+import { registerHandlers, cancelHostTransfer, resumeTimers } from './socket/handlers';
+import { loadState, saveState, persistenceEnabled } from './persistence';
 
 const NODE_ENV = process.env.NODE_ENV ?? 'development';
 // Railway/Render inject PORT automatically; SERVER_PORT is the local/manual override.
@@ -69,6 +70,23 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEve
 );
 
 const rooms = new RoomManager();
+
+// ── Persistence: rehydrate on boot, then flush periodically ────────────────────
+
+async function rehydrate(): Promise<void> {
+  const snapshot = await loadState();
+  if (snapshot) {
+    const n = rooms.restoreAll(snapshot);
+    resumeTimers(io, rooms);
+    console.log(`[persist] restored ${n} room(s) from Redis`);
+  }
+}
+
+if (persistenceEnabled) {
+  rehydrate().catch(e => console.error('[persist] rehydrate failed:', e));
+  // Write-through snapshot; saveState no-ops when nothing changed
+  setInterval(() => { void saveState(rooms.snapshotAll()); }, 3000);
+}
 
 io.on('connection', socket => {
   const authPid = socket.handshake.auth && typeof socket.handshake.auth.persistentId === 'string'
@@ -134,10 +152,16 @@ httpServer.listen(PORT, () => {
 
 function shutdown(signal: string) {
   console.log(`\n[shutdown] ${signal} received — closing server…`);
-  io.close(() => {
-    httpServer.close(() => {
-      console.log('[shutdown] done');
-      process.exit(0);
+  // Persist the latest state so an in-progress game survives the redeploy/restart
+  const finalSave = persistenceEnabled
+    ? saveState(rooms.snapshotAll()).catch(e => console.error('[persist] final save failed:', e))
+    : Promise.resolve();
+  finalSave.finally(() => {
+    io.close(() => {
+      httpServer.close(() => {
+        console.log('[shutdown] done');
+        process.exit(0);
+      });
     });
   });
   // Force-exit after 10s if connections hang
