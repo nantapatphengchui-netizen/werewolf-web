@@ -546,28 +546,9 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── YOU banner (current player only) ── */}
-      {isCurrentPlayer && (
-        <div
-          className="absolute top-0 left-0 right-0 z-20 flex items-center justify-center"
-          style={{
-            background: `linear-gradient(to bottom, rgba(${myRoleRgb},${alive ? '0.72' : '0.40'}) 0%, rgba(${myRoleRgb},0.00) 100%)`,
-            paddingTop: '3px',
-            paddingBottom: '10px',
-          }}
-        >
-          <span
-            className="text-[7px] font-cinzel font-bold tracking-[0.30em] uppercase"
-            style={{ color: '#ffffff', textShadow: '0 1px 5px rgba(0,0,0,0.95)' }}
-          >
-            {T('card.youBanner')}
-          </span>
-        </div>
-      )}
-
       {/* ── Host crown ── */}
       {player.isHost && (
-        <div className={`absolute ${isCurrentPlayer ? 'top-4' : 'top-1'} left-1/2 -translate-x-1/2 z-20`}>
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
           <svg viewBox="0 0 18 12" className="w-4 h-3" fill="#fbbf24">
             <path d="M1 11L4 5.5L9 8.5L14 5.5L17 11H1Z" stroke="#92400e" strokeWidth="0.7" strokeLinejoin="round" />
             <circle cx="1"  cy="4.5" r="1.5" fill="#fbbf24" />
