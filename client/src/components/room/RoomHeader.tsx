@@ -26,7 +26,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
   return (
     <div
       style={{ backgroundColor: 'rgba(3,5,7,0.94)' }}
-      className="flex items-center gap-3 px-4 py-2.5 border border-amber-800/55 rounded-lg shadow-[0_4px_28px_rgba(0,0,0,0.7)]"
+      className="flex items-center gap-3 px-4 py-2.5 border border-amber-800/55 rounded-lg shadow-[0_4px_28px_rgba(0,0,0,0.7)] lg:justify-between"
     >
 
       {/* Left: room code */}
@@ -41,10 +41,10 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
         <CopyButton text={code} />
       </div>
 
-      <div className="hidden sm:block w-px h-4 bg-amber-700/40 shrink-0" />
+      <div className="hidden sm:block lg:hidden w-px h-4 bg-amber-700/40 shrink-0" />
 
-      {/* Center: player pips + count */}
-      <div className="flex-1 flex items-center justify-center gap-3 min-w-0">
+      {/* Center: player pips + count — desktop hides this (the info panel owns it) */}
+      <div className="flex-1 lg:hidden flex items-center justify-center gap-3 min-w-0">
         <div className="flex items-center gap-[3px]">
           {Array.from({ length: maxPlayers }, (_, i) => (
             <div
@@ -66,7 +66,7 @@ export function RoomHeader({ code, playerCount, maxPlayers, minPlayers, isConnec
         </span>
       </div>
 
-      <div className="hidden sm:block w-px h-4 bg-amber-700/40 shrink-0" />
+      <div className="hidden sm:block lg:hidden w-px h-4 bg-amber-700/40 shrink-0" />
 
       {/* Right: status + music + lang + leave */}
       <div className="flex items-center gap-3 shrink-0">

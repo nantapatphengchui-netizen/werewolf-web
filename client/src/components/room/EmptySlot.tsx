@@ -1,40 +1,39 @@
+import { useT } from '@/i18n';
+
 interface Props {
   index: number;
 }
 
 export function EmptySlot({ index }: Props) {
+  const T = useT();
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-xl border border-amber-900/15 bg-black/18">
-      {/* Ghost avatar — visible enough to feel like an empty seat */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/avatar-hooded.png"
-        alt=""
-        draggable={false}
-        className="absolute inset-0 w-full h-full object-cover object-[50%_18%] grayscale opacity-[0.11]"
-      />
-
-      {/* Bottom gradient so text stays legible */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
+    <div
+      className="group relative w-full h-full overflow-hidden rounded-xl flex flex-col items-center justify-center gap-2"
+      style={{
+        // Flat, opaque seat — no village art bleeding through
+        backgroundColor: 'rgba(10,8,5,0.72)',
+        border: '1.5px dashed rgba(146,64,14,0.30)',
+      }}
+    >
       {/* Slot number */}
-      <span className="absolute top-1.5 left-2 text-[9px] text-amber-700/65 font-cinzel tabular-nums leading-none">
+      <span className="absolute top-1.5 left-2 text-[9px] text-amber-800/60 font-cinzel tabular-nums leading-none">
         {index + 1}
       </span>
 
-      {/* Center glyph — subtle seat indicator */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-5 h-5 rounded-full border border-amber-900/12 flex items-center justify-center">
-          <div className="w-1.5 h-1.5 rounded-full bg-amber-900/15" />
-        </div>
+      {/* Empty-seat glyph */}
+      <div
+        className="w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-200 group-hover:border-amber-700/50"
+        style={{ border: '1.5px dashed rgba(146,64,14,0.35)' }}
+      >
+        <svg viewBox="0 0 24 24" className="w-4 h-4 text-amber-800/55" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M12 6v12M6 12h12" />
+        </svg>
       </div>
 
-      {/* "Waiting" label */}
-      <div className="absolute bottom-2 left-0 right-0 text-center">
-        <span className="text-[8px] text-amber-700/70 font-cinzel uppercase tracking-[0.22em] leading-none">
-          Waiting
-        </span>
-      </div>
+      {/* Label */}
+      <span className="text-[8px] text-amber-800/60 font-cinzel uppercase tracking-[0.22em] leading-none">
+        {T('lobby.waitingSeat')}
+      </span>
     </div>
   );
 }

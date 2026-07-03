@@ -8,6 +8,7 @@ import { RoomHeader } from '@/components/room/RoomHeader';
 import { PlayerGrid } from '@/components/room/PlayerGrid';
 import { HostControls } from '@/components/room/HostControls';
 import { HostAdminPanel } from '@/components/room/HostAdminPanel';
+import { LobbyInfoPanel } from '@/components/room/LobbyInfoPanel';
 import { GameView } from '@/components/game/GameView';
 import { ConnectionOverlay } from '@/components/game/ConnectionOverlay';
 import { useAudioPhaseStore } from '@/store/audioPhaseStore';
@@ -134,26 +135,51 @@ export default function RoomPage() {
               />
             </div>
 
-            {/* ── Player grid ── */}
-            <div className="flex-1 min-h-0 px-3 pb-1 flex flex-col overflow-y-auto lg:overflow-hidden">
-              <div className="flex-1 min-h-0">
-                <PlayerGrid
-                  players={room.players}
-                  maxPlayers={room.maxPlayers}
-                  currentPlayerId={playerId ?? ''}
-                  readyPlayers={room.readyPlayers}
-                />
+            {/* ── Body: roster (left) + info panel (right, desktop) ── */}
+            <div className="flex-1 min-h-0 px-3 pb-1 flex flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden">
+              {/* Roster */}
+              <div className="flex-1 min-h-0 flex flex-col">
+                <div className="flex-1 min-h-0">
+                  <PlayerGrid
+                    players={room.players}
+                    maxPlayers={room.maxPlayers}
+                    currentPlayerId={playerId ?? ''}
+                    readyPlayers={room.readyPlayers}
+                  />
+                </div>
+
+                {error && (
+                  <div className="shrink-0 mt-2 text-center text-red-400 text-sm bg-red-950/30 border border-red-900/40 rounded px-4 py-2.5">
+                    {error}
+                  </div>
+                )}
               </div>
 
-              {error && (
-                <div className="shrink-0 mt-2 text-center text-red-400 text-sm bg-red-950/30 border border-red-900/40 rounded px-4 py-2.5">
-                  {error}
-                </div>
-              )}
+              {/* Info panel — status hub (desktop) */}
+              <div className="hidden lg:block shrink-0">
+                <LobbyInfoPanel
+                  code={code}
+                  playerCount={room.players.length}
+                  maxPlayers={room.maxPlayers}
+                  minPlayers={room.minPlayers}
+                  readyCount={room.readyPlayers.length}
+                  isHost={isHost}
+                  players={room.players}
+                  hostId={room.hostId}
+                  isLocked={room.isLocked}
+                  onKick={hostKickPlayer}
+                  onLock={hostLockRoom}
+                  onUnlock={hostUnlockRoom}
+                  onResetReady={hostResetReady}
+                  onAddBot={hostAddBot}
+                  onFillBots={hostFillBots}
+                  onRemoveBots={hostRemoveBots}
+                />
+              </div>
             </div>
 
-            {/* ── Utility row: Host Tools + Dev Bots (small trigger buttons only) ── */}
-            <div className="shrink-0 px-3 py-1">
+            {/* ── Utility row: Host Tools + Dev Bots (mobile/tablet — desktop uses the panel) ── */}
+            <div className="shrink-0 px-3 py-1 lg:hidden">
               <HostAdminPanel
                 isHost={isHost}
                 players={room.players}

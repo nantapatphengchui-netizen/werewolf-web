@@ -210,6 +210,12 @@ export const en: Record<string, string> = {
   'lobby.allReady':     'All ready — host can start!',
   'lobby.readyCount':   '{{ready}} / {{total}} ready',
   'lobby.waitHost':     'Waiting for host',
+  'lobby.waitingSeat':  'Waiting',
+  'lobby.inviteCode':   'Invite Code',
+  'lobby.shareHint':    'Share this code with friends to join',
+  'lobby.players':      'Players',
+  'lobby.readyLabel':   'Ready',
+  'lobby.copied':       'Copied!',
 
   // ── Host controls ──────────────────────────────────────────────────────────
   'host.timer':         'Phase Timer',

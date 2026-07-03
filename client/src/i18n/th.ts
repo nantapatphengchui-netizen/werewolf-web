@@ -210,6 +210,12 @@ export const th: Record<string, string> = {
   'lobby.allReady':     'ทุกคนพร้อมแล้ว — โฮสต์เริ่มได้!',
   'lobby.readyCount':   '{{ready}} / {{total}} พร้อม',
   'lobby.waitHost':     'รอโฮสต์',
+  'lobby.waitingSeat':  'รอผู้เล่น',
+  'lobby.inviteCode':   'รหัสเชิญ',
+  'lobby.shareHint':    'แชร์รหัสนี้ให้เพื่อนเข้าห้อง',
+  'lobby.players':      'ผู้เล่น',
+  'lobby.readyLabel':   'พร้อมแล้ว',
+  'lobby.copied':       'คัดลอกแล้ว!',
 
   // ── Host controls ──────────────────────────────────────────────────────────
   'host.timer':         'ตัวจับเวลา',
