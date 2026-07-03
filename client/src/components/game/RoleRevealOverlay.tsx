@@ -201,8 +201,8 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
           const rot     = SPREAD_ROTATIONS[i];
 
           const cardStyle: React.CSSProperties = {
-            width:  'clamp(72px, 18vw, 112px)',
-            height: 'clamp(106px, 26vw, 164px)',
+            width:  'clamp(92px, 23vw, 150px)',
+            height: 'clamp(136px, 33vw, 220px)',
             transition: isShuffling ? 'none' : 'all 0.65s cubic-bezier(0.34,1.45,0.64,1)',
             transitionDelay: isShuffling ? '0ms' : `${i * 55}ms`,
             transform: isSpread
