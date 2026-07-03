@@ -38,6 +38,7 @@ export const th: Record<string, string> = {
   // ── Turn prompt / night atmosphere ─────────────────────────────────────────
   'turn.yourTurn':     'ตาของคุณ',
   'turn.waiting':      'รอผู้อื่น…',
+  'turn.change':       'เปลี่ยน',
   'turn.voteProgress': 'ลงคะแนนแล้ว {{voted}} / {{total}} คน',
   'turn.tallyLive':    'กำลังนับคะแนน…',
   'night.flavor.0':    'หมาป่ากำลังออกล่าในความมืด…',

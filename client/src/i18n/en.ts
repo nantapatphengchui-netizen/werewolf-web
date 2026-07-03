@@ -38,6 +38,7 @@ export const en: Record<string, string> = {
   // ── Turn prompt / night atmosphere ─────────────────────────────────────────
   'turn.yourTurn':     'Your Turn',
   'turn.waiting':      'Waiting…',
+  'turn.change':       'Change',
   'turn.voteProgress': '{{voted}} / {{total}} have voted',
   'turn.tallyLive':    'Tallying the votes…',
   'night.flavor.0':    'The wolves prowl in the darkness…',
