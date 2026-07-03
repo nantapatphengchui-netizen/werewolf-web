@@ -31,6 +31,7 @@ interface GameStore {
   werewolfIds: string[];
   seerLog: SeerEntry[];
   chatMessages: ChatMessage[];
+  wolfVotes: Record<string, number>;
   witchNightInfo: WitchNightInfo | null;
   witchActionSubmitted: boolean;
   error: string | null;
@@ -41,6 +42,7 @@ interface GameStore {
   setMyRole: (role: Role, werewolfIds: string[]) => void;
   addSeerResult: (entry: SeerEntry) => void;
   addChatMessage: (m: ChatMessage) => void;
+  setWolfVotes: (tally: Record<string, number>) => void;
   setWitchNightInfo: (info: WitchNightInfo | null) => void;
   setWitchActionSubmitted: (v: boolean) => void;
   setError: (error: string | null) => void;
@@ -56,6 +58,7 @@ export const useGameStore = create<GameStore>((set) => ({
   werewolfIds: [],
   seerLog: [],
   chatMessages: [],
+  wolfVotes: {},
   witchNightInfo: null,
   witchActionSubmitted: false,
   error: null,
@@ -74,16 +77,17 @@ export const useGameStore = create<GameStore>((set) => ({
       ? s
       : { chatMessages: [...s.chatMessages.slice(-199), m] }
   )),
+  setWolfVotes: (wolfVotes) => set({ wolfVotes }),
   setWitchNightInfo:     (witchNightInfo) => set({ witchNightInfo }),
   setWitchActionSubmitted: (witchActionSubmitted) => set({ witchActionSubmitted }),
   setError:     (error) => set({ error }),
   setConnected: (isConnected) => set({ isConnected }),
   clearGameState: () => set({
-    myRole: null, werewolfIds: [], seerLog: [], chatMessages: [],
+    myRole: null, werewolfIds: [], seerLog: [], chatMessages: [], wolfVotes: {},
     witchNightInfo: null, witchActionSubmitted: false,
   }),
   clearRoom: () => set({
-    room: null, playerId: null, myRole: null, werewolfIds: [], seerLog: [], chatMessages: [],
+    room: null, playerId: null, myRole: null, werewolfIds: [], seerLog: [], chatMessages: [], wolfVotes: {},
     witchNightInfo: null, witchActionSubmitted: false,
   }),
 }));

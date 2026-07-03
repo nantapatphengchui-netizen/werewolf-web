@@ -292,6 +292,7 @@ export function GameView({
   const isHost       = room.hostId === playerId;
   const seerLog      = useGameStore(s => s.seerLog);
   const chatMessages = useGameStore(s => s.chatMessages);
+  const wolfVotes    = useGameStore(s => s.wolfVotes);
 
   const seerRevealedMap = useMemo((): Record<string, Role> => {
     if (myRole !== 'seer') return {};
@@ -442,6 +443,13 @@ export function GameView({
   const phaseHudColor      = PHASE_HUD_COLOR[room.phase] ?? '#fbbf24';
   const roleInfo           = myRole ? ROLE_INFO[myRole] : null;
   const nc         = isHunterPending ? NIGHT_CFG['hunter_shoot'] : (myRole ? (NIGHT_CFG[myRole] ?? null) : null);
+
+  // Vote seals: day → public tally; night → live werewolf kill-vote tally (wolves only)
+  const voteCounts = room.phase === 'voting'
+    ? (room.publicVotes?.tally ?? {})
+    : (room.phase === 'night' && myRole === 'werewolf' && imAlive)
+      ? wolfVotes
+      : {};
 
   // Chat
   const chatWolfMode = room.phase === 'night' && myRole === 'werewolf' && imAlive;
@@ -800,7 +808,7 @@ export function GameView({
           players={room.players}
           currentPlayerId={playerId}
           werewolfIds={werewolfIds}
-          publicVotes={room.publicVotes}
+          voteCounts={voteCounts}
           currentPlayerSubmitted={isActionSubmitted}
           myRole={myRole}
           seerRevealedMap={seerRevealedMap}

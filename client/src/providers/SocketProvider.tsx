@@ -38,6 +38,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const clearGameState       = useGameStore(s => s.clearGameState);
   const clearRoom            = useGameStore(s => s.clearRoom);
   const addChatMessage       = useGameStore(s => s.addChatMessage);
+  const setWolfVotes         = useGameStore(s => s.setWolfVotes);
   const setWitchNightInfo    = useGameStore(s => s.setWitchNightInfo);
   const setWitchActionSubmitted = useGameStore(s => s.setWitchActionSubmitted);
 
@@ -63,8 +64,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     s.on('room_joined',  ({ room, playerId }) => setRoom(room, playerId));
     s.on('room_updated', ({ room }) => {
       if (room.phase === 'lobby') clearGameState();
-      // Clear witch info when night ends
-      if (room.phase !== 'night') { setWitchNightInfo(null); setWitchActionSubmitted(false); }
+      // Clear night-only state when night ends
+      if (room.phase !== 'night') { setWitchNightInfo(null); setWitchActionSubmitted(false); setWolfVotes({}); }
       updateRoom(room);
     });
     s.on('game_started', ({ room }) => {
@@ -77,6 +78,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setWitchNightInfo({ attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed });
     });
     s.on('chat_message', (m) => addChatMessage(m));
+    s.on('wolf_votes', ({ tally }) => setWolfVotes(tally));
     // hunter_shot_pending is handled in GameView via room.hunterPendingShot field
     s.on('error',  ({ message }) => setError(message));
     s.on('kicked', () => { clearRoom(); });

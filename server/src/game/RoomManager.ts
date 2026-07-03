@@ -368,6 +368,7 @@ export class RoomManager {
     seerResult?: SeerResultData;
     witchNeedsInfo?: WitchNightInfo;
     hunterPendingInfo?: HunterPendingInfo;
+    wolfVoteTally?: { tally: Record<string, number>; wolfIds: string[] };
   } {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return { ok: false, error: 'Not in a room.' };
@@ -405,6 +406,9 @@ export class RoomManager {
         return { ok: false, error: 'You have no night action.' };
     }
 
+    // Live werewolf kill-vote tally, broadcast to the pack so they can coordinate
+    const wolfVoteTally = myRole === 'werewolf' ? this.buildWolfVoteTally(room.code) : undefined;
+
     // Check if witch needs to be informed before full resolution
     const witch = room.players.find(p => p.isAlive && this.roleMap.get(p.id) === 'witch');
     if (witch && this.isPhase1NightReady(room) && !this.witchPhase1Done.get(room.code)) {
@@ -413,15 +417,22 @@ export class RoomManager {
       if (!saveUsed || !poisonUsed) {
         this.witchPhase1Done.set(room.code, true);
         const witchInfo = this.buildWitchNightInfo(room, witch.id, saveUsed, poisonUsed);
-        return { ok: true, witchNeedsInfo: witchInfo };
+        return { ok: true, witchNeedsInfo: witchInfo, wolfVoteTally };
       }
     }
 
     if (this.isNightReady(room)) {
       const resolution = this.resolveNight(room);
-      return { ok: true, room, ...resolution };
+      return { ok: true, room, ...resolution, wolfVoteTally };
     }
-    return { ok: true };
+    return { ok: true, wolfVoteTally };
+  }
+
+  private buildWolfVoteTally(roomCode: string): { tally: Record<string, number>; wolfIds: string[] } {
+    const votes = this.nightVotes.get(roomCode);
+    const tally: Record<string, number> = {};
+    if (votes) for (const targetId of votes.values()) tally[targetId] = (tally[targetId] ?? 0) + 1;
+    return { tally, wolfIds: this.getWerewolfIds(roomCode) };
   }
 
   submitWitchAction(

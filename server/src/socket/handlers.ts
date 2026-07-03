@@ -274,6 +274,15 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     const result = rooms.submitNightAction(pid, targetId);
     if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
 
+    // Broadcast the live wolf kill-vote tally to the living pack (unless the night just resolved)
+    if (result.wolfVoteTally && !result.room) {
+      for (const wolfId of result.wolfVoteTally.wolfIds) {
+        const wsid  = rooms.getSocketId(wolfId);
+        const wsock = wsid ? io.sockets.sockets.get(wsid) : undefined;
+        wsock?.emit('wolf_votes', { tally: result.wolfVoteTally.tally });
+      }
+    }
+
     // Witch needs to be informed before full resolution
     if (result.witchNeedsInfo) {
       const { witchId, attackedPlayerId, attackedPlayerName, savePotionUsed, poisonPotionUsed } = result.witchNeedsInfo;

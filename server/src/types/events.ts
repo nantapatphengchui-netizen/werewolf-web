@@ -12,6 +12,8 @@ export interface ServerToClientEvents {
   reaction:           (payload: { playerId: string; emoji: string }) => void;
   /** Chat message — 'public' goes to the room, 'wolf' only to living werewolves */
   chat_message:       (payload: { id: string; channel: 'public' | 'wolf'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
+  /** Live werewolf kill-vote tally — sent only to living werewolves at night */
+  wolf_votes:         (payload: { tally: Record<string, number> }) => void;
   /** Sent privately to the Hunter when their death triggers a final shot */
   hunter_shot_pending:(payload: { hunterId: string; availableTargetIds: string[] }) => void;
   /** Sent privately to the Witch after all other night actions resolve */

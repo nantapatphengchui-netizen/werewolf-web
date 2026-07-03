@@ -1,4 +1,4 @@
-import type { Player, PublicVotes, Role } from '@/types/game';
+import type { Player, Role } from '@/types/game';
 import { GamePlayerCard } from './GamePlayerCard';
 import type { CardActionType } from './GamePlayerCard';
 
@@ -6,7 +6,7 @@ interface Props {
   players: Player[];
   currentPlayerId: string;
   werewolfIds: string[];
-  publicVotes: PublicVotes | null;
+  voteCounts?: Record<string, number>;
   currentPlayerSubmitted?: boolean;
   myRole?: Role | null;
   seerRevealedMap?: Record<string, Role>;
@@ -23,7 +23,7 @@ export function GamePlayerGrid({
   players,
   currentPlayerId,
   werewolfIds,
-  publicVotes,
+  voteCounts = {},
   currentPlayerSubmitted = false,
   myRole,
   seerRevealedMap = {},
@@ -79,7 +79,7 @@ export function GamePlayerGrid({
           index={index}
           isCurrentPlayer={player.id === currentPlayerId}
           isWerewolfTeammate={werewolfIds.includes(player.id) && player.id !== currentPlayerId}
-          voteCount={publicVotes?.tally[player.id]}
+          voteCount={voteCounts[player.id]}
           actionSubmitted={player.id === currentPlayerId ? currentPlayerSubmitted : false}
           myRole={player.id === currentPlayerId ? myRole : undefined}
           seerRevealedRole={seerRevealedMap[player.id]}
