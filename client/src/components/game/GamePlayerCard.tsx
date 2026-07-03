@@ -486,7 +486,7 @@ export function GamePlayerCard({
       )}
 
       {/* ── Role action icon overlay ── */}
-      {isSelected && alive && onConfirmAction && actionType && (
+      {isSelected && alive && actionType && (
         <div
           className="absolute inset-x-0 flex justify-center pointer-events-none"
           style={{ top: '16%', zIndex: 15 }}
@@ -508,7 +508,7 @@ export function GamePlayerCard({
         <div className="absolute inset-0 bg-black/42 pointer-events-none" />
       )}
       {isSelected && (
-        onConfirmAction && alive && ac ? (
+        alive && ac ? (
           <div
             className="absolute inset-0 pointer-events-none rounded-xl"
             style={{

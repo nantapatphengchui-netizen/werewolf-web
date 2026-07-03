@@ -57,6 +57,7 @@ export const en: Record<string, string> = {
   // ── Action toasts ──────────────────────────────────────────────────────────
   'toast.actionSubmitted': 'Action recorded',
   'toast.voteCast':        'Vote cast',
+  'toast.cancelled':       'Cancelled',
   'toast.witchSaved':      'Save potion used',
   'toast.witchPoisoned':   'Poison used',
   'toast.witchPassed':     'Chose to do nothing',

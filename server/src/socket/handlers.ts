@@ -376,6 +376,13 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
     }
   });
 
+  socket.on('cancel_vote', () => {
+    const pid    = socket.data.playerId;
+    const result = rooms.cancelVote(pid);
+    if (!result.ok) { socket.emit('error', { message: result.error! }); return; }
+    if (result.room) io.to(result.room.code).emit('room_updated', { room: result.room });
+  });
+
   socket.on('restart_game', () => {
     const pid    = socket.data.playerId;
     const result = rooms.restartGame(pid);

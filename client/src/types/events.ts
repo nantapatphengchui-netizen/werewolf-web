@@ -28,6 +28,7 @@ export interface ClientToServerEvents {
   player_ready:         () => void;
   night_action:         (payload: { targetId: string }) => void;
   cast_vote:            (payload: { targetId: string }) => void;
+  cancel_vote:          () => void;
   advance_day:          () => void;
   restart_game:         () => void;
   return_to_lobby:      () => void;

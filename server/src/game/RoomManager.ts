@@ -754,22 +754,46 @@ export class RoomManager {
     if (room.phase !== 'voting') return { ok: false, error: 'Not voting phase.' };
     const voter = room.players.find(p => p.id === persistentId);
     if (!voter?.isAlive) return { ok: false, error: 'Only alive players can vote.' };
-    if (room.publicVotes?.hasVoted.includes(persistentId)) return { ok: false, error: 'You have already voted.' };
     const target = room.players.find(p => p.id === targetId);
     if (!target) return { ok: false, error: 'Invalid target.' };
     if (!target.isAlive) return { ok: false, error: 'Cannot vote for a dead player.' };
     if (targetId === persistentId) return { ok: false, error: 'Cannot vote for yourself.' };
 
     if (!this.dayVotes.has(room.code)) this.dayVotes.set(room.code, new Map());
-    this.dayVotes.get(room.code)!.set(persistentId, targetId);
     if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {} };
-    room.publicVotes.hasVoted.push(persistentId);
+
+    // Allow changing an existing vote — drop the previous target from the tally first
+    const prev = this.dayVotes.get(room.code)!.get(persistentId);
+    if (prev === targetId) return { ok: true, room }; // no change
+    if (prev !== undefined) {
+      room.publicVotes.tally[prev] = Math.max(0, (room.publicVotes.tally[prev] ?? 1) - 1);
+      if (room.publicVotes.tally[prev] === 0) delete room.publicVotes.tally[prev];
+    } else {
+      room.publicVotes.hasVoted.push(persistentId);
+    }
+    this.dayVotes.get(room.code)!.set(persistentId, targetId);
     room.publicVotes.tally[targetId] = (room.publicVotes.tally[targetId] ?? 0) + 1;
 
     const alivePlayers = room.players.filter(p => p.isAlive);
     if (alivePlayers.every(p => room.publicVotes!.hasVoted.includes(p.id))) {
       const hunterPendingInfo = this.resolveVoting(room);
       return { ok: true, room, hunterPendingInfo };
+    }
+    return { ok: true, room };
+  }
+
+  /** Cancel a player's day vote (abstain). */
+  cancelVote(persistentId: string): { ok: boolean; error?: string; room?: RoomState } {
+    const room = this.getRoomByPlayer(persistentId);
+    if (!room) return { ok: false, error: 'Not in a room.' };
+    if (room.phase !== 'voting') return { ok: false, error: 'Not voting phase.' };
+    const prev = this.dayVotes.get(room.code)?.get(persistentId);
+    if (prev === undefined) return { ok: true, room }; // nothing to cancel
+    this.dayVotes.get(room.code)!.delete(persistentId);
+    if (room.publicVotes) {
+      room.publicVotes.hasVoted = room.publicVotes.hasVoted.filter(id => id !== persistentId);
+      room.publicVotes.tally[prev] = Math.max(0, (room.publicVotes.tally[prev] ?? 1) - 1);
+      if (room.publicVotes.tally[prev] === 0) delete room.publicVotes.tally[prev];
     }
     return { ok: true, room };
   }

@@ -395,7 +395,8 @@ export function GameView({
     }
     // Someone else is the pending Hunter — everything is frozen until they shoot
     if (room.hunterPendingShot) return [];
-    if (isActionSubmitted || !imAlive) return [];
+    // Note: targets stay clickable after submitting so you can change/undo your choice
+    if (!imAlive) return [];
     // Witch poison mode: all alive players except self
     if (witchPoisonMode && myRole === 'witch' && room.phase === 'night') {
       return room.players.filter(p => p.isAlive && p.id !== playerId).map(p => p.id);
@@ -413,15 +414,32 @@ export function GameView({
 
   const onPlayerCardClick = (targetId: string) => {
     if (!validTargetIds.includes(targetId)) return;
-    setSelectedTarget(prev => prev === targetId ? null : targetId);
+    // Hunter shot / witch poison keep the deliberate select-then-confirm flow
+    if (isHunterPending || witchPoisonMode) {
+      setSelectedTarget(prev => prev === targetId ? null : targetId);
+      return;
+    }
+    // Click your current choice again:
+    //  · voting → cancel / abstain
+    //  · night  → no-op (you must act; change by clicking another card)
+    if (isActionSubmitted && selectedTarget === targetId) {
+      if (room.phase === 'voting') {
+        socket?.emit('cancel_vote');
+        setSelectedTarget(null);
+        setActionSubmitted(false);
+        showToast(T('toast.cancelled'));
+      }
+      return;
+    }
+    // Click a (different) valid target → act / switch
+    if (room.phase === 'night')  handleNightAction(targetId);
+    else if (room.phase === 'voting') handleCastVote(targetId);
+    setSelectedTarget(targetId);
   };
 
   const handleCardConfirm = (targetId: string) => {
     if (isHunterPending) { handleHunterShoot(targetId); return; }
     if (witchPoisonMode && myRole === 'witch') { handleWitchAction(false, targetId); return; }
-    if (isActionSubmitted) return;
-    if (room.phase === 'night')  handleNightAction(targetId);
-    if (room.phase === 'voting') handleCastVote(targetId);
   };
 
   const actionType = (() => {
@@ -618,28 +636,12 @@ export function GameView({
 
           {/* Night: compact turn status (glowing cards show the actual targets) */}
           {room.phase === 'night' && !isHunterPending && imAlive && nc && !witchPoisonMode && (
-            isActionSubmitted ? (
-              <div className="shrink-0 flex items-center gap-1.5">
-                <span className="text-[10px] font-cinzel font-bold uppercase tracking-widest" style={{ color: '#4ade80' }}>
-                  ✓ {T('turn.waiting')}
-                </span>
-                {/* Change your mind before the night resolves */}
-                <button
-                  onClick={() => { setActionSubmitted(false); setSelectedTarget(null); }}
-                  className="px-2 py-0.5 text-[9px] font-cinzel uppercase tracking-widest rounded transition-all duration-150 hover:brightness-125"
-                  style={{ border: '1px solid rgba(120,65,10,0.5)', color: '#d97706' }}
-                >
-                  {T('turn.change')}
-                </button>
-              </div>
-            ) : (
-              <span
-                className="shrink-0 text-[10px] font-cinzel font-bold uppercase tracking-widest animate-pulse"
-                style={{ color: roleInfo?.accentColor ?? '#d97706' }}
-              >
-                {T('turn.yourTurn')}
-              </span>
-            )
+            <span
+              className={`shrink-0 text-[10px] font-cinzel font-bold uppercase tracking-widest ${isActionSubmitted ? '' : 'animate-pulse'}`}
+              style={{ color: isActionSubmitted ? '#4ade80' : (roleInfo?.accentColor ?? '#d97706') }}
+            >
+              {isActionSubmitted ? `✓ ${T('turn.waiting')}` : T('turn.yourTurn')}
+            </span>
           )}
 
           <div className="flex-1" />
@@ -830,10 +832,10 @@ export function GameView({
           seerRevealedMap={seerRevealedMap}
           validTargetIds={validTargetIds}
           selectedTargetId={selectedTarget}
-          onPlayerCardClick={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : onPlayerCardClick}
+          onPlayerCardClick={onPlayerCardClick}
           actionType={actionType}
-          onConfirmAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : handleCardConfirm}
-          onCancelAction={(isActionSubmitted && !isHunterPending && !witchPoisonMode) ? undefined : () => setSelectedTarget(null)}
+          onConfirmAction={(isHunterPending || witchPoisonMode) ? handleCardConfirm : undefined}
+          onCancelAction={(isHunterPending || witchPoisonMode) ? () => setSelectedTarget(null) : undefined}
           reactionsMap={reactionsMap}
         />
       </div>

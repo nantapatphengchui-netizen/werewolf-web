@@ -57,6 +57,7 @@ export const th: Record<string, string> = {
   // ── Action toasts ──────────────────────────────────────────────────────────
   'toast.actionSubmitted': 'บันทึกการกระทำแล้ว',
   'toast.voteCast':        'ลงคะแนนแล้ว',
+  'toast.cancelled':       'ยกเลิกแล้ว',
   'toast.witchSaved':      'ใช้ยาช่วยชีวิตแล้ว',
   'toast.witchPoisoned':   'ใช้ยาพิษแล้ว',
   'toast.witchPassed':     'เลือกไม่ทำอะไร',
