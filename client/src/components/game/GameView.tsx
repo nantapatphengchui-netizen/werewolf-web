@@ -887,6 +887,28 @@ export function GameView({
                   />
                 </>
               )}
+
+              {/* Host: call the vote (day) — inline so it costs no extra row */}
+              {isHost && room.phase === 'day' && (
+                <>
+                  <span className="w-px h-4" style={{ backgroundColor: `${phaseHudColor}44` }} />
+                  <button
+                    onClick={onAdvanceDay}
+                    className="flex items-center gap-1 -my-0.5 -mr-1.5 pl-2 pr-2.5 py-1 text-[10px] font-cinzel font-bold uppercase tracking-widest rounded-full transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+                    style={{
+                      background: 'linear-gradient(180deg, rgba(146,64,14,0.94) 0%, rgba(110,48,0,0.94) 100%)',
+                      border: '1px solid rgba(217,119,6,0.7)',
+                      color: '#fde68a',
+                      boxShadow: '0 0 12px rgba(217,119,6,0.3)',
+                    }}
+                  >
+                    <svg viewBox="0 0 16 16" className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 5l6-2 6 2M8 3v10M4 5l-1.5 5h3L4 5zM12 5l-1.5 5h3L12 5z" />
+                    </svg>
+                    {T('bar.day.callVote')}
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Narrow progress under the pill */}
@@ -899,22 +921,6 @@ export function GameView({
                   pausedTimeRemaining={room.pausedTimeRemaining}
                 />
               </div>
-            )}
-
-            {/* Contextual action: call the vote (day host) */}
-            {isHost && room.phase === 'day' && (
-              <button
-                onClick={onAdvanceDay}
-                className="mt-0.5 px-4 py-1.5 text-[11px] font-cinzel font-bold uppercase tracking-widest rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(146,64,14,0.94) 0%, rgba(110,48,0,0.94) 100%)',
-                  border: '1px solid rgba(217,119,6,0.7)',
-                  color: '#fde68a',
-                  boxShadow: '0 0 16px rgba(217,119,6,0.35), inset 0 1px 0 rgba(255,220,150,0.15)',
-                }}
-              >
-                {T('bar.day.callVote')}
-              </button>
             )}
 
             {/* Night turn status */}
