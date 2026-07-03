@@ -123,8 +123,8 @@ export default function RoomPage() {
 
           <div className="relative z-10 flex flex-col h-full">
 
-            {/* ── Top bar ── */}
-            <div className="shrink-0 px-3 pt-3 pb-2">
+            {/* ── Top bar (mobile/tablet — desktop folds this into the info panel) ── */}
+            <div className="shrink-0 px-3 pt-3 pb-2 lg:hidden">
               <RoomHeader
                 code={code}
                 playerCount={room.players.length}
@@ -136,7 +136,7 @@ export default function RoomPage() {
             </div>
 
             {/* ── Body: roster (left) + info panel (right, desktop) ── */}
-            <div className="flex-1 min-h-0 px-3 pb-1 flex flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden">
+            <div className="flex-1 min-h-0 px-3 pb-1 lg:pt-3 lg:pb-3 flex flex-col lg:flex-row gap-3 overflow-y-auto lg:overflow-hidden">
               {/* Roster */}
               <div className="flex-1 min-h-0 flex flex-col">
                 <div className="flex-1 min-h-0">
@@ -155,7 +155,7 @@ export default function RoomPage() {
                 )}
               </div>
 
-              {/* Info panel — status hub (desktop) */}
+              {/* Info panel — full control hub (desktop) */}
               <div className="hidden lg:block shrink-0">
                 <LobbyInfoPanel
                   code={code}
@@ -163,7 +163,13 @@ export default function RoomPage() {
                   maxPlayers={room.maxPlayers}
                   minPlayers={room.minPlayers}
                   readyCount={room.readyPlayers.length}
+                  isConnected={isConnected}
+                  onLeave={handleLeave}
                   isHost={isHost}
+                  canStart={canStart}
+                  isReady={isReady}
+                  onReady={playerReady}
+                  onStartGame={startGame}
                   players={room.players}
                   hostId={room.hostId}
                   isLocked={room.isLocked}
@@ -195,8 +201,8 @@ export default function RoomPage() {
               />
             </div>
 
-            {/* ── Bottom command bar: Ready · Status · Start ── */}
-            <div className="shrink-0 px-3 pb-3 pt-0">
+            {/* ── Bottom command bar (mobile/tablet — desktop folds this into the info panel) ── */}
+            <div className="shrink-0 px-3 pb-3 pt-0 lg:hidden">
               <HostControls
                 isHost={isHost}
                 canStart={canStart}

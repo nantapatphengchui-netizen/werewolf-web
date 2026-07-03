@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import type { Player } from '@/types/game';
 import { HostAdminPanel } from './HostAdminPanel';
+import { StatusDot } from '@/components/ui/StatusDot';
+import { AudioControls } from '@/components/ui/AudioControls';
+import { LangToggle } from '@/components/ui/LangToggle';
+import { HowToPlay } from '@/components/game/HowToPlay';
 import { useT } from '@/i18n';
 
 interface Props {
@@ -11,8 +15,15 @@ interface Props {
   maxPlayers: number;
   minPlayers: number;
   readyCount: number;
-  // Host admin passthrough
+  isConnected: boolean;
+  onLeave: () => void;
+  // Ready / start
   isHost: boolean;
+  canStart: boolean;
+  isReady: boolean;
+  onReady: () => void;
+  onStartGame: () => void;
+  // Host admin passthrough
   players: Player[];
   hostId: string;
   isLocked: boolean;
@@ -105,22 +116,68 @@ function CountRing({ count, max, enough }: { count: number; max: number; enough:
   );
 }
 
+/** Compact top row: connection · sound · language · help · leave. */
+function UtilityBar({ isConnected, onLeave }: { isConnected: boolean; onLeave: () => void }) {
+  const T = useT();
+  const [showHowTo, setShowHowTo] = useState(false);
+  return (
+    <div className="flex items-center justify-between gap-1.5">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <StatusDot connected={isConnected} />
+        <span className={`text-[9px] font-cinzel uppercase tracking-wider truncate ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+          {isConnected ? T('lobby.connected') : T('lobby.offline')}
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <AudioControls />
+        <LangToggle />
+        <button
+          onClick={() => setShowHowTo(true)}
+          title={T('howto.button')}
+          className="p-1.5 border border-amber-800/45 rounded-lg text-amber-500 hover:text-amber-300 transition-colors"
+        >
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="8" cy="8" r="6.5" />
+            <path strokeLinecap="round" d="M6.1 6.1a2 2 0 0 1 3.8.6c0 1.3-1.9 1.7-1.9 1.7" />
+            <circle cx="8" cy="11.5" r="0.5" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+        <button
+          onClick={onLeave}
+          title={T('lobby.leave')}
+          className="p-1.5 border border-amber-700/55 hover:border-red-600/70 text-amber-400 hover:text-red-400 rounded-lg transition-colors"
+        >
+          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 14H3.5A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H6" />
+            <path d="M10.5 11 14 7.5 10.5 4M14 7.5H6" />
+          </svg>
+        </button>
+      </div>
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
+    </div>
+  );
+}
+
 export function LobbyInfoPanel(props: Props) {
   const T = useT();
-  const { code, playerCount, maxPlayers, minPlayers, readyCount } = props;
+  const { code, playerCount, maxPlayers, minPlayers, readyCount, isHost, canStart, isReady } = props;
   const needed    = minPlayers - playerCount;
   const hasEnough = playerCount >= minPlayers;
   const readyFrac = playerCount > 0 ? readyCount / playerCount : 0;
 
   return (
     <aside
-      className="w-full lg:w-[280px] shrink-0 flex flex-col gap-4 rounded-2xl p-4"
+      className="w-full lg:w-[288px] shrink-0 h-full flex flex-col gap-3.5 rounded-2xl p-4 overflow-y-auto"
       style={{
         backgroundColor: 'rgba(6,5,3,0.90)',
         border: '1px solid rgba(146,64,14,0.35)',
         boxShadow: '0 4px 30px rgba(0,0,0,0.6)',
       }}
     >
+      <UtilityBar isConnected={props.isConnected} onLeave={props.onLeave} />
+
+      <div className="h-px w-full bg-amber-900/25" />
+
       <InviteCode code={code} />
 
       <div className="h-px w-full bg-amber-900/25" />
@@ -160,20 +217,54 @@ export function LobbyInfoPanel(props: Props) {
       </div>
 
       {/* Host / dev controls */}
-      <div className="mt-auto pt-1">
-        <HostAdminPanel
-          isHost={props.isHost}
-          players={props.players}
-          hostId={props.hostId}
-          isLocked={props.isLocked}
-          onKick={props.onKick}
-          onLock={props.onLock}
-          onUnlock={props.onUnlock}
-          onResetReady={props.onResetReady}
-          onAddBot={props.onAddBot}
-          onFillBots={props.onFillBots}
-          onRemoveBots={props.onRemoveBots}
-        />
+      <HostAdminPanel
+        isHost={props.isHost}
+        players={props.players}
+        hostId={props.hostId}
+        isLocked={props.isLocked}
+        onKick={props.onKick}
+        onLock={props.onLock}
+        onUnlock={props.onUnlock}
+        onResetReady={props.onResetReady}
+        onAddBot={props.onAddBot}
+        onFillBots={props.onFillBots}
+        onRemoveBots={props.onRemoveBots}
+      />
+
+      {/* ── Ready / Start — pinned to the bottom ── */}
+      <div className="mt-auto pt-1 space-y-2">
+        {!isHost && (
+          <p className="text-center font-cinzel text-[9px] tracking-widest uppercase" style={{ color: '#b45309' }}>
+            {T('lobby.waitHost')}
+          </p>
+        )}
+        <button
+          onClick={props.onReady}
+          style={{
+            backgroundColor: isReady ? 'rgb(20,83,45)' : 'rgb(120,50,10)',
+            border:          isReady ? '1px solid rgba(74,222,128,0.65)' : '1px solid rgba(217,119,6,0.6)',
+            color:           isReady ? '#bbf7d0' : '#fde68a',
+          }}
+          className="w-full px-5 py-2.5 font-cinzel text-[11px] tracking-[0.2em] uppercase rounded-lg transition-all duration-150 hover:brightness-125 active:scale-95"
+        >
+          {isReady ? T('lobby.ready') : T('lobby.notReady')}
+        </button>
+        {isHost && (
+          <button
+            onClick={props.onStartGame}
+            disabled={!canStart}
+            style={{
+              backgroundColor: canStart ? 'rgb(127,29,29)' : 'rgb(20,18,16)',
+              border:          canStart ? '1px solid rgba(239,68,68,0.55)' : '1px solid rgba(87,83,78,0.45)',
+              color:           canStart ? '#ffffff' : '#78716c',
+            }}
+            className={`w-full px-5 py-2.5 font-cinzel text-[11px] tracking-[0.2em] uppercase rounded-lg transition-all duration-150 ${
+              canStart ? 'hover:brightness-125 active:scale-95' : 'cursor-not-allowed'
+            }`}
+          >
+            {T('lobby.startGame')}
+          </button>
+        )}
       </div>
     </aside>
   );
