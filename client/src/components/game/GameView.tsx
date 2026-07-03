@@ -485,17 +485,81 @@ export function GameView({
         className="hidden lg:flex flex-col fixed right-0 top-0 bottom-0 w-80 z-20"
         style={{ borderLeft: '1px solid rgba(146,64,14,0.45)', boxShadow: '-10px 0 30px rgba(0,0,0,0.55)' }}
       >
-        <ChatFeed
-          messages={chatMessages}
-          events={room.eventLog}
-          playerId={playerId}
-          canChat={canChat}
-          wolfMode={chatWolfMode}
-          disabledReason={chatDisabledReason}
-          onSend={(text) => socket?.emit('chat_send', { text })}
-          showReactions={(room.phase === 'day' || room.phase === 'voting') && imAlive}
-          onReact={(emoji) => socket?.emit('send_reaction', { emoji })}
-        />
+        {/* Utility header — the top-bar chrome lives here on desktop */}
+        <div
+          className="shrink-0 flex flex-col gap-2 px-3 py-2.5"
+          style={{ background: 'linear-gradient(180deg, rgba(14,11,7,0.98) 0%, rgba(6,5,3,0.98) 100%)', borderBottom: '1px solid rgba(146,64,14,0.40)' }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[9px] font-cinzel uppercase tracking-widest shrink-0" style={{ color: '#a16207' }}>{T('lobby.room')}</span>
+              <span className="font-mono font-bold text-sm tracking-[0.28em] truncate" style={{ color: '#fbbf24', textShadow: '0 0 10px rgba(251,191,36,0.4)' }}>{room.code}</span>
+              <CopyButton text={room.code} />
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <StatusDot connected={isConnected} />
+              <span className={`text-[9px] font-cinzel uppercase tracking-wider ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                {isConnected ? T('lobby.connected') : T('lobby.offline')}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-1.5">
+            <AudioControls />
+            <LangToggle />
+            {isHost && (
+              <button
+                onClick={() => setHostOpen(true)}
+                title={T('hud.hostControls')}
+                className="p-1.5 transition-all duration-150 hover:brightness-125"
+                style={{ border: '1px solid rgba(120,65,10,0.40)', borderRadius: '7px' }}
+              >
+                <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="#d97706" strokeWidth="1.5">
+                  <circle cx="8" cy="8" r="2.5" />
+                  <path strokeLinecap="round" d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M11.5 3.1l-1.4 1.4M3.1 11.5l1.4-1.4" />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={() => setHowToOpen(true)}
+              title={T('howto.button')}
+              className="p-1.5 transition-all duration-150 hover:brightness-125"
+              style={{ border: '1px solid rgba(120,65,10,0.40)', borderRadius: '7px' }}
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="#d97706" strokeWidth="1.5">
+                <circle cx="8" cy="8" r="6.5" />
+                <path strokeLinecap="round" d="M6.1 6.1a2 2 0 0 1 3.8.6c0 1.3-1.9 1.7-1.9 1.7" />
+                <circle cx="8" cy="11.5" r="0.5" fill="#d97706" stroke="none" />
+              </svg>
+            </button>
+            <button
+              onClick={onLeave}
+              title={T('hud.leave')}
+              className="p-1.5 transition-colors"
+              style={{ border: '1px solid rgba(146,64,14,0.50)', borderRadius: '7px', color: '#d97706' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#d97706')}
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 14H3.5A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H6" />
+                <path d="M10.5 11 14 7.5 10.5 4M14 7.5H6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0">
+          <ChatFeed
+            messages={chatMessages}
+            events={room.eventLog}
+            playerId={playerId}
+            canChat={canChat}
+            wolfMode={chatWolfMode}
+            disabledReason={chatDisabledReason}
+            onSend={(text) => socket?.emit('chat_send', { text })}
+            showReactions={(room.phase === 'day' || room.phase === 'voting') && imAlive}
+            onReact={(emoji) => socket?.emit('send_reaction', { emoji })}
+          />
+        </div>
       </aside>
 
       {/* ── Phase atmosphere tint ── */}
@@ -586,8 +650,8 @@ export function GameView({
           }}
           className="flex items-center gap-2 px-3 py-2"
         >
-          {/* Room code */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          {/* Room code — desktop shows it in the chat-sidebar header instead */}
+          <div className="flex items-center gap-1.5 shrink-0 lg:hidden">
             <span className="text-[9px] font-cinzel uppercase tracking-widest hidden sm:inline" style={{ color: '#a16207' }}>{T('lobby.room')}</span>
             <span className="font-mono font-bold text-base tracking-[0.35em]" style={{ color: '#fbbf24', textShadow: '0 0 12px rgba(251,191,36,0.45)' }}>
               {room.code}
@@ -595,7 +659,7 @@ export function GameView({
             <CopyButton text={room.code} />
           </div>
 
-          <div className="w-px h-4 shrink-0" style={{ backgroundColor: 'rgba(146,64,14,0.35)' }} />
+          <div className="w-px h-4 shrink-0 lg:hidden" style={{ backgroundColor: 'rgba(146,64,14,0.35)' }} />
 
           {/* Phase + round */}
           <div className="flex items-center gap-1.5 shrink-0" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
@@ -689,22 +753,22 @@ export function GameView({
             <span style={{ color: '#57534e' }}>↓</span>
           </div>
 
-          <div className="w-px h-4 shrink-0" style={{ backgroundColor: 'rgba(146,64,14,0.30)' }} />
+          <div className="w-px h-4 shrink-0 lg:hidden" style={{ backgroundColor: 'rgba(146,64,14,0.30)' }} />
 
-          {/* Connection + Audio + Lang */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Connection + Audio + Lang — desktop shows these in the chat-sidebar header */}
+          <div className="flex items-center gap-2 shrink-0 lg:hidden">
             <StatusDot connected={isConnected} />
             <AudioControls />
             <LangToggle />
           </div>
 
-          {/* Host controls icon — host only */}
+          {/* Host controls icon — host only (mobile HUD; desktop uses the sidebar header) */}
           {isHost && (
             <button
               onClick={() => setHostOpen(true)}
               title="Host Controls"
               style={{ border: '1px solid rgba(120,65,10,0.40)', borderRadius: '7px' }}
-              className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125"
+              className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125 lg:hidden"
             >
               <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="#d97706" strokeWidth="1.5">
                 <circle cx="8" cy="8" r="2.5" />
@@ -733,11 +797,11 @@ export function GameView({
             )}
           </button>
 
-          {/* How to play icon */}
+          {/* How to play icon — mobile HUD; desktop uses the sidebar header */}
           <button
             onClick={() => setHowToOpen(true)}
             title={T('howto.button')}
-            className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125"
+            className="p-1.5 shrink-0 transition-all duration-150 hover:brightness-125 lg:hidden"
             style={{ border: '1px solid rgba(120,65,10,0.40)', borderRadius: '7px' }}
           >
             <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="#d97706" strokeWidth="1.5">
@@ -747,10 +811,10 @@ export function GameView({
             </svg>
           </button>
 
-          {/* Leave */}
+          {/* Leave — mobile HUD; desktop uses the sidebar header */}
           <button
             onClick={onLeave}
-            className="px-2.5 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg shrink-0 hidden sm:block transition-colors"
+            className="px-2.5 py-1.5 text-[10px] font-cinzel uppercase tracking-widest rounded-lg shrink-0 hidden sm:block lg:hidden transition-colors"
             style={{ border: '1px solid rgba(146,64,14,0.50)', color: '#d97706' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
             onMouseLeave={e => (e.currentTarget.style.color = '#d97706')}
