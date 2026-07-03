@@ -638,8 +638,8 @@ export function GameView({
         </div>
       )}
 
-      {/* ── Top HUD ──────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-3 pt-3 pb-2 relative z-10">
+      {/* ── Top HUD (mobile/tablet — desktop uses the floating HUD below) ─── */}
+      <div className="shrink-0 px-3 pt-3 pb-2 relative z-10 lg:hidden">
         <div
           style={{
             background: 'linear-gradient(180deg, rgba(14,11,7,0.97) 0%, rgba(3,5,7,0.97) 100%)',
@@ -824,9 +824,134 @@ export function GameView({
         </div>
       </div>
 
-      {/* ── Full-width phase countdown ───────────────────────────────────────── */}
+      {/* ── Floating game HUD (desktop) — no solid bar, elements sit on the scene ── */}
+      <div className="hidden lg:block shrink-0 px-5 pt-4 pb-1 relative z-10">
+        <div className="flex items-start justify-between gap-4">
+
+          {/* Left: role pill (opens role drawer) */}
+          <div className="shrink-0 w-44">
+            {roleInfo && myRole && (
+              <button
+                onClick={() => setRoleOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 transition-all duration-150 hover:brightness-125 active:scale-[0.97]"
+                style={{
+                  background: `linear-gradient(135deg, ${roleInfo.accentColor}2e 0%, rgba(0,0,0,0.5) 100%)`,
+                  border: `1px solid ${roleInfo.accentColor}70`,
+                  borderRadius: '10px',
+                  boxShadow: `0 0 22px ${roleInfo.accentColor}2e, inset 0 1px 0 ${roleInfo.accentColor}18`,
+                }}
+              >
+                <div
+                  className="shrink-0 flex items-center justify-center w-7 h-7 rounded-full"
+                  style={{ backgroundColor: `${roleInfo.accentColor}25`, border: `1px solid ${roleInfo.accentColor}60`, color: roleInfo.accentColor }}
+                >
+                  {ROLE_HUD_ICON[myRole]}
+                </div>
+                <div className="flex flex-col items-start leading-tight min-w-0">
+                  <span className="text-[7px] font-cinzel uppercase tracking-[0.18em]" style={{ color: `${roleInfo.accentColor}99` }}>
+                    {T('hud.yourRole')}
+                  </span>
+                  <span className="text-[12px] font-cinzel font-bold uppercase tracking-wide truncate" style={{ color: roleInfo.accentColor, textShadow: `0 0 8px ${roleInfo.accentColor}66` }}>
+                    {T(`role.${myRole}.name`)}
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
+
+          {/* Center: phase + timer hero cluster */}
+          <div className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+            <div
+              className="flex items-center gap-2.5 px-4 py-1.5 rounded-full"
+              style={{
+                background: `linear-gradient(180deg, ${phaseHudColor}22 0%, rgba(0,0,0,0.5) 100%)`,
+                border: `1px solid ${phaseHudColor}55`,
+                boxShadow: `0 0 22px ${phaseHudColor}26, inset 0 1px 0 rgba(255,255,255,0.05)`,
+              }}
+            >
+              <span className="flex items-center gap-1.5" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
+                {PHASE_ICON[room.phase]}
+                <span className="font-cinzel text-sm tracking-[0.18em] uppercase font-bold">
+                  {room.phase === 'ended' ? T('hud.gameOver') : `${T(`phase.${room.phase}`)} · R${room.round}`}
+                </span>
+              </span>
+              {showTimer && (
+                <>
+                  <span className="w-px h-4" style={{ backgroundColor: `${phaseHudColor}44` }} />
+                  <PhaseTimer
+                    phase={room.phase}
+                    phaseEndAt={room.phaseEndAt}
+                    paused={room.timerPaused}
+                    pausedTimeRemaining={room.pausedTimeRemaining}
+                    compact
+                  />
+                </>
+              )}
+            </div>
+
+            {/* Narrow progress under the pill */}
+            {showTimer && (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
+              <div className="w-56">
+                <PhaseProgressBar
+                  phase={room.phase}
+                  phaseEndAt={room.phaseEndAt}
+                  paused={room.timerPaused}
+                  pausedTimeRemaining={room.pausedTimeRemaining}
+                />
+              </div>
+            )}
+
+            {/* Contextual action: call the vote (day host) */}
+            {isHost && room.phase === 'day' && (
+              <button
+                onClick={onAdvanceDay}
+                className="mt-0.5 px-4 py-1.5 text-[11px] font-cinzel font-bold uppercase tracking-widest rounded-lg transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(146,64,14,0.94) 0%, rgba(110,48,0,0.94) 100%)',
+                  border: '1px solid rgba(217,119,6,0.7)',
+                  color: '#fde68a',
+                  boxShadow: '0 0 16px rgba(217,119,6,0.35), inset 0 1px 0 rgba(255,220,150,0.15)',
+                }}
+              >
+                {T('bar.day.callVote')}
+              </button>
+            )}
+
+            {/* Night turn status */}
+            {room.phase === 'night' && !isHunterPending && imAlive && nc && !witchPoisonMode && (
+              <span
+                className={`mt-0.5 text-[10px] font-cinzel font-bold uppercase tracking-widest ${isActionSubmitted ? '' : 'animate-pulse'}`}
+                style={{ color: isActionSubmitted ? '#4ade80' : (roleInfo?.accentColor ?? '#d97706') }}
+              >
+                {isActionSubmitted ? `✓ ${T('turn.waiting')}` : T('turn.yourTurn')}
+              </span>
+            )}
+          </div>
+
+          {/* Right: alive / dead pill */}
+          <div className="shrink-0 w-44 flex justify-end">
+            <div
+              className="flex items-center gap-2.5 px-3 py-1.5 rounded-full"
+              style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.72) 0%, rgba(0,0,0,0.5) 100%)', border: '1px solid rgba(146,64,14,0.42)', boxShadow: 'inset 0 1px 0 rgba(255,240,210,0.05)' }}
+            >
+              <div className="flex items-center gap-1">
+                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="#4ade80"><circle cx="8" cy="4.5" r="2.5"/><path d="M3 14a5 5 0 0 1 10 0z"/></svg>
+                <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#4ade80' }}>{aliveCount}</span>
+              </div>
+              <span className="w-px h-4" style={{ backgroundColor: 'rgba(146,64,14,0.35)' }} />
+              <div className="flex items-center gap-1">
+                <svg viewBox="0 0 16 16" className="w-3 h-3" fill="#ef4444"><path d="M8 1a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9zM6 6.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/><path d="M6 13h4v1.5H6z"/></svg>
+                <span className="text-[12px] font-semibold tabular-nums" style={{ color: '#ef4444' }}>{deadCount}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── Full-width phase countdown (mobile/tablet — desktop shows it in the floating HUD) ── */}
       {showTimer && (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
-        <div className="shrink-0 px-3 pb-1 relative z-10">
+        <div className="shrink-0 px-3 pb-1 relative z-10 lg:hidden">
           <PhaseProgressBar
             phase={room.phase}
             phaseEndAt={room.phaseEndAt}
