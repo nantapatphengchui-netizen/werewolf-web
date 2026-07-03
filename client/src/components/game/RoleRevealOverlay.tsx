@@ -125,6 +125,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
   }, []);
 
   const handleEnter = () => {
+    if (flying) return;
     const from = yourCardRef.current?.getBoundingClientRect();
     const to   = document.querySelector('[data-own-card="true"]')?.getBoundingClientRect();
     if (!from || !to || to.width === 0) { onDismiss(); return; }
@@ -134,6 +135,15 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
     requestAnimationFrame(() => requestAnimationFrame(() => setFlyStarted(true)));
     setTimeout(onDismiss, 700);
   };
+
+  // Auto-deal the card into the slot once revealed — no button press needed.
+  // The delay lets the player read their role first.
+  useEffect(() => {
+    if (phase !== 'revealed') return;
+    const t = setTimeout(handleEnter, 2000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   const isSpread    = phase !== 'enter';
   const isShuffling = phase === 'shuffle';
@@ -315,19 +325,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
             {T(`role.${myRole}.nightAction`)}
           </p>
         )}
-        {!roleInfo.nightAction && <div className="mb-5" />}
-        <button
-          onClick={handleEnter}
-          className="px-6 sm:px-8 py-2 sm:py-2.5 font-cinzel text-[10px] sm:text-[11px] uppercase tracking-widest rounded-lg transition-all duration-150 hover:brightness-125 active:scale-[0.97]"
-          style={{
-            background: `linear-gradient(135deg, ${roleInfo.accentColor}30 0%, rgba(0,0,0,0.65) 100%)`,
-            border: `1px solid ${roleInfo.accentColor}72`,
-            color: roleInfo.accentColor,
-            boxShadow: `0 0 22px ${roleInfo.accentColor}25`,
-          }}
-        >
-          {T('reveal.enterGame')}
-        </button>
+        {!roleInfo.nightAction && <div className="mb-2" />}
       </div>
 
       </div>{/* end fading content */}
