@@ -184,6 +184,11 @@
   50%       { box-shadow: 0 0 10px 3px rgba(220,38,38,0.55); }
 }
 
+@keyframes perimeter-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
 /* ── Event log slide-in ─────────────────────────────────────────────────────── */
 
 @keyframes log-entry-slide {

@@ -17,6 +17,7 @@ import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
 import { PhaseProgressBar } from './PhaseProgressBar';
+import { PhasePerimeter } from './PhasePerimeter';
 import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
 import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
@@ -571,6 +572,16 @@ export function GameView({
       {/* ── Animated scene atmosphere (moonlight, fog, dust, vignette) ── */}
       <SceneAtmosphere phase={room.phase} />
 
+      {/* ── Phase countdown as a glowing frame around the play field (desktop) ── */}
+      {(room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
+        <PhasePerimeter
+          phase={room.phase}
+          phaseEndAt={room.phaseEndAt}
+          paused={room.timerPaused}
+          pausedTimeRemaining={room.pausedTimeRemaining}
+        />
+      )}
+
       {/* ── Game over overlay ── */}
       {room.phase === 'ended' && (
         <GameOverScreen room={room} playerId={playerId} onLeave={onLeave} onRestart={onRestart} onReturnToLobby={onReturnToLobby} />
@@ -910,18 +921,6 @@ export function GameView({
                 </>
               )}
             </div>
-
-            {/* Narrow progress under the pill */}
-            {showTimer && (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
-              <div className="w-56">
-                <PhaseProgressBar
-                  phase={room.phase}
-                  phaseEndAt={room.phaseEndAt}
-                  paused={room.timerPaused}
-                  pausedTimeRemaining={room.pausedTimeRemaining}
-                />
-              </div>
-            )}
 
             {/* Night turn status */}
             {room.phase === 'night' && !isHunterPending && imAlive && nc && !witchPoisonMode && (
