@@ -71,6 +71,10 @@ const EMBERS = [
   { left: '32%', top: '42%', color: '#fb923c', delay: '0.26s', dur: '0.74s', anim: 'ember-3' },
   { left: '78%', top: '62%', color: '#fcd34d', delay: '0.07s', dur: '0.84s', anim: 'ember-4' },
   { left: '14%', top: '50%', color: '#ef4444', delay: '0.22s', dur: '0.68s', anim: 'ember-5' },
+  { left: '58%', top: '54%', color: '#fb923c', delay: '0.30s', dur: '0.96s', anim: 'ember-6' },
+  { left: '40%', top: '72%', color: '#fbbf24', delay: '0.16s', dur: '0.88s', anim: 'ember-7' },
+  { left: '88%', top: '48%', color: '#ef4444', delay: '0.34s', dur: '0.72s', anim: 'ember-0' },
+  { left: '8%',  top: '64%', color: '#fcd34d', delay: '0.12s', dur: '0.80s', anim: 'ember-2' },
 ] as const;
 
 // ── Action icon config ────────────────────────────────────────────────────────
@@ -274,7 +278,7 @@ export function GamePlayerCard({
 
   if (burning) {
     border = '1px solid rgba(251,146,60,0.55)';
-    cardAnimation = 'card-burn-glow 2.0s ease-out forwards';
+    cardAnimation = 'card-burn-glow 2.0s ease-out forwards, card-burn-shake 0.5s ease-in-out 2';
   } else if (!alive) {
     border = '1px solid rgba(68,64,60,0.35)';
   } else if (isSelected) {
@@ -326,8 +330,6 @@ export function GamePlayerCard({
     subLabel = { text: T(`role.${seerRevealedRole}.name`), color: ROLE_INFO[seerRevealedRole].accentColor };
   } else if (revealedInfo && player.revealedRole) {
     subLabel = { text: T(`role.${player.revealedRole}.name`), color: revealedInfo.accentColor };
-  } else if (!alive) {
-    subLabel = { text: T('card.eliminated'), color: '#7f1d1d' };
   } else if (offline) {
     subLabel = { text: T('card.away'), color: '#57534e' };
   }
@@ -525,14 +527,39 @@ export function GamePlayerCard({
         )
       )}
 
-      {/* ── Dead X ── */}
-      {!alive && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <svg viewBox="0 0 40 40" className="w-10 h-10 opacity-60">
-            <line x1="8" y1="8" x2="32" y2="32" stroke="#7f1d1d" strokeWidth="3" strokeLinecap="round" />
-            <line x1="32" y1="8" x2="8" y2="32" stroke="#7f1d1d" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-        </div>
+      {/* ── Dead state: blood wash + "ตายแล้ว" stamp ── */}
+      {!alive && !burning && (
+        <>
+          {/* Blood-red vignette darkening the edges */}
+          <div
+            className="absolute inset-0 pointer-events-none rounded-xl"
+            style={{
+              background: 'radial-gradient(ellipse at 50% 38%, transparent 20%, rgba(70,0,0,0.42) 72%, rgba(38,0,0,0.66) 100%)',
+              zIndex: 6,
+            }}
+          />
+          {/* Blood seeping from the top */}
+          <div
+            className="absolute inset-x-0 top-0 h-2/5 pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, rgba(96,4,4,0.52) 0%, rgba(60,0,0,0.20) 46%, transparent 100%)', zIndex: 6 }}
+          />
+          {/* Diagonal "ตายแล้ว" stamp */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 16 }}>
+            <span
+              className="font-cinzel font-bold uppercase tracking-[0.2em] text-[11px] px-2.5 py-1 rounded"
+              style={{
+                color: '#fca5a5',
+                border: '2px solid rgba(153,27,27,0.85)',
+                backgroundColor: 'rgba(28,2,2,0.55)',
+                transform: 'rotate(-11deg)',
+                textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                boxShadow: '0 0 14px rgba(120,10,10,0.5), inset 0 0 10px rgba(120,10,10,0.3)',
+              }}
+            >
+              {T('card.dead')}
+            </span>
+          </div>
+        </>
       )}
 
       {/* ── Host crown ── */}

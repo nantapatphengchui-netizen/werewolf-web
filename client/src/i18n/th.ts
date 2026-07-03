@@ -270,6 +270,7 @@ export const th: Record<string, string> = {
 
   // ── Card ──────────────────────────────────────────────────────────────────
   'card.eliminated':  'ถูกกำจัด',
+  'card.dead':        'ตายแล้ว',
   'card.away':        'ไม่อยู่',
 
   // ── Event log (server-generated) ───────────────────────────────────────────

@@ -254,6 +254,7 @@ export const en: Record<string, string> = {
 
   // ── Card ───────────────────────────────────────────────────────────────────
   'card.eliminated':  'Eliminated',
+  'card.dead':        'Dead',
   'card.away':        'Away',
 
   // ── Confirm dialogs ────────────────────────────────────────────────────────

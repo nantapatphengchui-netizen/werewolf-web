@@ -19,6 +19,15 @@ const FOG: Record<string, string> = {
   lobby:  'rgba(30,24,48,0.34)',
 };
 
+// Per-phase darkness wash — night swallows the room, day is bright
+const DARK: Record<string, number> = {
+  night:  0.52,
+  day:    0.08,
+  voting: 0.30,
+  ended:  0.62,
+  lobby:  0.22,
+};
+
 // Fixed set (deterministic — avoids SSR hydration mismatch)
 const MOTES = [
   { l: '6%',  t: '78%', s: 2.5, d: '15s', delay: '0s',   dx: '16px',  o: 0.55 },
@@ -40,9 +49,16 @@ const MOTES = [
 export function SceneAtmosphere({ phase }: { phase: GamePhase }) {
   const moon = MOONLIGHT[phase] ?? MOONLIGHT.night;
   const fog  = FOG[phase] ?? FOG.night;
+  const dark = DARK[phase] ?? 0.30;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+      {/* Phase darkness wash (night is darkest) — sits under the glow so motes still shine */}
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: `rgba(3,2,12,${dark})`, transition: 'background-color 1.4s ease' }}
+      />
+
       {/* Moonlight shaft from the top */}
       <div
         className="absolute inset-0"
@@ -87,11 +103,33 @@ export function SceneAtmosphere({ phase }: { phase: GamePhase }) {
         />
       ))}
 
+      {/* Night — a thicker, denser fog bank rolling along the ground */}
+      {phase === 'night' && (
+        <div
+          className="absolute inset-x-0 bottom-0 h-3/4"
+          style={{
+            background: 'radial-gradient(165% 105% at 50% 138%, rgba(38,28,66,0.55) 0%, rgba(24,18,44,0.30) 40%, transparent 66%)',
+            animation: 'fog-drift 30s ease-in-out infinite',
+          }}
+        />
+      )}
+
       {/* Depth vignette — darkens the edges of the play area */}
       <div
         className="absolute inset-0"
         style={{ background: 'radial-gradient(ellipse 85% 75% at 50% 45%, transparent 55%, rgba(0,0,0,0.5) 100%)' }}
       />
+
+      {/* Voting — the walls throb an angry red */}
+      {phase === 'voting' && (
+        <div
+          className="absolute inset-0"
+          style={{
+            boxShadow: 'inset 0 0 110px 14px rgba(150,10,10,0.45)',
+            animation: 'vote-edge-pulse 1.5s ease-in-out infinite',
+          }}
+        />
+      )}
     </div>
   );
 }

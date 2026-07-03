@@ -189,6 +189,12 @@
   50%      { opacity: 1; }
 }
 
+/* Voting — the walls of the room throb an angry red */
+@keyframes vote-edge-pulse {
+  0%, 100% { opacity: 0.32; }
+  50%      { opacity: 0.78; }
+}
+
 /* ── Event log slide-in ─────────────────────────────────────────────────────── */
 
 @keyframes log-entry-slide {
@@ -292,6 +298,25 @@
 @keyframes ember-5 {
   0%   { transform: translate(0,0)   scale(0.9); opacity: 0.75; }
   100% { transform: translate(-7px,-70px) scale(0); opacity: 0; }
+}
+@keyframes ember-6 {
+  0%   { transform: translate(0,0)    scale(1.0); opacity: 0.92; }
+  100% { transform: translate(24px,-78px) scale(0); opacity: 0; }
+}
+@keyframes ember-7 {
+  0%   { transform: translate(0,0)     scale(0.8); opacity: 0.82; }
+  100% { transform: translate(-26px,-72px) scale(0); opacity: 0; }
+}
+
+/* Death shudder — the card jolts as it ignites */
+@keyframes card-burn-shake {
+  0%, 100% { transform: translate(0,0) rotate(0deg); }
+  12%  { transform: translate(-3px,1px)  rotate(-1.1deg); }
+  26%  { transform: translate(3px,-1px)  rotate(1deg); }
+  40%  { transform: translate(-2px,2px)  rotate(-0.7deg); }
+  54%  { transform: translate(2px,-1px)  rotate(0.6deg); }
+  70%  { transform: translate(-1px,1px)  rotate(-0.3deg); }
+  100% { transform: translate(0,0) rotate(0deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
