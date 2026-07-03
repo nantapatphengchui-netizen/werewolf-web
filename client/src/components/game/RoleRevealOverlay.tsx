@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { RoleSkillIcon } from './RoleSkillIcon';
@@ -107,6 +107,12 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
   const [yourIdx]             = useState(() => Math.floor(Math.random() * 4));
   const roleInfo              = ROLE_INFO[myRole];
 
+  // "Deal into place" — on enter, the revealed card flies to the player's slot
+  const yourCardRef                 = useRef<HTMLDivElement>(null);
+  const [flying, setFlying]         = useState(false);
+  const [flyStarted, setFlyStarted] = useState(false);
+  const [fly, setFly]               = useState<{ from: DOMRect; to: DOMRect } | null>(null);
+
   useEffect(() => {
     const ts = [
       setTimeout(() => setPhase('spread'),   350),
@@ -118,6 +124,17 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
     return () => ts.forEach(clearTimeout);
   }, []);
 
+  const handleEnter = () => {
+    const from = yourCardRef.current?.getBoundingClientRect();
+    const to   = document.querySelector('[data-own-card="true"]')?.getBoundingClientRect();
+    if (!from || !to || to.width === 0) { onDismiss(); return; }
+    setFly({ from, to });
+    setFlying(true);
+    // Two frames so the clone paints at the source rect before transitioning
+    requestAnimationFrame(() => requestAnimationFrame(() => setFlyStarted(true)));
+    setTimeout(onDismiss, 700);
+  };
+
   const isSpread    = phase !== 'enter';
   const isShuffling = phase === 'shuffle';
   const isPick      = phase === 'pick' || phase === 'flip' || phase === 'revealed';
@@ -126,10 +143,23 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
 
   return (
     <div
-      className="fixed inset-0 flex flex-col items-center justify-center px-4"
-      style={{ zIndex: 200, backgroundColor: 'rgba(2,0,8,0.94)', backdropFilter: 'blur(6px)' }}
+      className="fixed inset-0 px-4"
+      style={{
+        zIndex: 200,
+        backgroundColor: flying ? 'rgba(2,0,8,0)' : 'rgba(2,0,8,0.94)',
+        backdropFilter: flying ? 'blur(0px)' : 'blur(6px)',
+        WebkitBackdropFilter: flying ? 'blur(0px)' : 'blur(6px)',
+        transition: 'background-color 0.7s ease, backdrop-filter 0.7s ease',
+        pointerEvents: flying ? 'none' : undefined,
+      }}
     >
       <style>{KEYFRAMES}</style>
+
+      {/* Everything except the flying clone fades out as the card is dealt in */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center px-4"
+        style={{ opacity: flying ? 0 : 1, transition: 'opacity 0.4s ease' }}
+      >
 
       {/* ── Title ── */}
       <div
@@ -187,7 +217,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
             : '0 10px 36px rgba(0,0,0,0.65)';
 
           return (
-            <div key={i} style={cardStyle}>
+            <div key={i} style={cardStyle} ref={isYours ? yourCardRef : undefined}>
               {isPick && isYours && !isFlipped && (
                 <div
                   className="absolute -inset-2 rounded-2xl pointer-events-none"
@@ -287,7 +317,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         )}
         {!roleInfo.nightAction && <div className="mb-5" />}
         <button
-          onClick={onDismiss}
+          onClick={handleEnter}
           className="px-6 sm:px-8 py-2 sm:py-2.5 font-cinzel text-[10px] sm:text-[11px] uppercase tracking-widest rounded-lg transition-all duration-150 hover:brightness-125 active:scale-[0.97]"
           style={{
             background: `linear-gradient(135deg, ${roleInfo.accentColor}30 0%, rgba(0,0,0,0.65) 100%)`,
@@ -299,6 +329,33 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
           {T('reveal.enterGame')}
         </button>
       </div>
+
+      </div>{/* end fading content */}
+
+      {/* ── Flying clone — deals the revealed card into the player's own slot ── */}
+      {fly && (
+        <div
+          style={{
+            position: 'fixed',
+            left: fly.from.left,
+            top: fly.from.top,
+            width: fly.from.width,
+            height: fly.from.height,
+            transformOrigin: 'top left',
+            transform: flyStarted
+              ? `translate(${fly.to.left - fly.from.left}px, ${fly.to.top - fly.from.top}px) scale(${fly.to.width / fly.from.width}, ${fly.to.height / fly.from.height})`
+              : 'none',
+            opacity: flyStarted ? 0.15 : 1,
+            transition: 'transform 0.66s cubic-bezier(0.5,0,0.2,1), opacity 0.66s ease-in',
+            zIndex: 210,
+            borderRadius: '12px',
+            boxShadow: `0 0 44px ${roleInfo.accentColor}66, 0 18px 44px rgba(0,0,0,0.7)`,
+            pointerEvents: 'none',
+          }}
+        >
+          <CardFace role={myRole} />
+        </div>
+      )}
     </div>
   );
 }
