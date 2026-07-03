@@ -18,7 +18,6 @@ import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
 import { PhaseProgressBar } from './PhaseProgressBar';
 import { PhasePerimeter } from './PhasePerimeter';
-import { VoteLines } from './VoteLines';
 import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
 import { ActionToast, type ToastState, type ToastTone } from './ActionToast';
@@ -273,7 +272,6 @@ export function GameView({
   const [toast, setToast] = useState<ToastState | null>(null);
   const [seerReveal, setSeerReveal] = useState<{ targetName: string; role: Role; key: number } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gridWrapRef   = useRef<HTMLDivElement>(null);
 
   const showToast = (text: string, tone: ToastTone = 'default') => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -1017,7 +1015,7 @@ export function GameView({
       </div>
 
       {/* ── Player grid — full width ──────────────────────────────────────── */}
-      <div ref={gridWrapRef} className="flex-1 min-h-0 px-3 overflow-y-auto relative z-10">
+      <div className="flex-1 min-h-0 px-3 overflow-y-auto relative z-10">
         <GamePlayerGrid
           players={room.players}
           currentPlayerId={playerId}
@@ -1034,11 +1032,6 @@ export function GameView({
           onCancelAction={(isHunterPending || witchPoisonMode) ? () => setSelectedTarget(null) : undefined}
           reactionsMap={reactionsMap}
         />
-
-        {/* Day-vote connection lines (who voted whom) — desktop */}
-        {room.phase === 'voting' && room.publicVotes?.votes && Object.keys(room.publicVotes.votes).length > 0 && (
-          <VoteLines containerRef={gridWrapRef} votes={room.publicVotes.votes} playerId={playerId} />
-        )}
       </div>
 
       {/* ── Witch night panel ─────────────────────────────────────────────── */}
