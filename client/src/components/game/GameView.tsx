@@ -17,7 +17,6 @@ import { GamePlayerGrid } from './GamePlayerGrid';
 import { GameOverScreen } from './GameOverScreen';
 import { HostGameControls } from './HostGameControls';
 import { PhaseTimer } from './PhaseTimer';
-import { PhaseProgressBar } from './PhaseProgressBar';
 import { PhasePerimeter } from './PhasePerimeter';
 import { HowToPlay } from './HowToPlay';
 import { SeerRevealModal } from './SeerRevealModal';
@@ -1014,17 +1013,6 @@ export function GameView({
         </div>
       </div>
 
-      {/* ── Full-width phase countdown (mobile/tablet — desktop shows it in the floating HUD) ── */}
-      {showTimer && (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
-        <div className="shrink-0 px-3 pb-1 relative z-10 lg:hidden">
-          <PhaseProgressBar
-            phase={room.phase}
-            phaseEndAt={room.phaseEndAt}
-            paused={room.timerPaused}
-            pausedTimeRemaining={room.pausedTimeRemaining}
-          />
-        </div>
-      )}
 
       {/* ── Banner area ───────────────────────────────────────────────────── */}
       <div className="shrink-0 px-3 space-y-1.5 pb-1 relative z-10">

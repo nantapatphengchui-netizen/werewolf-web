@@ -15,8 +15,8 @@ const PHASE_COLOR: Record<string, string> = { night: '#7c3aed', day: '#d97706', 
 
 /**
  * A glowing border that hugs the game-area edge and drains clockwise as the
- * phase timer runs down. Desktop only (frames the play field, not the chat
- * sidebar). pathLength normalises the dash so it works at any viewport size.
+ * phase timer runs down. Frames the whole screen on mobile; on desktop it
+ * stops at the chat sidebar. pathLength normalises the dash for any size.
  */
 export function PhasePerimeter({ phase, phaseEndAt, paused = false, pausedTimeRemaining = null }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -62,8 +62,8 @@ export function PhasePerimeter({ phase, phaseEndAt, paused = false, pausedTimeRe
   return (
     <div
       ref={wrapRef}
-      className="hidden lg:block pointer-events-none"
-      style={{ position: 'fixed', top: 0, left: 0, bottom: 0, right: '20rem', zIndex: 15 }}
+      className="fixed inset-y-0 left-0 right-0 lg:right-80 pointer-events-none"
+      style={{ zIndex: 15 }}
     >
       {active && size.w > 0 && (
         <svg width={size.w} height={size.h} className="absolute inset-0 block">
