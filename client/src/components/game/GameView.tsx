@@ -56,21 +56,27 @@ const PHASE_BANNER_CFG: Record<string, { bg: string; borderColor: string; textCo
 };
 
 const PHASE_ICON: Record<string, React.ReactNode> = {
+  // Crescent moon with a few stars
   night: (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="currentColor">
-      <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+    <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="currentColor">
+      <path d="M20.2 14.6A8 8 0 1 1 10 4.1a6.3 6.3 0 0 0 10.2 10.5z" />
+      <circle cx="16.8" cy="5.4" r="0.95" opacity="0.85" />
+      <circle cx="20.4" cy="8.6" r="0.6" opacity="0.7" />
+      <circle cx="14.2" cy="3.4" r="0.55" opacity="0.6" />
     </svg>
   ),
+  // Sun — filled disc with rays
   day: (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="5" />
-      <path strokeLinecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none" />
+      <path d="M12 2.4v2.3M12 19.3v2.3M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.3M19.3 12h2.3M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" />
     </svg>
   ),
+  // Scales of judgment
   voting: (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l9-3 9 3M12 3v18M5 6l-2 8h4l-2-8zM19 6l-2 8h4l-2-8z" />
-      <path strokeLinecap="round" d="M5 21h14" />
+    <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.2v17.6M7 20.8h10M4.2 7.2l7.8-2 7.8 2" />
+      <path d="M4.2 7.2 1.9 12.4a2.4 2.4 0 0 0 4.6 0L4.2 7.2zM19.8 7.2l-2.3 5.2a2.4 2.4 0 0 0 4.6 0L19.8 7.2z" />
     </svg>
   ),
 };
