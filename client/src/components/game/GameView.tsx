@@ -637,6 +637,16 @@ export function GameView({
       {/* ── Animated scene atmosphere (moonlight, fog, dust, vignette) ── */}
       <SceneAtmosphere phase={room.phase} />
 
+      {/* ── Top scrim (desktop) — grounds the floating HUD so it doesn't look detached ── */}
+      <div
+        className="hidden lg:block fixed top-0 left-0 right-80 pointer-events-none"
+        style={{
+          height: '160px',
+          background: 'linear-gradient(to bottom, rgba(6,4,11,0.78) 0%, rgba(6,4,11,0.42) 38%, rgba(6,4,11,0.14) 68%, transparent 100%)',
+          zIndex: 5,
+        }}
+      />
+
       {/* ── Phase countdown as a glowing frame around the play field (desktop) ── */}
       {(room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') && (
         <PhasePerimeter
@@ -928,10 +938,10 @@ export function GameView({
                 onClick={() => setRoleOpen(true)}
                 className="flex items-center gap-2 px-3 py-1.5 transition-all duration-150 hover:brightness-125 active:scale-[0.97]"
                 style={{
-                  background: `linear-gradient(135deg, ${roleInfo.accentColor}2e 0%, rgba(0,0,0,0.5) 100%)`,
-                  border: `1px solid ${roleInfo.accentColor}70`,
+                  background: `linear-gradient(135deg, ${roleInfo.accentColor}22 0%, rgba(0,0,0,0.34) 100%)`,
+                  border: `1px solid ${roleInfo.accentColor}4d`,
                   borderRadius: '10px',
-                  boxShadow: `0 0 22px ${roleInfo.accentColor}2e, inset 0 1px 0 ${roleInfo.accentColor}18`,
+                  boxShadow: `0 0 15px ${roleInfo.accentColor}1f, inset 0 1px 0 ${roleInfo.accentColor}14`,
                 }}
               >
                 <div
@@ -957,9 +967,9 @@ export function GameView({
             <div
               className="flex items-center gap-2.5 px-4 py-1.5 rounded-full"
               style={{
-                background: `linear-gradient(180deg, ${phaseHudColor}22 0%, rgba(0,0,0,0.5) 100%)`,
-                border: `1px solid ${phaseHudColor}55`,
-                boxShadow: `0 0 22px ${phaseHudColor}26, inset 0 1px 0 rgba(255,255,255,0.05)`,
+                background: `linear-gradient(180deg, ${phaseHudColor}1a 0%, rgba(0,0,0,0.34) 100%)`,
+                border: `1px solid ${phaseHudColor}38`,
+                boxShadow: `0 0 16px ${phaseHudColor}1c, inset 0 1px 0 rgba(255,255,255,0.04)`,
               }}
             >
               <span className="flex items-center gap-1.5" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
@@ -1026,7 +1036,7 @@ export function GameView({
           <div className="shrink-0 w-44 flex justify-end">
             <div
               className="flex items-center gap-2.5 px-3 py-1.5 rounded-full"
-              style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.72) 0%, rgba(0,0,0,0.5) 100%)', border: '1px solid rgba(146,64,14,0.42)', boxShadow: 'inset 0 1px 0 rgba(255,240,210,0.05)' }}
+              style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5) 0%, rgba(0,0,0,0.32) 100%)', border: '1px solid rgba(146,64,14,0.3)', boxShadow: 'inset 0 1px 0 rgba(255,240,210,0.04)' }}
             >
               <div className="flex items-center gap-1">
                 <svg viewBox="0 0 16 16" className="w-3 h-3" fill="#4ade80"><circle cx="8" cy="4.5" r="2.5"/><path d="M3 14a5 5 0 0 1 10 0z"/></svg>
