@@ -10,6 +10,7 @@ import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
 import { LangToggle } from '@/components/ui/LangToggle';
 import { useT, useMessage } from '@/i18n';
+import { useSoundEffect } from '@/hooks/useSoundEffect';
 import { RolePanel } from './RolePanel';
 import { RoleRevealOverlay } from './RoleRevealOverlay';
 import { GamePlayerGrid } from './GamePlayerGrid';
@@ -261,6 +262,7 @@ export function GameView({
   const T = useT();
   const M = useMessage();
   const socket = useSocket();
+  const { play: playSfx } = useSoundEffect();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
   const [roleOpen, setRoleOpen]   = useState(false);
@@ -311,9 +313,10 @@ export function GameView({
         setPhaseTransition(room.phase);
         if (phaseTransTimerRef.current) clearTimeout(phaseTransTimerRef.current);
         phaseTransTimerRef.current = setTimeout(() => setPhaseTransition(null), 2500);
+        playSfx(room.phase === 'night' ? 'phase_night' : room.phase === 'day' ? 'phase_day' : 'phase_voting');
       }
     }
-  }, [room.phase]);
+  }, [room.phase, playSfx]);
 
   // Emoji reaction socket listener
   useEffect(() => {
@@ -359,8 +362,8 @@ export function GameView({
     prevRoleRef.current = myRole;
   }, [myRole]);
 
-  const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); showToast(T('toast.actionSubmitted')); };
-  const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); showToast(T('toast.voteCast')); };
+  const handleNightAction = (id: string) => { onNightAction(id); setActionSubmitted(true); showToast(T('toast.actionSubmitted')); playSfx('action_submit'); };
+  const handleCastVote    = (id: string) => { onCastVote(id);    setActionSubmitted(true); showToast(T('toast.voteCast')); playSfx('vote_cast'); };
   const handleHunterShoot = (targetId: string | null) => {
     socket?.emit('hunter_shoot', { targetId });
     setSelectedTarget(null);
@@ -478,6 +481,38 @@ export function GameView({
     : room.phase === 'night' ? T('chat.disabledNight')
     : T('chat.disabledDefault');
   const unreadChat = chatOpen ? 0 : Math.max(0, chatMessages.length - chatSeen);
+
+  // ── Sound cues ─────────────────────────────────────────────────────────────
+  const prevAliveSfxRef = useRef(aliveCount);
+  useEffect(() => {
+    if (aliveCount < prevAliveSfxRef.current) playSfx('player_die');
+    prevAliveSfxRef.current = aliveCount;
+  }, [aliveCount, playSfx]);
+
+  const turnCuedRef = useRef(false);
+  useEffect(() => {
+    const myTurn = room.phase === 'night' && !isHunterPending && imAlive && !!nc && !witchPoisonMode && !isActionSubmitted;
+    if (myTurn && !turnCuedRef.current) { playSfx('your_turn'); turnCuedRef.current = true; }
+    else if (!myTurn) turnCuedRef.current = false;
+  }, [room.phase, isHunterPending, imAlive, nc, witchPoisonMode, isActionSubmitted, playSfx]);
+
+  useEffect(() => {
+    if (!room.phaseEndAt || room.timerPaused) return;
+    const ms = room.phaseEndAt - Date.now() - 10000;
+    if (ms <= 0) return;
+    const id = setTimeout(() => playSfx('timer_urgent'), ms);
+    return () => clearTimeout(id);
+  }, [room.phaseEndAt, room.timerPaused, playSfx]);
+
+  const endCuedRef = useRef(false);
+  useEffect(() => {
+    if (room.phase === 'ended' && !endCuedRef.current) {
+      endCuedRef.current = true;
+      playSfx(room.winner === 'village' ? 'game_over_village' : 'game_over_wolf');
+    } else if (room.phase !== 'ended') {
+      endCuedRef.current = false;
+    }
+  }, [room.phase, room.winner, playSfx]);
 
   return (
     <div className="relative z-10 flex flex-col overflow-hidden lg:pr-80" style={{ height: '100dvh' }}>
