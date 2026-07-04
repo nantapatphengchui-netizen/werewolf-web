@@ -253,6 +253,8 @@ export const en: Record<string, string> = {
   'hud.eventLog':      'Event Log',
 
   // ── Card ───────────────────────────────────────────────────────────────────
+  'hud.votedCount':   'Voted {{voted}}/{{total}}',
+  'overlay.tapSkip':  'Tap to skip',
   'card.eliminated':  'Eliminated',
   'card.dead':        'Dead',
   'card.away':        'Away',

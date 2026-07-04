@@ -113,16 +113,28 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
   const [flyStarted, setFlyStarted] = useState(false);
   const [fly, setFly]               = useState<{ from: DOMRect; to: DOMRect } | null>(null);
 
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
-    const ts = [
+    timersRef.current = [
       setTimeout(() => setPhase('spread'),   350),
       setTimeout(() => setPhase('shuffle'),  950),
       setTimeout(() => setPhase('pick'),    2750),
       setTimeout(() => setPhase('flip'),    3250),
       setTimeout(() => setPhase('revealed'), 4050),
     ];
-    return () => ts.forEach(clearTimeout);
+    return () => timersRef.current.forEach(clearTimeout);
   }, []);
+
+  // Tap anywhere to fast-forward: first jump to the reveal, then deal the card in.
+  const handleSkip = () => {
+    if (flying) return;
+    if (phase !== 'revealed') {
+      timersRef.current.forEach(clearTimeout);
+      setPhase('revealed');
+    } else {
+      handleEnter();
+    }
+  };
 
   const handleEnter = () => {
     if (flying) return;
@@ -153,7 +165,8 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
 
   return (
     <div
-      className="fixed inset-0 px-4"
+      onClick={handleSkip}
+      className={`fixed inset-0 px-4 ${flying ? '' : 'cursor-pointer'}`}
       style={{
         zIndex: 200,
         backgroundColor: flying ? 'rgba(2,0,8,0)' : 'rgba(2,0,8,0.94)',
@@ -327,6 +340,14 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         )}
         {!roleInfo.nightAction && <div className="mb-2" />}
       </div>
+
+      {/* Tap-to-skip hint */}
+      <span
+        className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-cinzel uppercase tracking-[0.3em] pointer-events-none"
+        style={{ color: 'rgba(255,255,255,0.28)' }}
+      >
+        {T('overlay.tapSkip')}
+      </span>
 
       </div>{/* end fading content */}
 

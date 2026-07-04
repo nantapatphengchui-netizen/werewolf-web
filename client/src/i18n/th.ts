@@ -269,6 +269,8 @@ export const th: Record<string, string> = {
   'hud.eventLog':      'บันทึกเหตุการณ์',
 
   // ── Card ──────────────────────────────────────────────────────────────────
+  'hud.votedCount':   'โหวตแล้ว {{voted}}/{{total}}',
+  'overlay.tapSkip':  'แตะเพื่อข้าม',
   'card.eliminated':  'ถูกกำจัด',
   'card.dead':        'ตายแล้ว',
   'card.away':        'ไม่อยู่',

@@ -381,6 +381,7 @@ export function GameView({
   const imAlive    = me?.isAlive ?? false;
   const aliveCount = room.players.filter(p => p.isAlive).length;
   const deadCount  = room.players.length - aliveCount;
+  const votedCount = room.publicVotes?.hasVoted.length ?? 0;
   const hasVotedAlready   = room.publicVotes?.hasVoted.includes(playerId) ?? false;
   const isActionSubmitted = actionSubmitted || hasVotedAlready;
   const showTimer         = !!(room.phaseEndAt || room.timerPaused);
@@ -587,9 +588,13 @@ export function GameView({
         <GameOverScreen room={room} playerId={playerId} onLeave={onLeave} onRestart={onRestart} onReturnToLobby={onReturnToLobby} />
       )}
 
-      {/* ── Phase transition overlay ── */}
+      {/* ── Phase transition overlay (tap anywhere to skip) ── */}
       {phaseTransition && (
-        <div className="fixed inset-0 pointer-events-none flex flex-col items-center justify-center gap-5" style={{ zIndex: 100 }}>
+        <div
+          className="fixed inset-0 flex flex-col items-center justify-center gap-5 cursor-pointer"
+          style={{ zIndex: 100 }}
+          onClick={() => { if (phaseTransTimerRef.current) clearTimeout(phaseTransTimerRef.current); setPhaseTransition(null); }}
+        >
           <div
             className="absolute inset-0"
             style={{
@@ -646,6 +651,12 @@ export function GameView({
               Round {room.round}
             </p>
           </div>
+          <span
+            className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-cinzel uppercase tracking-[0.3em] pointer-events-none"
+            style={{ color: 'rgba(255,255,255,0.30)', animation: 'phase-text-appear 2.5s ease-in-out forwards' }}
+          >
+            {T('overlay.tapSkip')}
+          </span>
         </div>
       )}
 
@@ -716,6 +727,13 @@ export function GameView({
               style={{ color: isActionSubmitted ? '#4ade80' : (roleInfo?.accentColor ?? '#d97706') }}
             >
               {isActionSubmitted ? `✓ ${T('turn.waiting')}` : T('turn.yourTurn')}
+            </span>
+          )}
+
+          {/* Voting progress */}
+          {room.phase === 'voting' && (
+            <span className="shrink-0 text-[10px] font-cinzel font-bold uppercase tracking-widest tabular-nums" style={{ color: '#f87171' }}>
+              {T('hud.votedCount', { voted: votedCount, total: aliveCount })}
             </span>
           )}
 
@@ -929,6 +947,13 @@ export function GameView({
                 style={{ color: isActionSubmitted ? '#4ade80' : (roleInfo?.accentColor ?? '#d97706') }}
               >
                 {isActionSubmitted ? `✓ ${T('turn.waiting')}` : T('turn.yourTurn')}
+              </span>
+            )}
+
+            {/* Voting progress — how many have cast a vote */}
+            {room.phase === 'voting' && (
+              <span className="mt-0.5 text-[10px] font-cinzel font-bold uppercase tracking-widest tabular-nums" style={{ color: '#f87171' }}>
+                {T('hud.votedCount', { voted: votedCount, total: aliveCount })}
               </span>
             )}
           </div>
