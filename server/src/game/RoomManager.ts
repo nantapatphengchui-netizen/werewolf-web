@@ -733,7 +733,7 @@ export class RoomManager {
 
   private transitionToVoting(room: RoomState): { ok: boolean; room: RoomState } {
     room.phase        = 'voting';
-    room.publicVotes  = { hasVoted: [], tally: {}, votes: {} };
+    room.publicVotes  = { hasVoted: [], tally: {} };
     room.lastAnnouncement = null;
     room.phaseEndAt   = Date.now() + PHASE_DURATIONS.voting;
     room.timerPaused  = false;
@@ -760,8 +760,7 @@ export class RoomManager {
     if (targetId === persistentId) return { ok: false, error: 'Cannot vote for yourself.' };
 
     if (!this.dayVotes.has(room.code)) this.dayVotes.set(room.code, new Map());
-    if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {}, votes: {} };
-    if (!room.publicVotes.votes) room.publicVotes.votes = {};
+    if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {} };
 
     // Allow changing an existing vote — drop the previous target from the tally first
     const prev = this.dayVotes.get(room.code)!.get(persistentId);
@@ -774,7 +773,6 @@ export class RoomManager {
     }
     this.dayVotes.get(room.code)!.set(persistentId, targetId);
     room.publicVotes.tally[targetId] = (room.publicVotes.tally[targetId] ?? 0) + 1;
-    room.publicVotes.votes[persistentId] = targetId;
 
     const alivePlayers = room.players.filter(p => p.isAlive);
     if (alivePlayers.every(p => room.publicVotes!.hasVoted.includes(p.id))) {
@@ -796,7 +794,6 @@ export class RoomManager {
       room.publicVotes.hasVoted = room.publicVotes.hasVoted.filter(id => id !== persistentId);
       room.publicVotes.tally[prev] = Math.max(0, (room.publicVotes.tally[prev] ?? 1) - 1);
       if (room.publicVotes.tally[prev] === 0) delete room.publicVotes.tally[prev];
-      if (room.publicVotes.votes) delete room.publicVotes.votes[persistentId];
     }
     return { ok: true, room };
   }
@@ -1064,11 +1061,9 @@ export class RoomManager {
       const target = pickRandom(targets);
       if (!this.dayVotes.has(roomCode)) this.dayVotes.set(roomCode, new Map());
       this.dayVotes.get(roomCode)!.set(bot.id, target.id);
-      if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {}, votes: {} };
-      if (!room.publicVotes.votes) room.publicVotes.votes = {};
+      if (!room.publicVotes) room.publicVotes = { hasVoted: [], tally: {} };
       room.publicVotes.hasVoted.push(bot.id);
       room.publicVotes.tally[target.id] = (room.publicVotes.tally[target.id] ?? 0) + 1;
-      room.publicVotes.votes[bot.id] = target.id;
     }
 
     const alive = room.players.filter(p => p.isAlive);

@@ -83,8 +83,6 @@ export type GamePhase = 'lobby' | 'night' | 'day' | 'voting' | 'ended';
 export interface PublicVotes {
   hasVoted: string[];
   tally: Record<string, number>;
-  /** voterId → targetId (day voting is public) */
-  votes?: Record<string, string>;
 }
 
 /** i18n-friendly message: a translation key + interpolation params. */
