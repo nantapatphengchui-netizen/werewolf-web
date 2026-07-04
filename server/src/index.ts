@@ -126,11 +126,13 @@ io.on('connection', socket => {
         poisonPotionUsed:   witchInfo.poisonPotionUsed,
       });
     }
-    // Replay recent chat — wolf-channel lines only to a living werewolf
+    // Replay recent chat — wolf lines only to a living wolf, dead lines only to the dead
     const me = room.players.find(p => p.id === persistentId);
     const isLivingWolf = !!me?.isAlive && role === 'werewolf';
+    const isDead = !!me && !me.isAlive;
     for (const m of rooms.getChatLog(room.code)) {
       if (m.channel === 'wolf' && !isLivingWolf) continue;
+      if (m.channel === 'dead' && !isDead) continue;
       socket.emit('chat_message', m);
     }
     cancelHostTransfer(room.code);

@@ -72,7 +72,7 @@ export type WitchNightInfo = {
 
 export interface ChatMessage {
   id: string;
-  channel: 'public' | 'wolf';
+  channel: 'public' | 'wolf' | 'dead';
   senderId: string;
   senderName: string;
   text: string;

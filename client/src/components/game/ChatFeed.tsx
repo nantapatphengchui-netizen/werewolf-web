@@ -13,6 +13,7 @@ interface Props {
   playerId: string;
   canChat: boolean;
   wolfMode: boolean;
+  deadMode?: boolean;
   disabledReason: string;
   onSend: (text: string) => void;
   showReactions?: boolean;
@@ -24,7 +25,7 @@ type FeedItem =
   | { kind: 'log'; ts: number; ev: GameEvent }
   | { kind: 'chat'; ts: number; msg: ChatMessage };
 
-export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabledReason, onSend, showReactions, onReact, onClose }: Props) {
+export function ChatFeed({ messages, events, playerId, canChat, wolfMode, deadMode = false, disabledReason, onSend, showReactions, onReact, onClose }: Props) {
   const T = useT();
   const M = useMessage();
   const [draft, setDraft] = useState('');
@@ -48,7 +49,7 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
     setDraft('');
   };
 
-  const accent = wolfMode ? '#ef4444' : '#d97706';
+  const accent = deadMode ? '#94a3b8' : wolfMode ? '#ef4444' : '#d97706';
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'linear-gradient(180deg, rgba(11,9,6,0.98) 0%, rgba(3,4,6,0.98) 55%, rgba(6,5,10,0.98) 100%)' }}>
@@ -59,7 +60,7 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
             <path d="M17 9.5a6.5 6.5 0 0 1-9.3 5.9L3 16.5l1.2-4.4A6.5 6.5 0 1 1 17 9.5z" strokeLinejoin="round" />
           </svg>
           <p className="font-cinzel text-[11px] uppercase tracking-widest" style={{ color: accent }}>
-            {wolfMode ? T('chat.wolfTitle') : T('chat.title')}
+            {deadMode ? T('chat.deadTitle') : wolfMode ? T('chat.wolfTitle') : T('chat.title')}
           </p>
         </div>
         {onClose && (
@@ -98,10 +99,12 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
             const m = item.msg;
             const mine = m.senderId === playerId;
             const isWolf = m.channel === 'wolf';
-            const nameColor = isWolf ? '#f87171' : '#fbbf24';
+            const isDead = m.channel === 'dead';
+            const nameColor = isDead ? '#94a3b8' : isWolf ? '#f87171' : '#fbbf24';
             return (
               <div key={m.id} className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
                 <div className="flex items-center gap-1 px-1">
+                  {isDead && <span className="text-[9px]">🪦</span>}
                   {isWolf && <span className="text-[9px]">🐺</span>}
                   <span className="text-[9px] font-cinzel font-bold uppercase tracking-wide" style={{ color: nameColor }}>
                     {mine ? T('chat.you') : m.senderName}
@@ -110,9 +113,10 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
                 <div
                   className="max-w-[85%] px-2.5 py-1.5 rounded-lg text-[12px] font-medium leading-snug break-words"
                   style={{
-                    backgroundColor: isWolf ? 'rgba(80,10,10,0.55)' : mine ? 'rgba(120,53,0,0.55)' : 'rgba(30,26,20,0.9)',
-                    border: `1px solid ${isWolf ? 'rgba(185,28,28,0.4)' : 'rgba(120,65,10,0.35)'}`,
-                    color: '#f5e6c8',
+                    backgroundColor: isDead ? 'rgba(42,46,54,0.6)' : isWolf ? 'rgba(80,10,10,0.55)' : mine ? 'rgba(120,53,0,0.55)' : 'rgba(30,26,20,0.9)',
+                    border: `1px solid ${isDead ? 'rgba(100,116,139,0.4)' : isWolf ? 'rgba(185,28,28,0.4)' : 'rgba(120,65,10,0.35)'}`,
+                    color: isDead ? '#cbd5e1' : '#f5e6c8',
+                    fontStyle: isDead ? 'italic' : undefined,
                   }}
                 >
                   {m.text}
@@ -149,7 +153,7 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, disabl
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
               maxLength={300}
-              placeholder={wolfMode ? T('chat.placeholderWolf') : T('chat.placeholder')}
+              placeholder={deadMode ? T('chat.placeholderDead') : wolfMode ? T('chat.placeholderWolf') : T('chat.placeholder')}
               className="flex-1 min-w-0 bg-black/50 rounded-lg px-3 py-2 outline-none text-[12px]"
               style={{ border: `1px solid ${accent}44`, color: '#f5e6c8' }}
             />

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
 import { RoleSkillIcon } from './RoleSkillIcon';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useT } from '@/i18n';
 
 const ROLE_IMAGE: Record<Role, string> = {
@@ -103,6 +104,7 @@ interface Props {
 
 export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
   const T = useT();
+  const reducedMotion         = useReducedMotion();
   const [phase, setPhase]     = useState<Phase>('enter');
   const [yourIdx]             = useState(() => Math.floor(Math.random() * 4));
   const roleInfo              = ROLE_INFO[myRole];
@@ -115,14 +117,23 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
 
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
-    timersRef.current = [
-      setTimeout(() => setPhase('spread'),   350),
-      setTimeout(() => setPhase('shuffle'),  950),
-      setTimeout(() => setPhase('pick'),    2750),
-      setTimeout(() => setPhase('flip'),    3250),
-      setTimeout(() => setPhase('revealed'), 4050),
-    ];
+    // Reduced motion: skip the shuffle and reveal almost immediately
+    if (reducedMotion) {
+      timersRef.current = [
+        setTimeout(() => setPhase('spread'), 60),
+        setTimeout(() => setPhase('revealed'), 260),
+      ];
+    } else {
+      timersRef.current = [
+        setTimeout(() => setPhase('spread'),   350),
+        setTimeout(() => setPhase('shuffle'),  950),
+        setTimeout(() => setPhase('pick'),    2750),
+        setTimeout(() => setPhase('flip'),    3250),
+        setTimeout(() => setPhase('revealed'), 4050),
+      ];
+    }
     return () => timersRef.current.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Tap anywhere to fast-forward: first jump to the reveal, then deal the card in.

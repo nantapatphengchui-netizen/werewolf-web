@@ -14,7 +14,8 @@ export type SoundEvent =
   | 'player_die'
   | 'your_turn'
   | 'ready_up'
-  | 'timer_urgent';
+  | 'timer_urgent'
+  | 'timer_tick';
 
 // ── Synthesised cues (no audio assets needed) ─────────────────────────────────
 // Each cue is a tiny sequence of oscillator notes with a quick attack/decay.
@@ -26,6 +27,7 @@ const PATTERNS: Record<SoundEvent, Note[]> = {
   vote_cast:     [{ f: 196, t: 0,    d: 0.16, type: 'square', g: 0.45 }, { f: 147, t: 0.05, d: 0.22, type: 'square', g: 0.45 }],
   player_die:    [{ f: 220, t: 0,    d: 0.5,  type: 'sawtooth', g: 0.42 }, { f: 104, t: 0.14, d: 0.62, type: 'sawtooth', g: 0.42 }],
   timer_urgent:  [{ f: 1046, t: 0,   d: 0.08, type: 'square', g: 0.5 }, { f: 1046, t: 0.17, d: 0.08, type: 'square', g: 0.5 }],
+  timer_tick:    [{ f: 880, t: 0,    d: 0.05, type: 'square', g: 0.3 }],
   phase_night:   [{ f: 392, t: 0,    d: 0.32, type: 'sine' }],
   phase_day:     [{ f: 659, t: 0,    d: 0.30, type: 'sine' }],
   phase_voting:  [{ f: 494, t: 0,    d: 0.26, type: 'triangle' }],

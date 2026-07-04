@@ -556,6 +556,20 @@ export function registerHandlers(io: IO, socket: Sock, rooms: RoomManager): void
 
     const base = { id: Math.random().toString(36).slice(2, 10), senderId: pid, senderName: sender.name, text: clean, timestamp: now };
 
+    if (!sender.isAlive) {
+      // The dead talk among themselves in a private graveyard channel (any phase)
+      chatThrottle.set(socket.id, now);
+      const msg = { channel: 'dead' as const, ...base };
+      rooms.addChatMessage(room.code, msg);
+      for (const p of room.players) {
+        if (p.isAlive) continue;
+        const dsid  = rooms.getSocketId(p.id);
+        const dsock = dsid ? io.sockets.sockets.get(dsid) : undefined;
+        dsock?.emit('chat_message', msg);
+      }
+      return;
+    }
+
     if (room.phase === 'night') {
       // Only living werewolves may talk at night — private wolf channel
       if (!sender.isAlive || rooms.getRole(pid) !== 'werewolf') return;

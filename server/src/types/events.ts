@@ -11,7 +11,7 @@ export interface ServerToClientEvents {
   /** Emoji reaction broadcast — sender + emoji */
   reaction:           (payload: { playerId: string; emoji: string }) => void;
   /** Chat message — 'public' goes to the room, 'wolf' only to living werewolves */
-  chat_message:       (payload: { id: string; channel: 'public' | 'wolf'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
+  chat_message:       (payload: { id: string; channel: 'public' | 'wolf' | 'dead'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
   /** Live werewolf kill-vote tally — sent only to living werewolves at night */
   wolf_votes:         (payload: { tally: Record<string, number> }) => void;
   /** Sent privately to the Hunter when their death triggers a final shot */

@@ -9,7 +9,7 @@ export interface ServerToClientEvents {
   error:                (payload: { message: string }) => void;
   kicked:               () => void;
   reaction:             (payload: { playerId: string; emoji: string }) => void;
-  chat_message:         (payload: { id: string; channel: 'public' | 'wolf'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
+  chat_message:         (payload: { id: string; channel: 'public' | 'wolf' | 'dead'; senderId: string; senderName: string; text: string; timestamp: number }) => void;
   wolf_votes:           (payload: { tally: Record<string, number> }) => void;
   hunter_shot_pending:  (payload: { hunterId: string; availableTargetIds: string[] }) => void;
   witch_night_info:     (payload: {

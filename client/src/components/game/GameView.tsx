@@ -11,6 +11,7 @@ import { AudioControls } from '@/components/ui/AudioControls';
 import { LangToggle } from '@/components/ui/LangToggle';
 import { useT, useMessage } from '@/i18n';
 import { useSoundEffect } from '@/hooks/useSoundEffect';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { RolePanel } from './RolePanel';
 import { RoleRevealOverlay } from './RoleRevealOverlay';
 import { GamePlayerGrid } from './GamePlayerGrid';
@@ -262,6 +263,7 @@ export function GameView({
   const M = useMessage();
   const socket = useSocket();
   const { play: playSfx } = useSoundEffect();
+  const reducedMotion = useReducedMotion();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [selectedTarget, setSelectedTarget]   = useState<string | null>(null);
   const [roleOpen, setRoleOpen]   = useState(false);
@@ -273,6 +275,9 @@ export function GameView({
   const [toast, setToast] = useState<ToastState | null>(null);
   const [seerReveal, setSeerReveal] = useState<{ targetName: string; role: Role; key: number } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [announce, setAnnounce] = useState<{ text: string; key: number } | null>(null);
+  const announceKeyRef   = useRef<string>('');
+  const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (text: string, tone: ToastTone = 'default') => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -311,11 +316,11 @@ export function GameView({
       if (room.phase === 'night' || room.phase === 'day' || room.phase === 'voting') {
         setPhaseTransition(room.phase);
         if (phaseTransTimerRef.current) clearTimeout(phaseTransTimerRef.current);
-        phaseTransTimerRef.current = setTimeout(() => setPhaseTransition(null), 2500);
+        phaseTransTimerRef.current = setTimeout(() => setPhaseTransition(null), reducedMotion ? 700 : 2500);
         playSfx(room.phase === 'night' ? 'phase_night' : room.phase === 'day' ? 'phase_day' : 'phase_voting');
       }
     }
-  }, [room.phase, playSfx]);
+  }, [room.phase, playSfx, reducedMotion]);
 
   // Emoji reaction socket listener
   useEffect(() => {
@@ -475,9 +480,9 @@ export function GameView({
 
   // Chat
   const chatWolfMode = room.phase === 'night' && myRole === 'werewolf' && imAlive;
-  const canChat = imAlive && (chatWolfMode || room.phase === 'day' || room.phase === 'voting');
-  const chatDisabledReason = !imAlive ? T('chat.disabledDead')
-    : room.phase === 'night' ? T('chat.disabledNight')
+  const chatDeadMode = !imAlive && room.phase !== 'lobby'; // the dead speak in the graveyard
+  const canChat = chatDeadMode || (imAlive && (chatWolfMode || room.phase === 'day' || room.phase === 'voting'));
+  const chatDisabledReason = room.phase === 'night' ? T('chat.disabledNight')
     : T('chat.disabledDefault');
   const unreadChat = chatOpen ? 0 : Math.max(0, chatMessages.length - chatSeen);
 
@@ -497,10 +502,16 @@ export function GameView({
 
   useEffect(() => {
     if (!room.phaseEndAt || room.timerPaused) return;
-    const ms = room.phaseEndAt - Date.now() - 10000;
-    if (ms <= 0) return;
-    const id = setTimeout(() => playSfx('timer_urgent'), ms);
-    return () => clearTimeout(id);
+    const now = Date.now();
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const urgentMs = room.phaseEndAt - now - 10000;
+    if (urgentMs > 0) timers.push(setTimeout(() => playSfx('timer_urgent'), urgentMs));
+    // Ticking in the final 5 seconds
+    for (let s = 5; s >= 1; s--) {
+      const ms = room.phaseEndAt - now - s * 1000;
+      if (ms > 0) timers.push(setTimeout(() => playSfx('timer_tick'), ms));
+    }
+    return () => timers.forEach(clearTimeout);
   }, [room.phaseEndAt, room.timerPaused, playSfx]);
 
   const endCuedRef = useRef(false);
@@ -512,6 +523,18 @@ export function GameView({
       endCuedRef.current = false;
     }
   }, [room.phase, room.winner, playSfx]);
+
+  // Surface a new announcement as a floating toast (auto-dismiss)
+  useEffect(() => {
+    const a = room.lastAnnouncement;
+    if (!a) { announceKeyRef.current = ''; return; }
+    const id = a.code + JSON.stringify(a.params ?? {});
+    if (id === announceKeyRef.current) return;
+    announceKeyRef.current = id;
+    setAnnounce({ text: M(a), key: Date.now() });
+    if (announceTimerRef.current) clearTimeout(announceTimerRef.current);
+    announceTimerRef.current = setTimeout(() => setAnnounce(null), 5500);
+  }, [room.lastAnnouncement, M]);
 
   return (
     <div className="relative z-10 flex flex-col overflow-hidden lg:pr-80" style={{ height: '100dvh' }}>
@@ -590,6 +613,7 @@ export function GameView({
             playerId={playerId}
             canChat={canChat}
             wolfMode={chatWolfMode}
+            deadMode={chatDeadMode}
             disabledReason={chatDisabledReason}
             onSend={(text) => socket?.emit('chat_send', { text })}
             showReactions={(room.phase === 'day' || room.phase === 'voting') && imAlive}
@@ -1014,21 +1038,9 @@ export function GameView({
       </div>
 
 
-      {/* ── Banner area ───────────────────────────────────────────────────── */}
+      {/* ── Banner area (announcements now surface as a floating toast) ──────── */}
       <div className="shrink-0 px-3 space-y-1.5 pb-1 relative z-10">
 
-        {/* Last announcement */}
-        {room.lastAnnouncement && (
-          <div
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
-            style={{ backgroundColor: 'rgba(20,8,0,0.88)', border: '1px solid rgba(180,83,9,0.40)', borderLeft: '3px solid rgba(217,119,6,0.70)', boxShadow: '0 2px 12px rgba(0,0,0,0.50)' }}
-          >
-            <svg viewBox="0 0 20 20" className="w-3.5 h-3.5 shrink-0" fill="rgba(180,83,9,0.80)">
-              <path d="M10 2a6 6 0 0 0-6 6c0 2.5 1.5 4.7 3.7 5.6V15h4.6v-1.4A6 6 0 0 0 10 2zm-1 11v1h2v-1H9zm1-9a4 4 0 0 1 4 4 4 4 0 0 1-2.6 3.7l-.4.1V13h-2v-1.2l-.4-.1A4 4 0 0 1 6 8a4 4 0 0 1 4-4z"/>
-            </svg>
-            <p className="text-[11px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{M(room.lastAnnouncement)}</p>
-          </div>
-        )}
 
         {/* Hunter pending — this player is the hunter */}
         {isHunterPending && (
@@ -1259,6 +1271,7 @@ export function GameView({
               playerId={playerId}
               canChat={canChat}
               wolfMode={chatWolfMode}
+            deadMode={chatDeadMode}
               disabledReason={chatDisabledReason}
               onSend={(text) => socket?.emit('chat_send', { text })}
               showReactions={(room.phase === 'day' || room.phase === 'voting') && imAlive}
@@ -1281,6 +1294,28 @@ export function GameView({
 
       {/* Action feedback toast */}
       {toast && <ActionToast toast={toast} />}
+
+      {/* Announcement toast (who died / dawn) — floats then auto-dismisses */}
+      {announce && (
+        <div className="fixed top-14 lg:top-20 left-1/2 -translate-x-1/2 z-[70] px-4 w-full max-w-md pointer-events-none">
+          <div
+            key={announce.key}
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg"
+            style={{
+              backgroundColor: 'rgba(20,8,0,0.96)',
+              border: '1px solid rgba(180,83,9,0.50)',
+              borderLeft: '3px solid rgba(217,119,6,0.80)',
+              boxShadow: '0 6px 26px rgba(0,0,0,0.7), 0 0 18px rgba(217,119,6,0.22)',
+              animation: 'announce-in 0.4s ease-out',
+            }}
+          >
+            <svg viewBox="0 0 20 20" className="w-4 h-4 shrink-0" fill="rgba(217,119,6,0.9)">
+              <path d="M10 2a6 6 0 0 0-6 6c0 2.5 1.5 4.7 3.7 5.6V15h4.6v-1.4A6 6 0 0 0 10 2zm-1 11v1h2v-1H9zm1-9a4 4 0 0 1 4 4 4 4 0 0 1-2.6 3.7l-.4.1V13h-2v-1.2l-.4-.1A4 4 0 0 1 6 8a4 4 0 0 1 4-4z"/>
+            </svg>
+            <p className="text-[12px] italic leading-snug flex-1" style={{ color: '#fde68a' }}>{announce.text}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

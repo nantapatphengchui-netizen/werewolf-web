@@ -26,11 +26,13 @@ export const th: Record<string, string> = {
   // ── Chat ───────────────────────────────────────────────────────────────────
   'chat.title':            'แชทหมู่บ้าน',
   'chat.wolfTitle':        'แชทหมาป่า',
+  'chat.deadTitle':        'สุสาน',
   'chat.you':              'คุณ',
   'chat.send':             'ส่ง',
   'chat.empty':            'ยังไม่มีข้อความ',
   'chat.placeholder':      'พิมพ์ข้อความ…',
   'chat.placeholderWolf':  'คุยกับหมาป่าด้วยกัน…',
+  'chat.placeholderDead':  'คุยกับดวงวิญญาณ…',
   'chat.disabledNight':    'หมู่บ้านหลับอยู่ — เฉพาะหมาป่าคุยกันได้ตอนกลางคืน',
   'chat.disabledDead':     'ผู้ที่ตายแล้วไม่สามารถพูดได้',
   'chat.disabledDefault':  'ยังพิมพ์ข้อความไม่ได้ตอนนี้',
