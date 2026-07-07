@@ -105,20 +105,15 @@ function getActionSkillImage(role: Role | null | undefined, actionType: CardActi
 }
 
 function getActionIcon(role: Role | null | undefined, actionType: CardActionType) {
-  const glow = ACTION_GLOW_COLORS[actionType];
+  // Transparent cutout art — the overlay wrapper supplies the coloured glow
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={getActionSkillImage(role, actionType)}
       alt=""
       draggable={false}
-      className="rounded-full object-cover"
-      style={{
-        width: 62,
-        height: 62,
-        border: `2px solid ${glow}dd`,
-        boxShadow: `0 0 16px ${glow}99, 0 0 36px ${glow}44`,
-      }}
+      className="object-contain"
+      style={{ width: 68, height: 68 }}
     />
   );
 }
