@@ -1,8 +1,8 @@
-export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor' | 'hunter' | 'witch' | 'bodyguard';
+export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor' | 'hunter' | 'witch' | 'bodyguard' | 'jester';
 
 export interface RoleInfo {
   name: string;
-  alignment: 'village' | 'werewolf';
+  alignment: 'village' | 'werewolf' | 'neutral';
   description: string;
   nightAction: string | null;
   accentColor: string;
@@ -66,6 +66,14 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
     accentColor: '#2563eb',
     bgClass: 'bg-blue-950',
   },
+  jester: {
+    name: 'Jester',
+    alignment: 'neutral',
+    description: 'You are the Jester. You win alone if the village votes to exile you. Act suspicious — but not too suspicious.',
+    nightAction: null,
+    accentColor: '#d946ef',
+    bgClass: 'bg-fuchsia-950',
+  },
 };
 
 export interface Player {
@@ -79,6 +87,26 @@ export interface Player {
 }
 
 export type GamePhase = 'lobby' | 'night' | 'day' | 'voting' | 'ended';
+
+/** Host-configurable game options (lobby only). */
+export interface GameSettings {
+  werewolfCount: number;
+  roles: {
+    seer: boolean;
+    doctor: boolean;
+    bodyguard: boolean;
+    witch: boolean;
+    hunter: boolean;
+    jester: boolean;
+  };
+  timers: { night: number; day: number; voting: number };
+}
+
+export const DEFAULT_SETTINGS: GameSettings = {
+  werewolfCount: 2,
+  roles: { seer: true, doctor: true, bodyguard: true, witch: true, hunter: true, jester: false },
+  timers: { night: 45_000, day: 120_000, voting: 60_000 },
+};
 
 export interface PublicVotes {
   hasVoted: string[];
@@ -108,7 +136,8 @@ export interface RoomState {
   createdAt: number;
   round: number;
   lastAnnouncement: GameMessage | null;
-  winner: 'village' | 'werewolf' | null;
+  winner: 'village' | 'werewolf' | 'jester' | null;
+  settings?: GameSettings;
   publicVotes: PublicVotes | null;
   phaseEndAt: number | null;
   readyPlayers: string[];

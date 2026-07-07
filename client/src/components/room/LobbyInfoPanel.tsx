@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { Player } from '@/types/game';
+import type { Player, GameSettings } from '@/types/game';
+import { DEFAULT_SETTINGS } from '@/types/game';
 import { HostAdminPanel } from './HostAdminPanel';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { AudioControls } from '@/components/ui/AudioControls';
@@ -27,6 +28,8 @@ interface Props {
   players: Player[];
   hostId: string;
   isLocked: boolean;
+  settings?: GameSettings;
+  onUpdateSettings?: (s: Partial<GameSettings>) => void;
   onKick: (targetId: string) => void;
   onLock: () => void;
   onUnlock: () => void;
@@ -216,12 +219,28 @@ export function LobbyInfoPanel(props: Props) {
         </div>
       </div>
 
+      {/* Game composition summary — visible to everyone */}
+      {(() => {
+        const s = props.settings ?? DEFAULT_SETTINGS;
+        const enabled = (['seer','doctor','bodyguard','witch','hunter','jester'] as const).filter(r => s.roles[r]);
+        return (
+          <div className="space-y-1">
+            <span className="text-[9px] font-cinzel uppercase tracking-[0.2em] text-amber-700/75">{T('settings.title')}</span>
+            <p className="text-[10px] font-cinzel leading-relaxed" style={{ color: '#d9a45b' }}>
+              🐺 ×{s.werewolfCount} · {enabled.map(r => T(`role.${r}.name`)).join(' · ')}
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Host / dev controls */}
       <HostAdminPanel
         isHost={props.isHost}
         players={props.players}
         hostId={props.hostId}
         isLocked={props.isLocked}
+        settings={props.settings}
+        onUpdateSettings={props.onUpdateSettings}
         onKick={props.onKick}
         onLock={props.onLock}
         onUnlock={props.onUnlock}

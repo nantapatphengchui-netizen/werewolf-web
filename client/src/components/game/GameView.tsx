@@ -162,6 +162,15 @@ const ROLE_HUD_ICON: Record<string, React.ReactNode> = {
       <path d="M8 1.5L2.5 4v3.5c0 3.5 2.5 5.8 5.5 6.5 3-.7 5.5-3 5.5-6.5V4L8 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
     </svg>
   ),
+  jester: (
+    <svg viewBox="0 0 16 16" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11 3.7 5.5 6.4 8.7 8 3.5 9.6 8.7 12.3 5.5 13 11z" />
+      <path d="M3.4 13h9.2" />
+      <circle cx="3.6" cy="4.8" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="2.6" r="0.8" fill="currentColor" stroke="none" />
+      <circle cx="12.4" cy="4.8" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  ),
 };
 
 const DISCUSSION_PROMPTS = [

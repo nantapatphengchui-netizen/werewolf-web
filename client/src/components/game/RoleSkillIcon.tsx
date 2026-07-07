@@ -86,6 +86,19 @@ function SearchSkill({ color, size }: IconProps) {
   );
 }
 
+/** Jester — three-pointed fool's cap with bells */
+function JesterSkill({ color, size }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 16 5 7l4 5 3-8 3 8 4-5 1 9z" />
+      <path d="M4.5 19h15" />
+      <circle cx="5" cy="6" r="1.1" fill={color} stroke="none" />
+      <circle cx="12" cy="3.2" r="1.1" fill={color} stroke="none" />
+      <circle cx="19" cy="6" r="1.1" fill={color} stroke="none" />
+    </svg>
+  );
+}
+
 const SKILL_ICON: Record<Role, (p: IconProps) => React.ReactNode> = {
   werewolf:  p => <ClawSkill {...p} />,
   seer:      p => <EyeSkill {...p} />,
@@ -94,6 +107,7 @@ const SKILL_ICON: Record<Role, (p: IconProps) => React.ReactNode> = {
   hunter:    p => <CrosshairSkill {...p} />,
   witch:     p => <PotionSkill {...p} />,
   villager:  p => <SearchSkill {...p} />,
+  jester:    p => <JesterSkill {...p} />,
 };
 
 export function RoleSkillIcon({ role, size = 22, color }: { role: Role; size?: number; color: string }) {

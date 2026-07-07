@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { Player } from '@/types/game';
+import type { Player, GameSettings } from '@/types/game';
+import { DEFAULT_SETTINGS } from '@/types/game';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useT } from '@/i18n';
 
 const TEST_BOTS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_TEST_BOTS === 'true';
 
@@ -11,6 +13,8 @@ interface Props {
   players: Player[];
   hostId: string;
   isLocked: boolean;
+  settings?: GameSettings;
+  onUpdateSettings?: (s: Partial<GameSettings>) => void;
   onKick: (targetId: string) => void;
   onLock: () => void;
   onUnlock: () => void;
@@ -82,11 +86,30 @@ function ModalBtn({
   );
 }
 
+/** Small pill used for wolf-count / timer choices and role toggles. */
+function OptionChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        backgroundColor: active ? 'rgba(120,50,10,0.92)' : 'rgba(20,15,8,0.85)',
+        border: `1px solid ${active ? 'rgba(217,119,6,0.7)' : 'rgba(146,64,14,0.30)'}`,
+        color: active ? '#fde68a' : '#a16207',
+      }}
+      className="px-2 py-1 text-[10px] font-cinzel tracking-wide uppercase rounded-md transition-all duration-150 hover:brightness-125 active:scale-95"
+    >
+      {label}
+    </button>
+  );
+}
+
 export function HostAdminPanel({
   isHost,
   players,
   hostId,
   isLocked,
+  settings,
+  onUpdateSettings,
   onKick,
   onLock,
   onUnlock,
@@ -95,11 +118,19 @@ export function HostAdminPanel({
   onFillBots,
   onRemoveBots,
 }: Props) {
+  const T = useT();
   const [hostOpen, setHostOpen] = useState(false);
   const [botsOpen, setBotsOpen] = useState(false);
   const [kickTarget, setKickTarget] = useState<Player | null>(null);
 
   const nonHostPlayers = players.filter(p => p.id !== hostId);
+  const s = settings ?? DEFAULT_SETTINGS;
+  const ROLE_KEYS = ['seer', 'doctor', 'bodyguard', 'witch', 'hunter', 'jester'] as const;
+  const TIMER_OPTS: Record<'night' | 'day' | 'voting', number[]> = {
+    night:  [30_000, 45_000, 60_000],
+    day:    [60_000, 120_000, 180_000],
+    voting: [30_000, 60_000, 90_000],
+  };
 
   if (!isHost && !TEST_BOTS_ENABLED) return null;
 
@@ -160,7 +191,7 @@ export function HostAdminPanel({
       {/* ── Host Tools modal ── */}
       {hostOpen && (
         <Modal title="Host Tools" onClose={() => setHostOpen(false)}>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-0.5">
             <div className="flex gap-2">
               <ModalBtn onClick={isLocked ? onUnlock : onLock} active={isLocked}>
                 {isLocked ? 'Unlock Room' : 'Lock Room'}
@@ -172,6 +203,58 @@ export function HostAdminPanel({
               <p className="text-[10px] text-center font-cinzel" style={{ color: '#92400e' }}>
                 Room locked — no new players can join
               </p>
+            )}
+
+            {/* ── Game settings (lobby only) ── */}
+            {onUpdateSettings && (
+              <div className="space-y-2.5 pt-1" style={{ borderTop: '1px solid rgba(146,64,14,0.22)' }}>
+                <p className="text-[9px] font-cinzel uppercase tracking-widest" style={{ color: '#78350f' }}>
+                  {T('settings.title')}
+                </p>
+
+                {/* Werewolf count */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-cinzel" style={{ color: '#d97706' }}>{T('settings.wolves')}</span>
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map(n => (
+                      <OptionChip key={n} label={String(n)} active={s.werewolfCount === n}
+                        onClick={() => onUpdateSettings({ werewolfCount: n })} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Optional roles */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-cinzel" style={{ color: '#d97706' }}>{T('settings.roles')}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ROLE_KEYS.map(rk => (
+                      <OptionChip
+                        key={rk}
+                        label={T(`role.${rk}.name`)}
+                        active={s.roles[rk]}
+                        onClick={() => onUpdateSettings({ roles: { ...s.roles, [rk]: !s.roles[rk] } })}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Phase timers */}
+                {(['night', 'day', 'voting'] as const).map(ph => (
+                  <div key={ph} className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-cinzel" style={{ color: '#d97706' }}>{T(`settings.timer.${ph}`)}</span>
+                    <div className="flex gap-1.5">
+                      {TIMER_OPTS[ph].map(ms => (
+                        <OptionChip
+                          key={ms}
+                          label={`${ms / 1000}s`}
+                          active={s.timers[ph] === ms}
+                          onClick={() => onUpdateSettings({ timers: { ...s.timers, [ph]: ms } })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {nonHostPlayers.length > 0 ? (

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import type { Role } from '@/types/game';
@@ -15,6 +15,7 @@ const ROLE_IMAGE: Record<Role, string> = {
   hunter:    '/role-hunter.png',
   witch:     '/role-witch.png',
   bodyguard: '/role-bodyguard.png',
+  jester:    '/role-villager.png',
 };
 
 type Phase = 'enter' | 'spread' | 'shuffle' | 'pick' | 'flip' | 'revealed';
@@ -109,7 +110,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
   const [yourIdx]             = useState(() => Math.floor(Math.random() * 4));
   const roleInfo              = ROLE_INFO[myRole];
 
-  // "Deal into place" — on enter, the revealed card flies to the player's slot
+  // "Deal into place" โ€” on enter, the revealed card flies to the player's slot
   const yourCardRef                 = useRef<HTMLDivElement>(null);
   const [flying, setFlying]         = useState(false);
   const [flyStarted, setFlyStarted] = useState(false);
@@ -159,7 +160,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
     setTimeout(onDismiss, 700);
   };
 
-  // Auto-deal the card into the slot once revealed — no button press needed.
+  // Auto-deal the card into the slot once revealed โ€” no button press needed.
   // The delay lets the player read their role first.
   useEffect(() => {
     if (phase !== 'revealed') return;
@@ -195,7 +196,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         style={{ opacity: flying ? 0 : 1, transition: 'opacity 0.4s ease' }}
       >
 
-      {/* ── Title ── */}
+      {/* โ”€โ”€ Title โ”€โ”€ */}
       <div
         className="mb-6 sm:mb-10 text-center"
         style={{
@@ -218,7 +219,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         </h2>
       </div>
 
-      {/* ── 4 Cards ── */}
+      {/* โ”€โ”€ 4 Cards โ”€โ”€ */}
       <div className="flex gap-2.5 sm:gap-4 items-end">
         {[0, 1, 2, 3].map(i => {
           const isYours = i === yourIdx;
@@ -303,7 +304,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         })}
       </div>
 
-      {/* ── Role info after flip ── */}
+      {/* โ”€โ”€ Role info after flip โ”€โ”€ */}
       <div
         className="mt-6 sm:mt-9 text-center"
         style={{
@@ -362,7 +363,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
 
       </div>{/* end fading content */}
 
-      {/* ── Flying clone — deals the revealed card into the player's own slot ── */}
+      {/* โ”€โ”€ Flying clone โ€” deals the revealed card into the player's own slot โ”€โ”€ */}
       {fly && (
         <div
           style={{

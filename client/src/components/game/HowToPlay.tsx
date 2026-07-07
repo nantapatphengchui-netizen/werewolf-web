@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import type { Role } from '@/types/game';
 import { ROLE_INFO } from '@/types/game';
@@ -13,10 +13,11 @@ const ROLE_IMAGE: Record<Role, string> = {
   hunter:    '/role-hunter.png',
   witch:     '/role-witch.png',
   bodyguard: '/role-bodyguard.png',
+  jester:    '/role-villager.png',
 };
 
-// Werewolf first (the threat), then village roles
-const ROLE_ORDER: Role[] = ['werewolf', 'seer', 'doctor', 'bodyguard', 'witch', 'hunter', 'villager'];
+// Werewolf first (the threat), then village roles, then the neutral jester
+const ROLE_ORDER: Role[] = ['werewolf', 'seer', 'doctor', 'bodyguard', 'witch', 'hunter', 'jester', 'villager'];
 
 const PHASE_STEPS: { phase: 'night' | 'day' | 'voting'; descKey: string; color: string }[] = [
   { phase: 'night',  descKey: 'howto.nightDesc',  color: '#a78bfa' },
@@ -65,7 +66,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
             style={{ color: '#92400e' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#fbbf24')}
             onMouseLeave={e => (e.currentTarget.style.color = '#92400e')}
-          >×</button>
+          >ร—</button>
         </div>
 
         {/* Scrollable body */}
@@ -76,11 +77,11 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
             <SectionTitle>{T('howto.objectiveTitle')}</SectionTitle>
             <div className="space-y-2">
               <div className="flex items-start gap-2.5 px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(120,53,0,0.18)', border: '1px solid rgba(180,83,9,0.30)' }}>
-                <span className="text-base leading-none mt-0.5">🏰</span>
+                <span className="text-base leading-none mt-0.5">๐ฐ</span>
                 <p className="text-[12px] leading-snug" style={{ color: '#fde68a' }}>{T('howto.villageGoal')}</p>
               </div>
               <div className="flex items-start gap-2.5 px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(80,10,10,0.25)', border: '1px solid rgba(185,28,28,0.30)' }}>
-                <span className="text-base leading-none mt-0.5">🐺</span>
+                <span className="text-base leading-none mt-0.5">๐บ</span>
                 <p className="text-[12px] leading-snug" style={{ color: '#fca5a5' }}>{T('howto.wolfGoal')}</p>
               </div>
             </div>

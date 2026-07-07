@@ -76,6 +76,18 @@ function BodyguardIcon({ color }: { color: string }) {
   );
 }
 
+function JesterIcon({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 16 5 7l4 5 3-8 3 8 4-5 1 9z" />
+      <path d="M4.5 19h15" />
+      <circle cx="5" cy="6" r="1.1" fill={color} stroke="none" />
+      <circle cx="12" cy="3.2" r="1.1" fill={color} stroke="none" />
+      <circle cx="19" cy="6" r="1.1" fill={color} stroke="none" />
+    </svg>
+  );
+}
+
 const ROLE_ICONS: Record<Role, (color: string) => ReactNode> = {
   werewolf:  c => <WerewolfIcon color={c} />,
   seer:      c => <SeerIcon color={c} />,
@@ -84,6 +96,7 @@ const ROLE_ICONS: Record<Role, (color: string) => ReactNode> = {
   hunter:    c => <HunterIcon color={c} />,
   witch:     c => <WitchIcon color={c} />,
   bodyguard: c => <BodyguardIcon color={c} />,
+  jester:    c => <JesterIcon color={c} />,
 };
 
 interface Props {

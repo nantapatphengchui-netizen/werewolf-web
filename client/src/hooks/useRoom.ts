@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { useSocket } from '@/providers/SocketProvider';
 import { useGameStore } from '@/store/gameStore';
+import type { GameSettings } from '@/types/game';
 
 export function useRoom() {
   const socket = useSocket();
@@ -89,6 +90,10 @@ export function useRoom() {
     socket?.emit('host_reset_ready');
   }, [socket]);
 
+  const hostUpdateSettings = useCallback((settings: Partial<GameSettings>) => {
+    socket?.emit('host_update_settings', { settings });
+  }, [socket]);
+
   const hostPauseTimer = useCallback(() => {
     socket?.emit('host_pause_timer');
   }, [socket]);
@@ -152,6 +157,7 @@ export function useRoom() {
     hostLockRoom,
     hostUnlockRoom,
     hostResetReady,
+    hostUpdateSettings,
     hostPauseTimer,
     hostResumeTimer,
     hostExtendTimer,

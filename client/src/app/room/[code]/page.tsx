@@ -70,7 +70,7 @@ export default function RoomPage() {
     startGame, leaveRoom, playerReady,
     nightAction, castVote, advanceDay,
     restartGame, returnToLobby,
-    hostKickPlayer, hostLockRoom, hostUnlockRoom, hostResetReady,
+    hostKickPlayer, hostLockRoom, hostUnlockRoom, hostResetReady, hostUpdateSettings,
     hostPauseTimer, hostResumeTimer, hostExtendTimer, hostEndPhase,
     hostRestartGame, hostReturnToLobby,
     hostAddBot, hostFillBots, hostRemoveBots,
@@ -199,6 +199,8 @@ export default function RoomPage() {
                   players={room.players}
                   hostId={room.hostId}
                   isLocked={room.isLocked}
+                  settings={room.settings}
+                  onUpdateSettings={isHost ? hostUpdateSettings : undefined}
                   onKick={hostKickPlayer}
                   onLock={hostLockRoom}
                   onUnlock={hostUnlockRoom}
@@ -217,6 +219,8 @@ export default function RoomPage() {
                 players={room.players}
                 hostId={room.hostId}
                 isLocked={room.isLocked}
+                settings={room.settings}
+                onUpdateSettings={isHost ? hostUpdateSettings : undefined}
                 onKick={hostKickPlayer}
                 onLock={hostLockRoom}
                 onUnlock={hostUnlockRoom}

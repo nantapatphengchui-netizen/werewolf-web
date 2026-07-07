@@ -1,5 +1,5 @@
-import type { Player, RoomState, GamePhase, Role, GameEvent, GameMessage } from '../types/game';
-import { assignRoles } from './roles/roleAssigner';
+import type { Player, RoomState, GamePhase, Role, GameEvent, GameMessage, GameSettings } from '../types/game';
+import { assignRoles, maxWolvesFor } from './roles/roleAssigner';
 
 const MIN_PLAYERS = 5;
 const MAX_PLAYERS = 12;
@@ -11,6 +11,19 @@ export const PHASE_DURATIONS: Record<string, number> = {
   night:  45_000,
   day:   120_000,
   voting: 60_000,
+};
+
+export function defaultSettings(): GameSettings {
+  return {
+    werewolfCount: 2,
+    roles: { seer: true, doctor: true, bodyguard: true, witch: true, hunter: true, jester: false },
+    timers: { night: PHASE_DURATIONS.night, day: PHASE_DURATIONS.day, voting: PHASE_DURATIONS.voting },
+  };
+}
+
+const clampMs = (v: unknown, min: number, max: number, fallback: number): number => {
+  const n = typeof v === 'number' && isFinite(v) ? Math.round(v) : fallback;
+  return Math.min(max, Math.max(min, n));
 };
 
 function generateCode(): string {
@@ -147,6 +160,7 @@ export class RoomManager {
       round: 0, lastAnnouncement: null, winner: null, publicVotes: null,
       phaseEndAt: null, readyPlayers: [], eventLog: [], isLocked: false,
       timerPaused: false, pausedTimeRemaining: null, hunterPendingShot: null,
+      settings: defaultSettings(),
     };
 
     this.rooms.set(code, room);
@@ -280,11 +294,44 @@ export class RoomManager {
     return { ok: true };
   }
 
+  /** Effective phase duration — host settings with a hard fallback. */
+  private phaseMs(room: RoomState, phase: 'night' | 'day' | 'voting'): number {
+    return room.settings?.timers?.[phase] ?? PHASE_DURATIONS[phase];
+  }
+
+  /** Sanitize + apply host game settings (lobby only). */
+  updateSettings(hostPid: string, incoming: Partial<GameSettings>): { ok: boolean; error?: string; room?: RoomState } {
+    const check = this.requireHost(hostPid);
+    if (!check.ok) return check;
+    const room = check.room;
+    if (room.phase !== 'lobby') return { ok: false, error: 'Settings can only be changed in the lobby.' };
+
+    const cur = room.settings ?? defaultSettings();
+    room.settings = {
+      werewolfCount: clampMs(incoming.werewolfCount, 1, 4, cur.werewolfCount),
+      roles: {
+        seer:      !!(incoming.roles?.seer      ?? cur.roles.seer),
+        doctor:    !!(incoming.roles?.doctor    ?? cur.roles.doctor),
+        bodyguard: !!(incoming.roles?.bodyguard ?? cur.roles.bodyguard),
+        witch:     !!(incoming.roles?.witch     ?? cur.roles.witch),
+        hunter:    !!(incoming.roles?.hunter    ?? cur.roles.hunter),
+        jester:    !!(incoming.roles?.jester    ?? cur.roles.jester),
+      },
+      timers: {
+        night:  clampMs(incoming.timers?.night,  15_000, 180_000, cur.timers.night),
+        day:    clampMs(incoming.timers?.day,    30_000, 600_000, cur.timers.day),
+        voting: clampMs(incoming.timers?.voting, 15_000, 300_000, cur.timers.voting),
+      },
+    };
+    return { ok: true, room };
+  }
+
   startGame(persistentId: string): { room: RoomState; roleMap: Map<string, Role> } | null {
     const room = this.getRoomByPlayer(persistentId);
     if (!room) return null;
 
-    const roleMap = assignRoles(room.players.map(p => p.id));
+    if (!room.settings) room.settings = defaultSettings();
+    const roleMap = assignRoles(room.players.map(p => p.id), room.settings);
     for (const [pid, role] of roleMap) this.roleMap.set(pid, role);
 
     room.players.forEach(p => { p.isAlive = true; delete p.revealedRole; });
@@ -294,7 +341,7 @@ export class RoomManager {
     room.winner         = null;
     room.publicVotes    = null;
     room.readyPlayers   = [];
-    room.phaseEndAt     = Date.now() + PHASE_DURATIONS.night;
+    room.phaseEndAt     = Date.now() + this.phaseMs(room, 'night');
     room.timerPaused    = false;
     room.pausedTimeRemaining = null;
     room.eventLog       = [];
@@ -502,7 +549,7 @@ export class RoomManager {
       this.revealAllRoles(room);
     } else {
       // Start the phase timer (phase is already set to day or night by prior resolution)
-      room.phaseEndAt          = Date.now() + PHASE_DURATIONS[room.phase];
+      room.phaseEndAt          = Date.now() + this.phaseMs(room, room.phase as 'night' | 'day' | 'voting');
       room.timerPaused         = false;
       room.pausedTimeRemaining = null;
     }
@@ -516,7 +563,7 @@ export class RoomManager {
     room.hunterPendingShot = null;
     this.addEvent(room, 'evt.hunterShotExpired');
     if (room.phase !== 'ended') {
-      room.phaseEndAt          = Date.now() + PHASE_DURATIONS[room.phase];
+      room.phaseEndAt          = Date.now() + this.phaseMs(room, room.phase as 'night' | 'day' | 'voting');
       room.timerPaused         = false;
       room.pausedTimeRemaining = null;
     }
@@ -708,7 +755,7 @@ export class RoomManager {
       room.hunterPendingShot = hunterPendingInfo.hunterId;
       room.phaseEndAt        = null; // timer starts AFTER hunter resolves
     } else {
-      room.phaseEndAt        = Date.now() + PHASE_DURATIONS.day;
+      room.phaseEndAt        = Date.now() + this.phaseMs(room, 'day');
     }
 
     return { seerResult, hunterPendingInfo };
@@ -735,7 +782,7 @@ export class RoomManager {
     room.phase        = 'voting';
     room.publicVotes  = { hasVoted: [], tally: {} };
     room.lastAnnouncement = null;
-    room.phaseEndAt   = Date.now() + PHASE_DURATIONS.voting;
+    room.phaseEndAt   = Date.now() + this.phaseMs(room, 'voting');
     room.timerPaused  = false;
     room.pausedTimeRemaining = null;
     this.dayVotes.delete(room.code);
@@ -819,6 +866,19 @@ export class RoomManager {
     }
 
     room.publicVotes = null;
+
+    // Jester wins alone the moment the village hangs them — game over on the spot
+    if (eliminated && this.roleMap.get(eliminatedId!) === 'jester') {
+      room.phase      = 'ended';
+      room.winner     = 'jester';
+      room.phaseEndAt = null;
+      room.lastAnnouncement = { code: 'ann.jesterWin', params: { name: eliminated.name } };
+      this.addEvent(room, 'evt.exiled', { name: eliminated.name, role: 'jester' });
+      this.addEvent(room, 'evt.jesterWon', { name: eliminated.name });
+      this.revealAllRoles(room);
+      return undefined;
+    }
+
     const winner = this.checkWin(room);
     const exileParams = eliminated
       ? { name: eliminated.name, role: eliminated.revealedRole ?? 'villager' }
@@ -856,7 +916,7 @@ export class RoomManager {
       return { hunterId: eliminatedId!, availableTargetIds };
     }
 
-    room.phaseEndAt = Date.now() + PHASE_DURATIONS.night;
+    room.phaseEndAt = Date.now() + this.phaseMs(room, 'night');
     room.lastAnnouncement = exileParams
       ? { code: 'ann.exiledNight', params: exileParams }
       : { code: 'ann.tieNight' };
@@ -1095,7 +1155,8 @@ export class RoomManager {
     if (!check.ok) return check;
     const room = check.room;
     if (!room.timerPaused) return { ok: false, error: 'Timer is not paused.' };
-    const remaining = room.pausedTimeRemaining ?? PHASE_DURATIONS[room.phase] ?? 60_000;
+    const remaining = room.pausedTimeRemaining
+      ?? (room.phase !== 'lobby' && room.phase !== 'ended' ? this.phaseMs(room, room.phase) : 60_000);
     room.phaseEndAt          = Date.now() + remaining;
     room.timerPaused         = false;
     room.pausedTimeRemaining = null;
@@ -1160,7 +1221,8 @@ export class RoomManager {
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
   private doStartNewRound(room: RoomState): { room: RoomState; roleMap: Map<string, Role> } {
-    const roleMap = assignRoles(room.players.map(p => p.id));
+    if (!room.settings) room.settings = defaultSettings();
+    const roleMap = assignRoles(room.players.map(p => p.id), room.settings);
     for (const [pid, role] of roleMap) this.roleMap.set(pid, role);
     room.players.forEach(p => { p.isAlive = true; delete p.revealedRole; });
     room.phase            = 'night';
@@ -1169,7 +1231,7 @@ export class RoomManager {
     room.lastAnnouncement = null;
     room.publicVotes      = null;
     room.readyPlayers     = [];
-    room.phaseEndAt       = Date.now() + PHASE_DURATIONS.night;
+    room.phaseEndAt       = Date.now() + this.phaseMs(room, 'night');
     room.timerPaused      = false;
     room.pausedTimeRemaining = null;
     room.eventLog         = [];
@@ -1271,6 +1333,7 @@ export class RoomManager {
     this.socketToPlayer.clear(); this.playerToSocket.clear();
 
     for (const room of s.rooms) {
+      if (!room.settings) room.settings = defaultSettings(); // snapshots from before settings existed
       this.rooms.set(room.code, room);
       for (const p of room.players) {
         p.isConnected = false; // no live sockets after a restart; reconnect flips this

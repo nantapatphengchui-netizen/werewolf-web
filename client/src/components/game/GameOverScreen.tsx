@@ -33,10 +33,23 @@ function WolfWinIcon() {
   );
 }
 
+function JesterWinIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="w-14 h-14" fill="none" stroke="#d946ef" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 32 10 14l8 10 6-16 6 16 8-10 2 18z" />
+      <path d="M9 38h30" />
+      <circle cx="10" cy="12" r="2" fill="#d946ef" stroke="none" />
+      <circle cx="24" cy="7" r="2" fill="#d946ef" stroke="none" />
+      <circle cx="38" cy="12" r="2" fill="#d946ef" stroke="none" />
+    </svg>
+  );
+}
+
 export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToLobby }: Props) {
   const T = useT();
   const M = useMessage();
   const isVillageWin = room.winner === 'village';
+  const isJesterWin  = room.winner === 'jester';
   const isHost = room.hostId === playerId;
 
   return (
@@ -44,19 +57,19 @@ export function GameOverScreen({ room, playerId, onLeave, onRestart, onReturnToL
       <div className="relative max-w-md w-full bg-[#0d0a06] border border-amber-900/50 rounded-xl shadow-[0_0_80px_rgba(0,0,0,0.9)] overflow-hidden">
 
         {/* Header */}
-        <div className={`px-8 py-7 text-center ${isVillageWin ? 'bg-amber-950/25' : 'bg-red-950/25'}`}>
+        <div className={`px-8 py-7 text-center ${isJesterWin ? 'bg-fuchsia-950/25' : isVillageWin ? 'bg-amber-950/25' : 'bg-red-950/25'}`}>
           <div className="flex justify-center mb-4">
-            {isVillageWin ? <VillageWinIcon /> : <WolfWinIcon />}
+            {isJesterWin ? <JesterWinIcon /> : isVillageWin ? <VillageWinIcon /> : <WolfWinIcon />}
           </div>
 
           <h2
             className="font-cinzel text-3xl font-bold tracking-[0.2em] drop-shadow-[0_0_20px_currentColor]"
-            style={{ color: isVillageWin ? '#d97706' : '#dc2626' }}
+            style={{ color: isJesterWin ? '#d946ef' : isVillageWin ? '#d97706' : '#dc2626' }}
           >
-            {isVillageWin ? T('gameover.villageWins') : T('gameover.wolvesWin')}
+            {isJesterWin ? T('gameover.jesterWins') : isVillageWin ? T('gameover.villageWins') : T('gameover.wolvesWin')}
           </h2>
           <p className="text-amber-700 text-sm mt-1">
-            {isVillageWin ? T('gameover.villageDesc') : T('gameover.wolvesDesc')}
+            {isJesterWin ? T('gameover.jesterDesc') : isVillageWin ? T('gameover.villageDesc') : T('gameover.wolvesDesc')}
           </p>
 
           {room.lastAnnouncement && (

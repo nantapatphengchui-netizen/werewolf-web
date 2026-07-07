@@ -1,20 +1,20 @@
-export const en: Record<string, string> = {
-  // ── Landing / lobby form ───────────────────────────────────────────────────
+﻿export const en: Record<string, string> = {
+  // โ”€โ”€ Landing / lobby form โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'landing.online':          'Online',
   'landing.tagline':         'A Game of Deception',
-  'landing.connecting':      'Connecting to server…',
+  'landing.connecting':      'Connecting to serverโ€ฆ',
   'landing.createRoom':      'Create Room',
   'landing.joinRoom':        'Join Room',
   'landing.yourName':        'Your Name',
-  'landing.namePlaceholder': 'Enter your name…',
+  'landing.namePlaceholder': 'Enter your nameโ€ฆ',
   'landing.roomCode':        'Room Code',
-  'landing.back':            '← Back',
-  'landing.playersRequired': '5–12 players required to start',
-  'landing.creating':        'Creating…',
-  'landing.joining':         'Joining…',
-  'landing.waitConnect':     'Connecting…',
+  'landing.back':            'โ Back',
+  'landing.playersRequired': '5โ€“12 players required to start',
+  'landing.creating':        'Creatingโ€ฆ',
+  'landing.joining':         'Joiningโ€ฆ',
+  'landing.waitConnect':     'Connectingโ€ฆ',
 
-  // ── Skill names ────────────────────────────────────────────────────────────
+  // โ”€โ”€ Skill names โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'skill.werewolf':  'Night Kill',
   'skill.seer':      'Divine',
   'skill.doctor':    'Heal',
@@ -22,41 +22,42 @@ export const en: Record<string, string> = {
   'skill.hunter':    'Revenge Shot',
   'skill.witch':     'Potions',
   'skill.villager':  'Investigate',
+  'skill.jester':    'Cause Chaos',
 
-  // ── Chat ───────────────────────────────────────────────────────────────────
+  // โ”€โ”€ Chat โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'chat.title':            'Village Chat',
   'chat.wolfTitle':        'Werewolf Chat',
   'chat.deadTitle':        'Graveyard',
   'chat.you':              'You',
   'chat.send':             'Send',
   'chat.empty':            'No messages yet',
-  'chat.placeholder':      'Type a message…',
-  'chat.placeholderWolf':  'Talk to your fellow wolves…',
-  'chat.placeholderDead':  'Speak with the departed…',
-  'chat.disabledNight':    'The village sleeps — only werewolves may talk at night',
+  'chat.placeholder':      'Type a messageโ€ฆ',
+  'chat.placeholderWolf':  'Talk to your fellow wolvesโ€ฆ',
+  'chat.placeholderDead':  'Speak with the departedโ€ฆ',
+  'chat.disabledNight':    'The village sleeps โ€” only werewolves may talk at night',
   'chat.disabledDead':     'The dead cannot speak',
   'chat.disabledDefault':  "You can't chat right now",
 
-  // ── Turn prompt / night atmosphere ─────────────────────────────────────────
+  // โ”€โ”€ Turn prompt / night atmosphere โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'turn.yourTurn':     'Your Turn',
-  'turn.waiting':      'Waiting…',
+  'turn.waiting':      'Waitingโ€ฆ',
   'turn.change':       'Change',
   'turn.voteProgress': '{{voted}} / {{total}} have voted',
-  'turn.tallyLive':    'Tallying the votes…',
-  'night.flavor.0':    'The wolves prowl in the darkness…',
-  'night.flavor.1':    'The Seer peers through the third eye…',
-  'night.flavor.2':    'The village sleeps, unaware…',
-  'night.flavor.3':    'Shadows move in silence…',
+  'turn.tallyLive':    'Tallying the votesโ€ฆ',
+  'night.flavor.0':    'The wolves prowl in the darknessโ€ฆ',
+  'night.flavor.1':    'The Seer peers through the third eyeโ€ฆ',
+  'night.flavor.2':    'The village sleeps, unawareโ€ฆ',
+  'night.flavor.3':    'Shadows move in silenceโ€ฆ',
 
-  // ── Seer reveal ────────────────────────────────────────────────────────────
+  // โ”€โ”€ Seer reveal โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'seerReveal.title':        "The Seer's Vision",
   'seerReveal.subtitle':     'The third eye reveals the truth',
   'seerReveal.isWerewolf':   'is a Werewolf!',
-  'seerReveal.isSafe':       'is not a Werewolf — Village side',
+  'seerReveal.isSafe':       'is not a Werewolf โ€” Village side',
   'seerReveal.roleLabel':    'True Role',
   'seerReveal.dismiss':      'Understood',
 
-  // ── Action toasts ──────────────────────────────────────────────────────────
+  // โ”€โ”€ Action toasts โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'toast.actionSubmitted': 'Action recorded',
   'toast.voteCast':        'Vote cast',
   'toast.cancelled':       'Cancelled',
@@ -66,34 +67,34 @@ export const en: Record<string, string> = {
   'toast.shotFired':       'Final shot fired',
   'toast.shotSkipped':     'Shot skipped',
 
-  // ── Connection / reconnect ─────────────────────────────────────────────────
-  'conn.reconnecting':     'Reconnecting…',
-  'conn.reconnectingDesc': 'Hang tight — restoring your game.',
-  'conn.loading':          'Loading…',
+  // โ”€โ”€ Connection / reconnect โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+  'conn.reconnecting':     'Reconnectingโ€ฆ',
+  'conn.reconnectingDesc': 'Hang tight โ€” restoring your game.',
+  'conn.loading':          'Loadingโ€ฆ',
   'conn.leaveHome':        'Leave to Home',
 
-  // ── How to play ────────────────────────────────────────────────────────────
+  // โ”€โ”€ How to play โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'howto.button':         'How to Play',
   'howto.title':          'How to Play',
   'howto.objectiveTitle': 'Objective',
   'howto.villageGoal':    'The Village wins by finding and eliminating every werewolf.',
   'howto.wolfGoal':       'The Werewolves win once they equal or outnumber the remaining villagers.',
   'howto.flowTitle':      'How a Round Works',
-  'howto.nightDesc':      'Special roles act in secret — werewolves choose a victim, the Seer inspects, protectors shield.',
+  'howto.nightDesc':      'Special roles act in secret โ€” werewolves choose a victim, the Seer inspects, protectors shield.',
   'howto.dayDesc':        'Everyone wakes, learns who died, and debates who the werewolves might be.',
   'howto.votingDesc':     'The village votes to exile one suspect. A tie means no one is exiled.',
   'howto.rolesTitle':     'Roles',
   'howto.tip':            'Tip: Watch behaviour, catch inconsistencies, and trust no one too easily.',
   'howto.close':          'Got it',
 
-  // ── Phases ─────────────────────────────────────────────────────────────────
+  // โ”€โ”€ Phases โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'phase.lobby':  'Lobby',
   'phase.night':  'Night',
   'phase.day':    'Day',
   'phase.voting': 'Vote',
   'phase.ended':  'Ended',
 
-  // ── Role names ─────────────────────────────────────────────────────────────
+  // โ”€โ”€ Role names โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'role.werewolf.name':   'Werewolf',
   'role.villager.name':   'Villager',
   'role.seer.name':       'Seer',
@@ -101,28 +102,31 @@ export const en: Record<string, string> = {
   'role.hunter.name':     'Hunter',
   'role.witch.name':      'Witch',
   'role.bodyguard.name':  'Bodyguard',
+  'role.jester.name':     'Jester',
 
-  // ── Role descriptions ──────────────────────────────────────────────────────
+  // โ”€โ”€ Role descriptions โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'role.werewolf.description':  'You are a Werewolf. Eliminate villagers each night and avoid being caught during the day.',
   'role.villager.description':  'You are a Villager. Use logic and intuition to find the werewolves.',
   'role.seer.description':      'You are the Seer. Each night you may reveal the true identity of one player.',
   'role.doctor.description':    'You are the Doctor. Each night you may protect one player from the wolves.',
-  'role.hunter.description':    'You are the Hunter. If eliminated — by vote or wolves — you may take one player down with you.',
+  'role.hunter.description':    'You are the Hunter. If eliminated โ€” by vote or wolves โ€” you may take one player down with you.',
   'role.witch.description':     "You are the Witch. You hold a save potion and a poison potion, each usable once per game.",
   'role.bodyguard.description': 'You are the Bodyguard. Each night you guard one player, but you cannot protect the same person on consecutive nights.',
+  'role.jester.description':    'You are the Jester. You win alone if the village votes to exile you. Act suspicious - but not too suspicious.',
 
-  // ── Role night actions ─────────────────────────────────────────────────────
+  // โ”€โ”€ Role night actions โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'role.werewolf.nightAction':  'Choose a villager to eliminate tonight.',
   'role.seer.nightAction':      'Inspect a player to reveal their true identity.',
   'role.doctor.nightAction':    'Choose a player to protect from the wolves tonight.',
   'role.witch.nightAction':     'Wait for the wolves to strike, then decide what to do.',
   'role.bodyguard.nightAction': 'Choose a player to guard tonight.',
 
-  // ── Alignment ──────────────────────────────────────────────────────────────
+  // โ”€โ”€ Alignment โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'alignment.village':   'Village',
   'alignment.werewolf':  'Werewolf',
+  'alignment.neutral':   'Neutral',
 
-  // ── Action labels (confirm buttons) ───────────────────────────────────────
+  // โ”€โ”€ Action labels (confirm buttons) โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'action.kill':      'Kill',
   'action.inspect':   'Inspect',
   'action.protect':   'Protect',
@@ -136,60 +140,62 @@ export const en: Record<string, string> = {
   'action.save':      'Save',
   'action.poison':    'Poison',
 
-  // ── Action bar — night ─────────────────────────────────────────────────────
-  'bar.night.submitted': 'Action submitted — awaiting others…',
+  // โ”€โ”€ Action bar โ€” night โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+  'bar.night.submitted': 'Action submitted โ€” awaiting othersโ€ฆ',
   'bar.night.perished':  'You have perished. Watch the night from the shadows.',
   'bar.night.sleep':     'Night falls. You close your eyes and wait for dawn.',
-  'bar.night.select':    'Select a player card above…',
-  'bar.night.confirmHint': 'Confirm on card ↑',
+  'bar.night.select':    'Select a player card aboveโ€ฆ',
+  'bar.night.confirmHint': 'Confirm on card โ‘',
 
-  // ── Action bar — day ──────────────────────────────────────────────────────
+  // โ”€โ”€ Action bar โ€” day โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'bar.day.discuss':  'Discuss with the village. Use card buttons to Suspect or Ask players.',
   'bar.day.callVote': 'Call to Vote',
-  'bar.day.waitHost': 'Waiting for host…',
+  'bar.day.waitHost': 'Waiting for hostโ€ฆ',
   'bar.day.perished': 'You have perished.',
 
-  // ── Action bar — voting ───────────────────────────────────────────────────
-  'bar.voting.submitted':  'Vote cast · {{voted}} / {{total}} voted',
+  // โ”€โ”€ Action bar โ€” voting โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+  'bar.voting.submitted':  'Vote cast ยท {{voted}} / {{total}} voted',
   'bar.voting.perished':   'You are eliminated. Watch the vote unfold.',
-  'bar.voting.select':     'Select a player to exile…',
-  'bar.voting.confirmHint':'Confirm on card ↑',
+  'bar.voting.select':     'Select a player to exileโ€ฆ',
+  'bar.voting.confirmHint':'Confirm on card โ‘',
 
-  // ── Instruction text ───────────────────────────────────────────────────────
+  // โ”€โ”€ Instruction text โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'instr.night.werewolf':  'Click a player card to eliminate tonight.',
   'instr.night.seer':      'Click a player card to reveal their identity.',
   'instr.night.doctor':    'Click a player card to protect tonight.',
   'instr.night.bodyguard': 'Click a player card to guard tonight.',
-  'instr.night.witch':     'Wait for the wolves to strike — your choice comes after.',
+  'instr.night.witch':     'Wait for the wolves to strike โ€” your choice comes after.',
   'instr.night.villager':  'Night falls. The village sleeps.',
   'instr.night.perished':  'You have perished. Watch the night from the shadows.',
-  'instr.night.submitted': 'Action submitted — awaiting other night actions…',
+  'instr.night.submitted': 'Action submitted โ€” awaiting other night actionsโ€ฆ',
   'instr.day.discuss':     'Discuss and find the wolves among you.',
   'instr.voting.select':   'Click a player card to cast your vote for exile.',
   'instr.voting.perished': 'You are eliminated. Watch the vote.',
-  'instr.voting.submitted':'Vote cast — awaiting…',
+  'instr.voting.submitted':'Vote cast โ€” awaitingโ€ฆ',
 
-  // ── Witch panel ────────────────────────────────────────────────────────────
+  // โ”€โ”€ Witch panel โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'witch.title':      "Witch's Choice",
   'witch.attacked':   "Tonight's target: {{name}}",
   'witch.noAttack':   'No one was attacked tonight.',
   'witch.saveName':   'Save {{name}}',
   'witch.poisonBtn':  'Poison Someone',
   'witch.doNothing':  'Do Nothing',
-  'witch.poisonMode': 'Choose a player to poison…',
+  'witch.poisonMode': 'Choose a player to poisonโ€ฆ',
   'witch.cancel':     'Cancel',
 
-  // ── Hunter ─────────────────────────────────────────────────────────────────
-  'hunter.myShot':       "The Hunter's Final Shot — choose a target to take down with you, or skip.",
-  'hunter.otherPending': 'The Hunter is choosing their final shot…',
-  'hunter.selectTarget': 'Select your final target…',
+  // โ”€โ”€ Hunter โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+  'hunter.myShot':       "The Hunter's Final Shot โ€” choose a target to take down with you, or skip.",
+  'hunter.otherPending': 'The Hunter is choosing their final shotโ€ฆ',
+  'hunter.selectTarget': 'Select your final targetโ€ฆ',
   'hunter.shoot':        'Shoot',
   'hunter.skipShot':     'Skip Shot',
   'hunter.skip':         'Skip',
 
-  // ── Game over ──────────────────────────────────────────────────────────────
+  // โ”€โ”€ Game over โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'gameover.villageWins':   'VILLAGE WINS',
   'gameover.wolvesWin':     'WOLVES WIN',
+  'gameover.jesterWins':    'JESTER WINS',
+  'gameover.jesterDesc':    'The Jester tricked the village into hanging them.',
   'gameover.villageDesc':   'The villagers have driven out the evil.',
   'gameover.wolvesDesc':    'The werewolves have claimed the village.',
   'gameover.truthRevealed': 'The truth revealed',
@@ -198,18 +204,18 @@ export const en: Record<string, string> = {
   'gameover.toLobby':       'Return to Lobby',
   'gameover.leave':         'Leave Room',
 
-  // ── Lobby ──────────────────────────────────────────────────────────────────
+  // โ”€โ”€ Lobby โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'lobby.room':         'Room',
   'lobby.readyToStart': 'Ready to start',
   'lobby.needMore':     'Need {{n}} more',
   'lobby.connected':    'Connected',
   'lobby.offline':      'Offline',
   'lobby.leave':        'Leave',
-  'lobby.ready':        '✓ Ready',
+  'lobby.ready':        'โ“ Ready',
   'lobby.notReady':     'Ready',
   'lobby.startGame':    'Start Game',
   'lobby.needPlayers':  'Need {{n}} more player{{s}} ({{cur}}/{{min}})',
-  'lobby.allReady':     'All ready — host can start!',
+  'lobby.allReady':     'All ready โ€” host can start!',
   'lobby.readyCount':   '{{ready}} / {{total}} ready',
   'lobby.waitHost':     'Waiting for host',
   'lobby.waitingSeat':  'Waiting',
@@ -219,42 +225,50 @@ export const en: Record<string, string> = {
   'lobby.readyLabel':   'Ready',
   'lobby.copied':       'Copied!',
 
-  // ── Host controls ──────────────────────────────────────────────────────────
+  // ── Game settings ───────────────────────────────────────────────────────────
+  'settings.title':        'Game Settings',
+  'settings.wolves':       'Werewolves',
+  'settings.roles':        'Special Roles',
+  'settings.timer.night':  'Night Timer',
+  'settings.timer.day':    'Day Timer',
+  'settings.timer.voting': 'Vote Timer',
+
+  // โ”€โ”€ Host controls โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'host.timer':         'Phase Timer',
-  'host.pauseTimer':    '⏸ Pause Timer',
-  'host.resumeTimer':   '▶ Resume Timer',
+  'host.pauseTimer':    'โธ Pause Timer',
+  'host.resumeTimer':   'โ–ถ Resume Timer',
   'host.endPhase':      'End {{phase}} Early',
   'host.game':          'Game',
   'host.toLobby':       'Return to Lobby',
   'host.restart':       'Restart Game',
 
-  // ── Role panel ─────────────────────────────────────────────────────────────
+  // โ”€โ”€ Role panel โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'rolepanel.yourRole':     'Your Role',
   'rolepanel.roleTab':      'Role',
   'rolepanel.infoTab':      'Info',
   'rolepanel.wolfPack':     'Wolf Pack',
   'rolepanel.soloWolf':     'You hunt alone.',
   'rolepanel.allies':       'Allies',
-  'rolepanel.alliesDesc':   "Village — but you don't know who is who.",
+  'rolepanel.alliesDesc':   "Village โ€” but you don't know who is who.",
   'rolepanel.nightAction':  'Night Action',
-  'rolepanel.noNightAction':'No night action. Sleep soundly — or try to.',
-  'rolepanel.noRole':       'Role not loaded — reconnecting…',
+  'rolepanel.noNightAction':'No night action. Sleep soundly โ€” or try to.',
+  'rolepanel.noRole':       'Role not loaded โ€” reconnectingโ€ฆ',
   'rolepanel.inspectionLog':'Inspection Log',
 
-  // ── Role reveal overlay ────────────────────────────────────────────────────
-  'reveal.destiny':    '✦ Destiny is Written ✦',
+  // โ”€โ”€ Role reveal overlay โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+  'reveal.destiny':    'โฆ Destiny is Written โฆ',
   'reveal.decided':    'Your Role Has Been Decided',
   'reveal.youAre':     'You Are',
-  'reveal.enterGame':  'Enter the Game ✦',
+  'reveal.enterGame':  'Enter the Game โฆ',
 
-  // ── HUD ────────────────────────────────────────────────────────────────────
+  // โ”€โ”€ HUD โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'hud.gameOver':      'Game Over',
   'hud.leave':         'Leave',
   'hud.yourRole':      'Your Role',
   'hud.hostControls':  'Host Controls',
   'hud.eventLog':      'Event Log',
 
-  // ── Card ───────────────────────────────────────────────────────────────────
+  // โ”€โ”€ Card โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'hud.votedCount':   'Voted {{voted}}/{{total}}',
   'hud.round':        'Round {{n}}',
   'overlay.tapSkip':  'Tap to skip',
@@ -262,7 +276,7 @@ export const en: Record<string, string> = {
   'card.dead':        'Dead',
   'card.away':        'Away',
 
-  // ── Confirm dialogs ────────────────────────────────────────────────────────
+  // โ”€โ”€ Confirm dialogs โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'confirm.restart.title':  'Restart Game',
   'confirm.restart.desc':   'All players will keep their spots but get new roles. The current game state will be lost.',
   'confirm.restart.btn':    'Restart',
@@ -275,7 +289,7 @@ export const en: Record<string, string> = {
   'confirm.yes':   'Confirm',
   'confirm.cancel':'Cancel',
 
-  // ── Event log (server-generated) ───────────────────────────────────────────
+  // โ”€โ”€ Event log (server-generated) โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'evt.gameBegun':        'The game has begun. Roles have been assigned.',
   'evt.nightFalls':       'Night falls upon the village. All close their eyes.',
   'evt.nightFallsAgain':  'Night falls once more. All close their eyes.',
@@ -286,6 +300,7 @@ export const en: Record<string, string> = {
   'evt.hunterReadies':    'The Hunter readies one final shot before falling.',
   'evt.villageWon':       'The village triumphed. All werewolves are gone.',
   'evt.wolvesWon':        'The werewolves claim the village.',
+  'evt.jesterWon':        '{{name}} was the Jester! They fooled everyone into voting them out.',
   'evt.foundDead':        '{{names}} found dead at dawn.',
   'evt.quietNight':       'A quiet night passed. No one was harmed.',
   'evt.dawnDiscuss':      'Dawn breaks. The village wakes to discuss.',
@@ -302,16 +317,17 @@ export const en: Record<string, string> = {
   'evt.hostCalledVote':   'The host called a vote early.',
   'evt.hostClosedVote':   'The host closed the vote early.',
 
-  // ── Announcements (banner) ─────────────────────────────────────────────────
+  // โ”€โ”€ Announcements (banner) โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   'ann.dawnSurvived':      'Dawn breaks. Someone narrowly survived the night. No one was eliminated.',
   'ann.dawnNoDeath':       'Dawn breaks. No one was harmed.',
   'ann.dawnOneDead':       'Dawn breaks. {{name}} was found dead at dawn. Their role remains unknown.',
   'ann.dawnManyDead':      'Dawn breaks. {{names}} were found dead at dawn. Their roles remain unknown.',
-  'ann.dawnOneDeadHunter': "Dawn breaks. {{name}} was found dead at dawn. Their role remains unknown. The Hunter's eyes still burn — a final shot is coming.",
-  'ann.dawnManyDeadHunter':"Dawn breaks. {{names}} were found dead at dawn. Their roles remain unknown. The Hunter's eyes still burn — a final shot is coming.",
-  'ann.exiledWin':         'The village has spoken. {{name}} has been exiled — they were the {{role}}.',
+  'ann.dawnOneDeadHunter': "Dawn breaks. {{name}} was found dead at dawn. Their role remains unknown. The Hunter's eyes still burn โ€” a final shot is coming.",
+  'ann.dawnManyDeadHunter':"Dawn breaks. {{names}} were found dead at dawn. Their roles remain unknown. The Hunter's eyes still burn โ€” a final shot is coming.",
+  'ann.exiledWin':         'The village has spoken. {{name}} has been exiled โ€” they were the {{role}}.',
   'ann.noAgreement':       'The votes were cast. The village could not agree.',
-  'ann.exiledHunter':      "{{name}} was exiled (the {{role}}). Their eyes burn — the Hunter's shot is not spent.",
+  'ann.jesterWin':         '{{name}} cackles from the gallows — they were the Jester, and this is exactly what they wanted!',
+  'ann.exiledHunter':      "{{name}} was exiled (the {{role}}). Their eyes burn โ€” the Hunter's shot is not spent.",
   'ann.exiledNight':       '{{name}} has been exiled (the {{role}}). Night falls once more.',
   'ann.tieNight':          'The vote ended in a tie. No one was exiled. Night falls.',
 };

@@ -1,4 +1,4 @@
-import type { RoomState, Role } from './game';
+import type { RoomState, Role, GameSettings } from './game';
 
 export interface ServerToClientEvents {
   room_joined:          (payload: { room: RoomState; playerId: string }) => void;
@@ -42,6 +42,7 @@ export interface ClientToServerEvents {
   host_lock_room:       () => void;
   host_unlock_room:     () => void;
   host_reset_ready:     () => void;
+  host_update_settings: (payload: { settings: Partial<GameSettings> }) => void;
   host_pause_timer:     () => void;
   host_resume_timer:    () => void;
   host_extend_timer:    (payload: { extraSeconds: number }) => void;

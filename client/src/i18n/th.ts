@@ -22,6 +22,7 @@ export const th: Record<string, string> = {
   'skill.hunter':    'ยิงสวน',
   'skill.witch':     'ปรุงยา',
   'skill.villager':  'สืบสวน',
+  'skill.jester':    'ป่วนเมือง',
 
   // ── Chat ───────────────────────────────────────────────────────────────────
   'chat.title':            'แชทหมู่บ้าน',
@@ -101,6 +102,7 @@ export const th: Record<string, string> = {
   'role.hunter.name':     'นักล่า',
   'role.witch.name':      'แม่มด',
   'role.bodyguard.name':  'ผู้คุ้มกัน',
+  'role.jester.name':     'ตัวตลก',
 
   // ── Role descriptions ──────────────────────────────────────────────────────
   'role.werewolf.description':  'คุณคือหมาป่า ฆ่าชาวบ้านในแต่ละคืนและอย่าให้ใครจับได้ในเวลากลางวัน',
@@ -110,6 +112,7 @@ export const th: Record<string, string> = {
   'role.hunter.description':    'คุณคือนักล่า หากโดนกำจัด — ไม่ว่าจากโหวตหรือกลางคืน — คุณสามารถพาผู้เล่นคนหนึ่งลงไปด้วย',
   'role.witch.description':     'คุณคือแม่มด มียาช่วยชีวิตและยาพิษอย่างละหนึ่งขวด ใช้ได้ขวดละครั้งตลอดเกม',
   'role.bodyguard.description': 'คุณคือผู้คุ้มกัน ทุกคืนคุ้มกันผู้เล่นคนหนึ่งได้ แต่คุ้มกันคนเดิมสองคืนติดต่อกันไม่ได้',
+  'role.jester.description':    'คุณคือตัวตลก คุณชนะคนเดียวทันทีถ้าหมู่บ้านโหวตเนรเทศคุณ — ทำตัวน่าสงสัยแต่อย่าให้โจ่งแจ้งเกินไป',
 
   // ── Role night actions ─────────────────────────────────────────────────────
   'role.werewolf.nightAction':  'เลือกชาวบ้านที่จะกำจัดในคืนนี้',
@@ -121,6 +124,7 @@ export const th: Record<string, string> = {
   // ── Alignment ──────────────────────────────────────────────────────────────
   'alignment.village':   'ฝ่ายหมู่บ้าน',
   'alignment.werewolf':  'ฝ่ายหมาป่า',
+  'alignment.neutral':   'ฝ่ายอิสระ',
 
   // ── Action labels (confirm buttons) ───────────────────────────────────────
   'action.kill':     'จู่โจม',
@@ -190,6 +194,8 @@ export const th: Record<string, string> = {
   // ── Game over ──────────────────────────────────────────────────────────────
   'gameover.villageWins':   'หมู่บ้านชนะ',
   'gameover.wolvesWin':     'หมาป่าชนะ',
+  'gameover.jesterWins':    'ตัวตลกชนะ',
+  'gameover.jesterDesc':    'ตัวตลกหลอกให้หมู่บ้านแขวนเขาได้สำเร็จ',
   'gameover.villageDesc':   'ชาวบ้านกำจัดความชั่วร้ายได้สำเร็จ',
   'gameover.wolvesDesc':    'หมาป่าเข้าครอบครองหมู่บ้าน',
   'gameover.truthRevealed': 'เปิดเผยความจริง',
@@ -218,6 +224,14 @@ export const th: Record<string, string> = {
   'lobby.players':      'ผู้เล่น',
   'lobby.readyLabel':   'พร้อมแล้ว',
   'lobby.copied':       'คัดลอกแล้ว!',
+
+  // ── Game settings ───────────────────────────────────────────────────────────
+  'settings.title':        'ตั้งค่าเกม',
+  'settings.wolves':       'จำนวนหมาป่า',
+  'settings.roles':        'โรลพิเศษ',
+  'settings.timer.night':  'เวลากลางคืน',
+  'settings.timer.day':    'เวลากลางวัน',
+  'settings.timer.voting': 'เวลาโหวต',
 
   // ── Host controls ──────────────────────────────────────────────────────────
   'host.timer':         'ตัวจับเวลา',
@@ -288,6 +302,7 @@ export const th: Record<string, string> = {
   'evt.hunterReadies':    'นักล่าเล็งนัดสุดท้ายก่อนล้มลง',
   'evt.villageWon':       'หมู่บ้านได้รับชัยชนะ หมาป่าถูกกำจัดหมดแล้ว',
   'evt.wolvesWon':        'หมาป่าเข้ายึดครองหมู่บ้าน',
+  'evt.jesterWon':        '{{name}} คือตัวตลก! เขาหลอกให้ทุกคนแขวนเขาสำเร็จ',
   'evt.foundDead':        '{{names}} ถูกพบเป็นศพยามรุ่งสาง',
   'evt.quietNight':       'คืนอันเงียบสงบผ่านไป ไม่มีใครได้รับอันตราย',
   'evt.dawnDiscuss':      'รุ่งสางมาถึง หมู่บ้านตื่นขึ้นมาถกเถียง',
@@ -312,6 +327,7 @@ export const th: Record<string, string> = {
   'ann.dawnOneDeadHunter': 'รุ่งสางมาถึง {{name}} ถูกพบเป็นศพ ยังไม่ทราบบทบาท ดวงตานักล่ายังลุกโชน — นัดสุดท้ายกำลังจะมา',
   'ann.dawnManyDeadHunter':'รุ่งสางมาถึง {{names}} ถูกพบเป็นศพ ยังไม่ทราบบทบาท ดวงตานักล่ายังลุกโชน — นัดสุดท้ายกำลังจะมา',
   'ann.exiledWin':         'หมู่บ้านได้ตัดสินแล้ว {{name}} ถูกเนรเทศ — เขาคือ{{role}}',
+  'ann.jesterWin':         '{{name}} หัวเราะร่าจากตะแลงแกง — เขาคือตัวตลก และนี่คือสิ่งที่เขาต้องการ!',
   'ann.noAgreement':       'ลงคะแนนเสร็จสิ้น หมู่บ้านตกลงกันไม่ได้',
   'ann.exiledHunter':      '{{name}} ถูกเนรเทศ ({{role}}) ดวงตายังลุกโชน — นัดของนักล่ายังไม่ถูกใช้',
   'ann.exiledNight':       '{{name}} ถูกเนรเทศ ({{role}}) ราตรีปกคลุมอีกครั้ง',
