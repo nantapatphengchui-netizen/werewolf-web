@@ -287,6 +287,7 @@ export const th: Record<string, string> = {
   // ── Card ──────────────────────────────────────────────────────────────────
   'hud.votedCount':   'โหวตแล้ว {{voted}}/{{total}}',
   'overlay.tapSkip':  'แตะเพื่อข้าม',
+  'reveal.tapOpen':   'แตะเพื่อเปิดไพ่ชะตา',
   'card.eliminated':  'ถูกกำจัด',
   'card.dead':        'ตายแล้ว',
   'card.away':        'ไม่อยู่',

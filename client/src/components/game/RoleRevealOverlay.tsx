@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import type { Role } from '@/types/game';
@@ -18,59 +18,39 @@ const ROLE_IMAGE: Record<Role, string> = {
   jester:    '/role-joker.png',
 };
 
-type Phase = 'enter' | 'spread' | 'shuffle' | 'pick' | 'flip' | 'revealed';
+// Gacha-style single-card reveal:
+// enter (card descends) → charge (trembles, aura tints toward YOUR role colour)
+// → ready (floats, waiting for the tap) → burst (flash + flip) → revealed
+type Phase = 'enter' | 'charge' | 'ready' | 'burst' | 'revealed';
+const ORDER: Record<Phase, number> = { enter: 0, charge: 1, ready: 2, burst: 3, revealed: 4 };
 
 const KEYFRAMES = `
-@keyframes cardShuf0{
-  0%,100%{transform:translateX(0) rotate(-5deg)}
-  20%{transform:translateX(90px) rotate(7deg)}
-  40%{transform:translateX(-75px) rotate(-9deg)}
-  60%{transform:translateX(105px) rotate(6deg)}
-  80%{transform:translateX(-55px) rotate(-4deg)}
-}
-@keyframes cardShuf1{
-  0%,100%{transform:translateX(0) rotate(-2deg)}
-  15%{transform:translateX(-95px) rotate(-8deg)}
-  35%{transform:translateX(85px) rotate(9deg)}
-  55%{transform:translateX(-85px) rotate(-6deg)}
-  75%{transform:translateX(65px) rotate(5deg)}
-}
-@keyframes cardShuf2{
-  0%,100%{transform:translateX(0) rotate(2deg)}
-  25%{transform:translateX(85px) rotate(8deg)}
-  45%{transform:translateX(-95px) rotate(-9deg)}
-  65%{transform:translateX(75px) rotate(7deg)}
-  85%{transform:translateX(-60px) rotate(-6deg)}
-}
-@keyframes cardShuf3{
-  0%,100%{transform:translateX(0) rotate(5deg)}
-  20%{transform:translateX(-85px) rotate(-7deg)}
-  40%{transform:translateX(100px) rotate(10deg)}
-  60%{transform:translateX(-75px) rotate(-6deg)}
-  80%{transform:translateX(90px) rotate(8deg)}
-}
-@keyframes pulseGlow{
-  0%,100%{opacity:1}
-  50%{opacity:0.65}
-}
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(16px)}
-  to{opacity:1;transform:translateY(0)}
-}
+@keyframes reveal-descend{from{transform:translateY(-80px) scale(.9);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes reveal-shake{0%,100%{transform:translate(0,0) rotate(0deg)}20%{transform:translate(-1.6px,1px) rotate(-.5deg)}40%{transform:translate(1.6px,-1px) rotate(.5deg)}60%{transform:translate(-1.1px,-1px) rotate(-.35deg)}80%{transform:translate(1.1px,1px) rotate(.35deg)}}
+@keyframes card-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes charge-glow{0%,100%{opacity:.30;transform:scale(.92)}50%{opacity:.70;transform:scale(1.04)}}
+@keyframes ready-glow{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes seam-flicker{0%,100%{opacity:.12}50%{opacity:.7}}
+@keyframes reveal-flash{from{opacity:.92}to{opacity:0}}
+@keyframes reveal-ring{from{transform:scale(.55);opacity:.85}to{transform:scale(2.1);opacity:0}}
+@keyframes spark-fly{from{transform:translate(0,0) scale(1);opacity:1}to{transform:translate(var(--sx),var(--sy)) scale(0);opacity:0}}
+@keyframes pulseGlow{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 `;
 
-const SPREAD_ROTATIONS = [-7, -2, 2, 7];
-
-function CardBack() {
-  return (
-    <img
-      src="/card-back.png"
-      alt=""
-      draggable={false}
-      className="w-full h-full rounded-xl object-cover"
-    />
-  );
-}
+// Burst sparks — direction endpoints (px) around the card
+const SPARKS = [
+  { sx: '110px',  sy: '-70px',  d: '0s',    s: 5 },
+  { sx: '-120px', sy: '-40px',  d: '0.04s', s: 4 },
+  { sx: '80px',   sy: '110px',  d: '0.02s', s: 5 },
+  { sx: '-90px',  sy: '95px',   d: '0.07s', s: 4 },
+  { sx: '140px',  sy: '25px',   d: '0.05s', s: 3.5 },
+  { sx: '-145px', sy: '15px',   d: '0.03s', s: 3.5 },
+  { sx: '30px',   sy: '-130px', d: '0.06s', s: 4.5 },
+  { sx: '-40px',  sy: '-120px', d: '0.01s', s: 4 },
+  { sx: '55px',   sy: '125px',  d: '0.08s', s: 3 },
+  { sx: '-15px',  sy: '135px',  d: '0.05s', s: 3 },
+] as const;
 
 function CardFace({ role }: { role: Role }) {
   const info = ROLE_INFO[role];
@@ -88,7 +68,7 @@ function CardFace({ role }: { role: Role }) {
       />
       <div className="absolute bottom-0 left-0 right-0 py-2 sm:py-3 text-center px-1">
         <p
-          className="font-cinzel text-[10px] sm:text-[13px] font-bold uppercase tracking-widest"
+          className="font-cinzel text-[11px] sm:text-[14px] font-bold uppercase tracking-widest"
           style={{ color: info.accentColor, textShadow: `0 0 14px ${info.accentColor}90` }}
         >
           {T(`role.${role}.name`)}
@@ -105,52 +85,52 @@ interface Props {
 
 export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
   const T = useT();
-  const reducedMotion         = useReducedMotion();
-  const [phase, setPhase]     = useState<Phase>('enter');
-  const [yourIdx]             = useState(() => Math.floor(Math.random() * 4));
-  const roleInfo              = ROLE_INFO[myRole];
+  const reducedMotion     = useReducedMotion();
+  const [phase, setPhase] = useState<Phase>('enter');
+  const roleInfo          = ROLE_INFO[myRole];
+  const accent            = roleInfo.accentColor;
 
-  // "Deal into place" โ€” on enter, the revealed card flies to the player's slot
-  const yourCardRef                 = useRef<HTMLDivElement>(null);
+  // "Deal into place" — after the reveal, the card flies to the player's slot
+  const cardRef                     = useRef<HTMLDivElement>(null);
   const [flying, setFlying]         = useState(false);
   const [flyStarted, setFlyStarted] = useState(false);
   const [fly, setFly]               = useState<{ from: DOMRect; to: DOMRect } | null>(null);
 
+  // Never move backwards through phases (timers may fire after a manual skip)
+  const advanceTo = (target: Phase) =>
+    setPhase(p => (ORDER[p] >= ORDER[target] ? p : target));
+
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
-    // Reduced motion: skip the shuffle and reveal almost immediately
     if (reducedMotion) {
-      timersRef.current = [
-        setTimeout(() => setPhase('spread'), 60),
-        setTimeout(() => setPhase('revealed'), 260),
-      ];
+      timersRef.current = [setTimeout(() => setPhase('revealed'), 150)];
     } else {
       timersRef.current = [
-        setTimeout(() => setPhase('spread'),   350),
-        setTimeout(() => setPhase('shuffle'),  950),
-        setTimeout(() => setPhase('pick'),    2750),
-        setTimeout(() => setPhase('flip'),    3250),
-        setTimeout(() => setPhase('revealed'), 4050),
+        setTimeout(() => advanceTo('charge'), 750),
+        setTimeout(() => advanceTo('ready'),  2500),
+        setTimeout(() => advanceTo('burst'),  6500), // auto-open if the player never taps
       ];
     }
     return () => timersRef.current.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Tap anywhere to fast-forward: first jump to the reveal, then deal the card in.
-  const handleSkip = () => {
-    if (flying) return;
-    if (phase !== 'revealed') {
-      timersRef.current.forEach(clearTimeout);
-      setPhase('revealed');
-    } else {
-      handleEnter();
-    }
+  // burst → revealed once the flip lands
+  useEffect(() => {
+    if (phase !== 'burst') return;
+    const t = setTimeout(() => setPhase('revealed'), 850);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const handleTap = () => {
+    if (flying || phase === 'burst') return;
+    if (phase === 'revealed') { handleEnter(); return; }
+    advanceTo('burst'); // open the card now
   };
 
   const handleEnter = () => {
     if (flying) return;
-    const from = yourCardRef.current?.getBoundingClientRect();
+    const from = cardRef.current?.getBoundingClientRect();
     const to   = document.querySelector('[data-own-card="true"]')?.getBoundingClientRect();
     if (!from || !to || to.width === 0) { onDismiss(); return; }
     setFly({ from, to });
@@ -160,24 +140,32 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
     setTimeout(onDismiss, 700);
   };
 
-  // Auto-deal the card into the slot once revealed โ€” no button press needed.
-  // The delay lets the player read their role first.
+  // Auto-deal the card into the slot after the player has had time to read
   useEffect(() => {
     if (phase !== 'revealed') return;
-    const t = setTimeout(handleEnter, 2000);
+    const t = setTimeout(handleEnter, 2600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  const isSpread    = phase !== 'enter';
-  const isShuffling = phase === 'shuffle';
-  const isPick      = phase === 'pick' || phase === 'flip' || phase === 'revealed';
-  const isFlipped   = phase === 'flip' || phase === 'revealed';
-  const isRevealed  = phase === 'revealed';
+  const isOpen     = phase === 'burst' || phase === 'revealed';
+  const isRevealed = phase === 'revealed';
+
+  // Card animation per phase (none during flip so the transform transition plays)
+  const cardAnim =
+    phase === 'enter'  ? 'reveal-descend 0.7s cubic-bezier(0.22,1,0.36,1) both'
+    : phase === 'charge' ? 'reveal-shake 0.45s ease-in-out infinite'
+    : phase === 'ready'  ? 'card-float 2.6s ease-in-out infinite'
+    : undefined;
+
+  const glowAnim =
+    phase === 'charge' ? 'charge-glow 1.3s ease-in-out infinite'
+    : phase === 'ready' ? 'ready-glow 0.85s ease-in-out infinite'
+    : undefined;
 
   return (
     <div
-      onClick={handleSkip}
+      onClick={handleTap}
       className={`fixed inset-0 px-4 ${flying ? '' : 'cursor-pointer'}`}
       style={{
         zIndex: 200,
@@ -196,174 +184,215 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
         style={{ opacity: flying ? 0 : 1, transition: 'opacity 0.4s ease' }}
       >
 
-      {/* โ”€โ”€ Title โ”€โ”€ */}
-      <div
-        className="mb-6 sm:mb-10 text-center"
-        style={{
-          transition: 'opacity 0.6s, transform 0.6s',
-          opacity: isSpread ? 1 : 0,
-          transform: isSpread ? 'translateY(0)' : 'translateY(-18px)',
-        }}
-      >
-        <p
-          className="text-[9px] sm:text-[10px] font-cinzel uppercase tracking-[0.4em] mb-1"
-          style={{ color: 'rgba(167,139,250,0.55)' }}
-        >
-          {T('reveal.destiny')}
-        </p>
-        <h2
-          className="font-cinzel text-lg sm:text-2xl font-bold uppercase tracking-widest"
-          style={{ color: '#e2d9f3', textShadow: '0 0 24px rgba(139,92,246,0.38)' }}
-        >
-          {T('reveal.decided')}
-        </h2>
-      </div>
+        {/* ── Title ── */}
+        <div className="mb-4 sm:mb-6 text-center" style={{ animation: 'fadeUp 0.7s ease both' }}>
+          <p
+            className="text-[9px] sm:text-[10px] font-cinzel uppercase tracking-[0.4em] mb-1"
+            style={{ color: 'rgba(167,139,250,0.55)' }}
+          >
+            {T('reveal.destiny')}
+          </p>
+          <h2
+            className="font-cinzel text-lg sm:text-2xl font-bold uppercase tracking-widest"
+            style={{ color: '#e2d9f3', textShadow: '0 0 24px rgba(139,92,246,0.38)' }}
+          >
+            {T('reveal.decided')}
+          </h2>
+        </div>
 
-      {/* โ”€โ”€ 4 Cards โ”€โ”€ */}
-      <div className="flex gap-2.5 sm:gap-4 items-end">
-        {[0, 1, 2, 3].map(i => {
-          const isYours = i === yourIdx;
-          const rot     = SPREAD_ROTATIONS[i];
+        {/* ── Card stage ── */}
+        <div className="relative flex items-center justify-center" style={{ width: 320, height: 320 }}>
 
-          const cardStyle: React.CSSProperties = {
-            width:  'clamp(92px, 23vw, 150px)',
-            height: 'clamp(136px, 33vw, 220px)',
-            transition: isShuffling ? 'none' : 'all 0.65s cubic-bezier(0.34,1.45,0.64,1)',
-            transitionDelay: isShuffling ? '0ms' : `${i * 55}ms`,
-            transform: isSpread
-              ? `translateY(0) rotate(${rot}deg)`
-              : 'translateY(90px)',
-            opacity: isSpread
-              ? (isPick && !isYours ? 0.28 : 1)
-              : 0,
-            animation: isShuffling
-              ? `cardShuf${i} 0.42s ease-in-out infinite`
-              : undefined,
-            position: 'relative',
-            zIndex: isYours ? 10 : 1,
-            flexShrink: 0,
-          };
+          {/* Moonbeam from above */}
+          <div
+            className="absolute inset-x-0 -top-10 mx-auto pointer-events-none"
+            style={{
+              width: 190,
+              height: 340,
+              background: 'linear-gradient(180deg, rgba(196,181,253,0.14) 0%, rgba(196,181,253,0.05) 55%, transparent 100%)',
+              clipPath: 'polygon(32% 0, 68% 0, 100% 100%, 0 100%)',
+              opacity: phase === 'enter' ? 0 : isOpen ? 0.35 : 1,
+              transition: 'opacity 0.8s ease',
+            }}
+          />
 
-          const borderColor = isPick && isYours
-            ? roleInfo.accentColor
-            : 'rgba(109,40,217,0.28)';
-          const shadow = isPick && isYours && !isFlipped
-            ? `0 0 32px ${roleInfo.accentColor}55, 0 0 64px ${roleInfo.accentColor}22`
-            : '0 10px 36px rgba(0,0,0,0.65)';
+          {/* Charging aura — tinted with YOUR role colour (the tell before the flip) */}
+          <div
+            className="absolute pointer-events-none rounded-full"
+            style={{
+              width: 300,
+              height: 320,
+              background: `radial-gradient(ellipse, ${accent}59 0%, ${accent}21 45%, transparent 70%)`,
+              opacity: glowAnim ? undefined : 0,
+              animation: glowAnim,
+              transition: 'opacity 0.4s ease',
+            }}
+          />
 
-          return (
-            <div key={i} style={cardStyle} ref={isYours ? yourCardRef : undefined}>
-              {isPick && isYours && !isFlipped && (
-                <div
-                  className="absolute -inset-2 rounded-2xl pointer-events-none"
+          {/* Burst effects */}
+          {isOpen && (
+            <>
+              {/* Flash */}
+              <div
+                className="absolute pointer-events-none rounded-full"
+                style={{
+                  width: 320, height: 320,
+                  background: `radial-gradient(circle, rgba(255,255,255,0.9) 0%, ${accent}88 35%, transparent 68%)`,
+                  animation: 'reveal-flash 0.55s ease-out both',
+                }}
+              />
+              {/* Shockwave ring */}
+              <div
+                className="absolute pointer-events-none rounded-full"
+                style={{
+                  width: 220, height: 260,
+                  border: `2px solid ${accent}cc`,
+                  boxShadow: `0 0 24px ${accent}88, inset 0 0 18px ${accent}44`,
+                  animation: 'reveal-ring 0.7s ease-out both',
+                }}
+              />
+              {/* Sparks */}
+              {SPARKS.map((sp, i) => (
+                <span
+                  key={i}
+                  className="absolute rounded-full pointer-events-none"
                   style={{
-                    border: `2px solid ${roleInfo.accentColor}60`,
-                    animation: 'pulseGlow 0.9s ease-in-out infinite',
-                  }}
+                    width: sp.s, height: sp.s,
+                    backgroundColor: i % 3 === 0 ? '#ffe9b8' : accent,
+                    boxShadow: `0 0 8px 2px ${i % 3 === 0 ? 'rgba(255,220,150,0.8)' : `${accent}aa`}`,
+                    ['--sx' as string]: sp.sx,
+                    ['--sy' as string]: sp.sy,
+                    animation: `spark-fly 0.7s ${sp.d} cubic-bezier(0.2,0.7,0.4,1) both`,
+                  } as React.CSSProperties}
                 />
-              )}
+              ))}
+            </>
+          )}
 
-              <div style={{ perspective: '700px', width: '100%', height: '100%' }}>
-                <div
-                  style={{
-                    width: '100%', height: '100%',
-                    transformStyle: 'preserve-3d',
-                    transform: isYours && isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                    transition: 'transform 0.80s cubic-bezier(0.4,0,0.2,1)',
-                    position: 'relative',
-                  }}
-                >
-                  <div
-                    style={{
-                      position: 'absolute', inset: 0,
-                      backfaceVisibility: 'hidden',
-                      borderRadius: '12px', overflow: 'hidden',
-                      border: `1px solid ${borderColor}`,
-                      boxShadow: shadow,
-                      transition: 'border 0.4s, box-shadow 0.4s',
-                    }}
-                  >
-                    <CardBack />
-                  </div>
-
-                  <div
-                    style={{
-                      position: 'absolute', inset: 0,
-                      backfaceVisibility: 'hidden',
-                      transform: 'rotateY(180deg)',
-                      borderRadius: '12px', overflow: 'hidden',
-                      boxShadow: `0 0 44px ${roleInfo.accentColor}55, 0 18px 44px rgba(0,0,0,0.70)`,
-                    }}
-                  >
-                    <CardFace role={myRole} />
-                  </div>
-                </div>
+          {/* The card */}
+          <div
+            ref={cardRef}
+            style={{
+              width: 'clamp(150px, 38vw, 190px)',
+              height: 'clamp(220px, 56vw, 278px)',
+              perspective: '900px',
+              animation: cardAnim,
+              filter: isOpen
+                ? `drop-shadow(0 0 30px ${accent}66) drop-shadow(0 16px 40px rgba(0,0,0,0.7))`
+                : 'drop-shadow(0 14px 34px rgba(0,0,0,0.7))',
+              transition: 'filter 0.5s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '100%', height: '100%',
+                transformStyle: 'preserve-3d',
+                transform: isOpen ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                transition: 'transform 0.8s cubic-bezier(0.4,0,0.2,1)',
+                position: 'relative',
+              }}
+            >
+              {/* Back */}
+              <div
+                style={{
+                  position: 'absolute', inset: 0,
+                  backfaceVisibility: 'hidden',
+                  borderRadius: '12px', overflow: 'hidden',
+                  border: `1px solid ${phase === 'ready' ? `${accent}88` : 'rgba(109,40,217,0.35)'}`,
+                  transition: 'border-color 0.6s ease',
+                }}
+              >
+                <img src="/card-back.png" alt="" draggable={false} className="w-full h-full object-cover" />
+                {/* Cracking light seams while charging */}
+                {(phase === 'charge' || phase === 'ready') && (
+                  <>
+                    <div className="absolute pointer-events-none" style={{ left: '18%', top: '-6%', width: 1.5, height: '115%', transform: 'rotate(14deg)', background: `linear-gradient(180deg, transparent, ${accent}, transparent)`, animation: 'seam-flicker 1.1s ease-in-out 0.1s infinite' }} />
+                    <div className="absolute pointer-events-none" style={{ left: '58%', top: '-6%', width: 1.5, height: '115%', transform: 'rotate(-11deg)', background: `linear-gradient(180deg, transparent, ${accent}, transparent)`, animation: 'seam-flicker 1.3s ease-in-out 0.5s infinite' }} />
+                    <div className="absolute pointer-events-none" style={{ left: '82%', top: '-6%', width: 1, height: '115%', transform: 'rotate(9deg)', background: `linear-gradient(180deg, transparent, ${accent}cc, transparent)`, animation: 'seam-flicker 0.9s ease-in-out 0.3s infinite' }} />
+                  </>
+                )}
+              </div>
+              {/* Face */}
+              <div
+                style={{
+                  position: 'absolute', inset: 0,
+                  backfaceVisibility: 'hidden',
+                  transform: 'rotateY(180deg)',
+                  borderRadius: '12px', overflow: 'hidden',
+                  border: `1px solid ${accent}66`,
+                }}
+              >
+                <CardFace role={myRole} />
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* โ”€โ”€ Role info after flip โ”€โ”€ */}
-      <div
-        className="mt-6 sm:mt-9 text-center"
-        style={{
-          opacity: isRevealed ? 1 : 0,
-          transform: isRevealed ? 'translateY(0)' : 'translateY(18px)',
-          transition: 'opacity 0.65s, transform 0.65s',
-          pointerEvents: isRevealed ? 'auto' : 'none',
-        }}
-      >
-        <p
-          className="text-[8px] sm:text-[9px] font-cinzel uppercase tracking-[0.32em] mb-1"
-          style={{ color: `${roleInfo.accentColor}80` }}
-        >
-          {T('reveal.youAre')}
-        </p>
-        <h3
-          className="font-cinzel text-2xl sm:text-4xl font-bold uppercase tracking-widest mb-2"
-          style={{ color: roleInfo.accentColor, textShadow: `0 0 28px ${roleInfo.accentColor}70` }}
-        >
-          {T(`role.${myRole}.name`)}
-        </h3>
-        <p
-          className="text-[10px] sm:text-[11px] max-w-xs sm:max-w-sm leading-relaxed mb-1"
-          style={{ color: 'rgba(255,255,255,0.50)' }}
-        >
-          {T(`role.${myRole}.description`)}
-        </p>
-        {/* Skill badge */}
-        <div className="flex items-center justify-center gap-2 mb-1.5 mt-1">
-          <RoleSkillIcon role={myRole} size={20} color={roleInfo.accentColor} />
-          <span
-            className="text-[10px] sm:text-[11px] font-cinzel font-bold uppercase tracking-widest"
-            style={{ color: roleInfo.accentColor }}
-          >
-            {T(`skill.${myRole}`)}
-          </span>
+          </div>
         </div>
-        {roleInfo.nightAction && (
-          <p
-            className="text-[9px] sm:text-[10px] max-w-xs sm:max-w-sm leading-relaxed mb-5 italic"
-            style={{ color: `${roleInfo.accentColor}70` }}
-          >
-            {T(`role.${myRole}.nightAction`)}
-          </p>
-        )}
-        {!roleInfo.nightAction && <div className="mb-2" />}
-      </div>
 
-      {/* Tap-to-skip hint */}
-      <span
-        className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-cinzel uppercase tracking-[0.3em] pointer-events-none"
-        style={{ color: 'rgba(255,255,255,0.28)' }}
-      >
-        {T('overlay.tapSkip')}
-      </span>
+        {/* ── Tap-to-open prompt (ready) ── */}
+        <p
+          className="mt-3 font-cinzel text-[11px] sm:text-[12px] uppercase tracking-[0.3em] text-center"
+          style={{
+            color: accent,
+            textShadow: `0 0 14px ${accent}88`,
+            opacity: phase === 'ready' ? 1 : 0,
+            transition: 'opacity 0.4s ease',
+            animation: phase === 'ready' ? 'pulseGlow 1.2s ease-in-out infinite' : undefined,
+          }}
+        >
+          {T('reveal.tapOpen')}
+        </p>
+
+        {/* ── Role info after the flip ── */}
+        <div
+          className="mt-3 sm:mt-4 text-center"
+          style={{
+            opacity: isRevealed ? 1 : 0,
+            transform: isRevealed ? 'translateY(0)' : 'translateY(18px)',
+            transition: 'opacity 0.65s, transform 0.65s',
+            pointerEvents: isRevealed ? 'auto' : 'none',
+          }}
+        >
+          <p
+            className="text-[8px] sm:text-[9px] font-cinzel uppercase tracking-[0.32em] mb-1"
+            style={{ color: `${accent}80` }}
+          >
+            {T('reveal.youAre')}
+          </p>
+          <h3
+            className="font-cinzel text-2xl sm:text-4xl font-bold uppercase tracking-widest mb-2"
+            style={{ color: accent, textShadow: `0 0 28px ${accent}70` }}
+          >
+            {T(`role.${myRole}.name`)}
+          </h3>
+          <p
+            className="text-[10px] sm:text-[11px] max-w-xs sm:max-w-sm leading-relaxed mb-1"
+            style={{ color: 'rgba(255,255,255,0.50)' }}
+          >
+            {T(`role.${myRole}.description`)}
+          </p>
+          {/* Skill badge */}
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <RoleSkillIcon role={myRole} size={20} color={accent} />
+            <span
+              className="text-[10px] sm:text-[11px] font-cinzel font-bold uppercase tracking-widest"
+              style={{ color: accent }}
+            >
+              {T(`skill.${myRole}`)}
+            </span>
+          </div>
+        </div>
+
+        {/* Tap hint (before the reveal) */}
+        <span
+          className="absolute bottom-6 left-0 right-0 text-center text-[10px] font-cinzel uppercase tracking-[0.3em] pointer-events-none"
+          style={{ color: 'rgba(255,255,255,0.28)', opacity: isRevealed ? 0 : 1, transition: 'opacity 0.4s' }}
+        >
+          {T('overlay.tapSkip')}
+        </span>
 
       </div>{/* end fading content */}
 
-      {/* โ”€โ”€ Flying clone โ€” deals the revealed card into the player's own slot โ”€โ”€ */}
+      {/* ── Flying clone — deals the revealed card into the player's own slot ── */}
       {fly && (
         <div
           style={{
@@ -380,7 +409,7 @@ export function RoleRevealOverlay({ myRole, onDismiss }: Props) {
             transition: 'transform 0.66s cubic-bezier(0.5,0,0.2,1), opacity 0.66s ease-in',
             zIndex: 210,
             borderRadius: '12px',
-            boxShadow: `0 0 44px ${roleInfo.accentColor}66, 0 18px 44px rgba(0,0,0,0.7)`,
+            boxShadow: `0 0 44px ${accent}66, 0 18px 44px rgba(0,0,0,0.7)`,
             pointerEvents: 'none',
           }}
         >

@@ -272,6 +272,7 @@
   'hud.votedCount':   'Voted {{voted}}/{{total}}',
   'hud.round':        'Round {{n}}',
   'overlay.tapSkip':  'Tap to skip',
+  'reveal.tapOpen':   'Tap to reveal your fate',
   'card.eliminated':  'Eliminated',
   'card.dead':        'Dead',
   'card.away':        'Away',
