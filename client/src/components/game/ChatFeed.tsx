@@ -52,7 +52,17 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, deadMo
   const accent = deadMode ? '#94a3b8' : wolfMode ? '#ef4444' : '#d97706';
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'linear-gradient(180deg, rgba(11,9,6,0.98) 0%, rgba(3,4,6,0.98) 55%, rgba(6,5,10,0.98) 100%)' }}>
+    <div className="flex flex-col h-full relative" style={{ background: 'linear-gradient(180deg, rgba(11,9,6,0.98) 0%, rgba(3,4,6,0.98) 55%, rgba(6,5,10,0.98) 100%)' }}>
+      {/* Watermark — clawed moon emblem grounding the empty space (behind the feed) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }}>
+        <svg viewBox="0 0 120 120" style={{ width: 150, height: 150, opacity: 0.06, transition: 'stroke 0.5s' }} fill="none" stroke={accent} strokeLinecap="round">
+          <circle cx="60" cy="60" r="43" strokeWidth="2" />
+          <circle cx="60" cy="60" r="36" strokeWidth="0.75" opacity="0.6" />
+          <path d="M40 26 Q56 60 46 96" strokeWidth="3.5" />
+          <path d="M58 20 Q70 60 62 101" strokeWidth="3.5" />
+          <path d="M76 27 Q86 60 80 94" strokeWidth="3.5" />
+        </svg>
+      </div>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 shrink-0" style={{ borderBottom: `1px solid ${accent}33` }}>
         <div className="flex items-center gap-2">
@@ -75,7 +85,7 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, deadMo
       </div>
 
       {/* Combined feed: system log + player chat */}
-      <div className="flex-1 overflow-y-auto px-3 py-2.5 space-y-1.5">
+      <div className="flex-1 overflow-y-auto px-3 py-2.5 space-y-1.5 relative" style={{ zIndex: 1 }}>
         {feed.length === 0 ? (
           <p className="text-center text-[11px] italic mt-6" style={{ color: '#57534e' }}>{T('chat.empty')}</p>
         ) : (

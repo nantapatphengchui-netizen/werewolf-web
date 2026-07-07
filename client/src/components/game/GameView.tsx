@@ -552,8 +552,8 @@ export function GameView({
       >
         {/* Utility header — the top-bar chrome lives here on desktop */}
         <div
-          className="shrink-0 flex flex-col gap-2 px-3 py-2.5"
-          style={{ background: 'linear-gradient(180deg, rgba(14,11,7,0.98) 0%, rgba(6,5,3,0.98) 100%)', borderBottom: '1px solid rgba(146,64,14,0.40)' }}
+          className="shrink-0 flex flex-col gap-2 px-3 pt-2.5 pb-2"
+          style={{ background: 'linear-gradient(180deg, rgba(14,11,7,0.98) 0%, rgba(6,5,3,0.98) 100%)' }}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -609,6 +609,13 @@ export function GameView({
                 <path d="M10.5 11 14 7.5 10.5 4M14 7.5H6" />
               </svg>
             </button>
+          </div>
+
+          {/* Ornamental divider — hairline · diamond · hairline */}
+          <div className="flex items-center gap-2 pt-0.5">
+            <span className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(217,119,6,0.45))' }} />
+            <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: 'rgba(217,119,6,0.55)', boxShadow: '0 0 6px rgba(217,119,6,0.35)' }} />
+            <span className="flex-1 h-px" style={{ background: 'linear-gradient(270deg, transparent, rgba(217,119,6,0.45))' }} />
           </div>
         </div>
 
@@ -964,8 +971,11 @@ export function GameView({
 
           {/* Center: phase + timer hero cluster */}
           <div className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-3 w-full max-w-md">
+            {/* Winged hairline — ties the emblem into the header */}
+            <span className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${phaseHudColor}4d)` }} />
             <div
-              className="flex items-center gap-2.5 px-4 py-1.5 rounded-full"
+              className="flex items-center gap-2.5 px-4 py-1.5 rounded-full shrink-0"
               style={{
                 background: `linear-gradient(180deg, ${phaseHudColor}1a 0%, rgba(0,0,0,0.34) 100%)`,
                 border: `1px solid ${phaseHudColor}38`,
@@ -1012,6 +1022,8 @@ export function GameView({
                   </button>
                 </>
               )}
+            </div>
+            <span className="flex-1 h-px" style={{ background: `linear-gradient(270deg, transparent, ${phaseHudColor}4d)` }} />
             </div>
 
             {/* Night turn status */}
