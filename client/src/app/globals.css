@@ -214,6 +214,25 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Phase transition: celestial rise ──────────────────────────────────────── */
+
+/* Moon/sun climbs over the horizon mask */
+@keyframes celestial-rise {
+  from { transform: translateY(150px) scale(0.88); opacity: 0.4; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Voting — the risen moon turns blood red */
+@keyframes blood-moon-in {
+  0%, 45% { opacity: 0; }
+  80%, 100% { opacity: 0.92; }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: 0.9; }
+}
+
 /* Cards dealt onto the table at game start — staggered per index.
    fill-mode backwards only: once finished the animation stops applying,
    so the hover-lift transform on the same wrapper keeps working. */

@@ -706,27 +706,111 @@ export function GameView({
             }}
           />
           <div className="relative z-10" style={{ animation: 'phase-text-appear 2.5s ease-in-out forwards' }}>
-            {phaseTransition === 'night' && (
-              <svg viewBox="0 0 64 64" style={{ width: 80, height: 80 }} fill="none">
-                <path d="M52 33A20 20 0 1 1 28 11a16 16 0 1 0 24 22z" fill="#c4b5fd" fillOpacity="0.88"/>
-                <circle cx="40" cy="14" r="2" fill="#e9d5ff" opacity="0.7"/>
-                <circle cx="16" cy="24" r="1.5" fill="#ddd6fe" opacity="0.55"/>
-                <circle cx="52" cy="46" r="1.2" fill="#ddd6fe" opacity="0.45"/>
-                <circle cx="48" cy="22" r="0.9" fill="#f5f3ff" opacity="0.40"/>
-              </svg>
-            )}
-            {phaseTransition === 'day' && (
-              <svg viewBox="0 0 64 64" style={{ width: 80, height: 80 }} fill="none" strokeLinecap="round">
-                <circle cx="32" cy="32" r="14" fill="#fbbf24" fillOpacity="0.90"/>
-                <path d="M32 6v8M32 50v8M6 32h8M50 32h8M13.4 13.4l5.7 5.7M44.9 44.9l5.7 5.7M44.9 19.1l5.7-5.7M13.4 50.6l5.7-5.7" stroke="#fbbf24" strokeWidth="2.5"/>
-              </svg>
-            )}
-            {phaseTransition === 'voting' && (
-              <svg viewBox="0 0 64 64" style={{ width: 80, height: 80 }} fill="none">
-                <path d="M12 24l20-6 20 6M32 18v38M18 24l-6 22h12l-6-22zM46 24l-6 22h12l-6-22z" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 54h40" stroke="#f87171" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            )}
+            {/* Horizon window — the celestial body rises from behind its lower edge */}
+            <div className="relative overflow-hidden flex items-end justify-center" style={{ width: 260, height: 172 }}>
+
+              {/* Stars (night sky + blood-moon sky) */}
+              {(phaseTransition === 'night' || phaseTransition === 'voting') && (
+                <>
+                  {[
+                    { l: '10%', t: '20%', s: 2.5, d: '0s' },
+                    { l: '25%', t: '42%', s: 1.5, d: '0.4s' },
+                    { l: '40%', t: '9%',  s: 2,   d: '0.6s' },
+                    { l: '63%', t: '14%', s: 1.5, d: '0.9s' },
+                    { l: '78%', t: '30%', s: 2,   d: '0.25s' },
+                    { l: '90%', t: '52%', s: 1.5, d: '0.7s' },
+                  ].map((st, i) => (
+                    <span
+                      key={i}
+                      className="absolute rounded-full"
+                      style={{
+                        left: st.l, top: st.t, width: st.s, height: st.s,
+                        backgroundColor: phaseTransition === 'voting' ? '#fca5a5' : '#e9d5ff',
+                        boxShadow: `0 0 4px 1px ${phaseTransition === 'voting' ? 'rgba(248,113,113,0.5)' : 'rgba(196,181,253,0.5)'}`,
+                        animation: `star-twinkle 1.8s ease-in-out ${st.d} infinite`,
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* Rising body */}
+              <div style={{ animation: 'celestial-rise 1.5s cubic-bezier(0.22,1,0.36,1) 0.1s both' }}>
+                {phaseTransition === 'day' ? (
+                  /* Sunrise */
+                  <svg width="132" height="132" viewBox="0 0 132 132" style={{ filter: 'drop-shadow(0 0 24px rgba(251,191,36,0.65)) drop-shadow(0 0 58px rgba(217,119,6,0.35))' }}>
+                    <defs>
+                      <radialGradient id="pt-sun" cx="40%" cy="38%" r="72%">
+                        <stop offset="0%" stopColor="#fff7d6" />
+                        <stop offset="55%" stopColor="#fbbf24" />
+                        <stop offset="100%" stopColor="#d97706" />
+                      </radialGradient>
+                    </defs>
+                    <g stroke="#fbbf24" strokeWidth="3" strokeLinecap="round" opacity="0.8">
+                      {Array.from({ length: 12 }).map((_, i) => {
+                        const a = (i * Math.PI) / 6;
+                        return (
+                          <line
+                            key={i}
+                            x1={66 + Math.cos(a) * 44} y1={66 + Math.sin(a) * 44}
+                            x2={66 + Math.cos(a) * 56} y2={66 + Math.sin(a) * 56}
+                          />
+                        );
+                      })}
+                    </g>
+                    <circle cx="66" cy="66" r="34" fill="url(#pt-sun)" />
+                  </svg>
+                ) : (
+                  /* Moonrise — pale; during voting it turns into a blood moon */
+                  <svg
+                    width="126" height="126" viewBox="0 0 126 126"
+                    style={{
+                      filter: phaseTransition === 'voting'
+                        ? 'drop-shadow(0 0 24px rgba(220,38,38,0.6)) drop-shadow(0 0 58px rgba(127,10,10,0.4))'
+                        : 'drop-shadow(0 0 24px rgba(167,139,250,0.55)) drop-shadow(0 0 58px rgba(109,40,217,0.32))',
+                    }}
+                  >
+                    <defs>
+                      <radialGradient id="pt-moon" cx="38%" cy="34%" r="75%">
+                        <stop offset="0%" stopColor="#f3efff" />
+                        <stop offset="60%" stopColor="#c4b5fd" />
+                        <stop offset="100%" stopColor="#8b78d8" />
+                      </radialGradient>
+                      <radialGradient id="pt-blood" cx="40%" cy="36%" r="75%">
+                        <stop offset="0%" stopColor="#f87171" />
+                        <stop offset="55%" stopColor="#b91c1c" />
+                        <stop offset="100%" stopColor="#5f0a0a" />
+                      </radialGradient>
+                    </defs>
+                    <circle cx="63" cy="63" r="46" fill="url(#pt-moon)" />
+                    <circle cx="47" cy="51" r="7.5" fill="rgba(88,76,150,0.28)" />
+                    <circle cx="73" cy="43" r="4.5" fill="rgba(88,76,150,0.22)" />
+                    <circle cx="67" cy="75" r="5.5" fill="rgba(88,76,150,0.25)" />
+                    <circle cx="51" cy="73" r="3"   fill="rgba(88,76,150,0.20)" />
+                    {phaseTransition === 'voting' && (
+                      <g style={{ animation: 'blood-moon-in 2.3s ease-in-out both' }}>
+                        <circle cx="63" cy="63" r="46" fill="url(#pt-blood)" />
+                        <circle cx="47" cy="51" r="7.5" fill="rgba(60,5,5,0.35)" />
+                        <circle cx="73" cy="43" r="4.5" fill="rgba(60,5,5,0.28)" />
+                        <circle cx="67" cy="75" r="5.5" fill="rgba(60,5,5,0.32)" />
+                      </g>
+                    )}
+                  </svg>
+                )}
+              </div>
+
+              {/* Horizon hairline */}
+              <div
+                className="absolute bottom-0 inset-x-3 h-px"
+                style={{
+                  background: `linear-gradient(90deg, transparent, ${
+                    phaseTransition === 'night' ? 'rgba(167,139,250,0.55)'
+                    : phaseTransition === 'day' ? 'rgba(251,191,36,0.55)'
+                    : 'rgba(239,68,68,0.55)'
+                  }, transparent)`,
+                }}
+              />
+            </div>
           </div>
           <div className="relative z-10 text-center" style={{ animation: 'phase-text-appear 2.5s ease-in-out forwards' }}>
             <p
