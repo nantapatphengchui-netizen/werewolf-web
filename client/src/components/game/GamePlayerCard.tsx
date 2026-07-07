@@ -94,91 +94,33 @@ const ACTION_GLOW_COLORS: Record<CardActionType, string> = {
   protect: '#10b981',
 };
 
-function ClawIcon() {
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <path d="M11 6 Q9 13 11 24" stroke="#ef4444" strokeWidth="2.8" strokeLinecap="round"/>
-      <path d="M18 5 Q16 12 18 23" stroke="#ef4444" strokeWidth="2.8" strokeLinecap="round"/>
-      <path d="M25 6 Q23 13 25 24" stroke="#ef4444" strokeWidth="2.8" strokeLinecap="round"/>
-      <circle cx="11" cy="25.5" r="1.6" fill="#ef4444"/>
-      <circle cx="18" cy="24.5" r="1.6" fill="#ef4444"/>
-      <circle cx="25" cy="25.5" r="1.6" fill="#ef4444"/>
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <path d="M5 20 Q20 7 35 20 Q20 33 5 20Z" stroke="#8b5cf6" strokeWidth="1.8" fill="rgba(139,92,246,0.15)"/>
-      <circle cx="20" cy="20" r="7.5" fill="#8b5cf6" opacity="0.9"/>
-      <circle cx="20" cy="20" r="3.5" fill="rgba(10,5,20,0.80)"/>
-      <circle cx="22" cy="18" r="1.8" fill="rgba(255,255,255,0.70)"/>
-      <path d="M20 5v4M20 31v4M5 20h4M31 20h4" stroke="#8b5cf6" strokeWidth="1.2" strokeLinecap="round" opacity="0.65"/>
-    </svg>
-  );
-}
-
-function MedCrossIcon() {
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <circle cx="20" cy="20" r="16" stroke="#10b981" strokeWidth="1.2" fill="rgba(16,185,129,0.10)" opacity="0.7"/>
-      <path d="M20 9v22M9 20h22" stroke="#10b981" strokeWidth="4.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <path d="M20 4L6 9.5v8.5c0 7.5 6 13.5 14 16 8-2.5 14-8.5 14-16V9.5L20 4Z" stroke="#3b82f6" strokeWidth="1.8" fill="rgba(59,130,246,0.14)"/>
-      <path d="M14 20l4.5 4.5 8-8" stroke="#3b82f6" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-function CrosshairIcon() {
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <circle cx="20" cy="20" r="13" stroke="#ea580c" strokeWidth="1.5" fill="rgba(234,88,12,0.10)"/>
-      <circle cx="20" cy="20" r="6" stroke="#ea580c" strokeWidth="1" fill="none" opacity="0.6"/>
-      <circle cx="20" cy="20" r="2.5" fill="#ea580c"/>
-      <path d="M20 4v7M20 29v7M4 20h7M29 20h7" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function SkullIcon() {
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none">
-      <circle cx="20" cy="17" r="10" stroke="#9333ea" strokeWidth="1.5" fill="rgba(147,51,234,0.14)"/>
-      <circle cx="15.5" cy="15.5" r="3" fill="#9333ea"/>
-      <circle cx="24.5" cy="15.5" r="3" fill="#9333ea"/>
-      <path d="M15 23 Q20 27 25 23" stroke="#9333ea" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      <path d="M14 30h12" stroke="#9333ea" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M18 30v4M22 30v4" stroke="#9333ea" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
-
-function VoteIcon() {
-  // Gavel โ€” the village's judgment, distinct from the confirm check
-  return (
-    <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none" stroke="#fbbf24" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 18 L16 10" strokeWidth="6.5" />
-      <path d="M14.5 14.5 L28 28" strokeWidth="2.8" />
-      <path d="M21 33 H34" strokeWidth="3.6" />
-    </svg>
-  );
+/** Skill-art medallion for the acting role + action. */
+function getActionSkillImage(role: Role | null | undefined, actionType: CardActionType): string {
+  if (actionType === 'vote')    return '/villager-skill.png'; // the village's judgment
+  if (actionType === 'inspect') return '/seer-skill.png';
+  if (actionType === 'protect') return role === 'bodyguard' ? '/bodyguard-skill.png' : '/doctor-skill.png';
+  if (role === 'hunter') return '/hunter-skill.png';
+  if (role === 'witch')  return '/witch-skill.png';
+  return '/werewolf-skill.png';
 }
 
 function getActionIcon(role: Role | null | undefined, actionType: CardActionType) {
-  if (actionType === 'vote')    return <VoteIcon />;
-  if (actionType === 'inspect') return <EyeIcon />;
-  if (actionType === 'protect') return role === 'bodyguard' ? <ShieldIcon /> : <MedCrossIcon />;
-  if (role === 'hunter') return <CrosshairIcon />;
-  if (role === 'witch')  return <SkullIcon />;
-  return <ClawIcon />;
+  const glow = ACTION_GLOW_COLORS[actionType];
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={getActionSkillImage(role, actionType)}
+      alt=""
+      draggable={false}
+      className="rounded-full object-cover"
+      style={{
+        width: 62,
+        height: 62,
+        border: `2px solid ${glow}dd`,
+        boxShadow: `0 0 16px ${glow}99, 0 0 36px ${glow}44`,
+      }}
+    />
+  );
 }
 
 // โ”€โ”€ Props โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
