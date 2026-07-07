@@ -256,6 +256,7 @@ export const en: Record<string, string> = {
 
   // ── Card ───────────────────────────────────────────────────────────────────
   'hud.votedCount':   'Voted {{voted}}/{{total}}',
+  'hud.round':        'Round {{n}}',
   'overlay.tapSkip':  'Tap to skip',
   'card.eliminated':  'Eliminated',
   'card.dead':        'Dead',

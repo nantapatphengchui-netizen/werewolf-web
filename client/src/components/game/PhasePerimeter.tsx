@@ -67,6 +67,19 @@ export function PhasePerimeter({ phase, phaseEndAt, paused = false, pausedTimeRe
     >
       {active && size.w > 0 && (
         <svg width={size.w} height={size.h} className="absolute inset-0 block">
+          {/* Antique frame corner ornaments — nested L-flourish + diamond */}
+          <defs>
+            <g id="pp-corner" fill="none" stroke={stroke} strokeLinecap="round">
+              <path d="M3 36 V16 Q3 3 16 3 H36" strokeWidth="1.6" strokeOpacity="0.5" />
+              <path d="M9 30 V18 Q9 9 18 9 H30" strokeWidth="1" strokeOpacity="0.3" />
+              <path d="M15 10 L20 15 L15 20 L10 15 Z" strokeWidth="1.2" strokeOpacity="0.55" fill={stroke} fillOpacity="0.14" />
+            </g>
+          </defs>
+          <use href="#pp-corner" transform={`translate(${inset},${inset})`} style={{ transition: 'stroke 0.5s ease' }} />
+          <use href="#pp-corner" transform={`translate(${size.w - inset},${inset}) scale(-1,1)`} />
+          <use href="#pp-corner" transform={`translate(${inset},${size.h - inset}) scale(1,-1)`} />
+          <use href="#pp-corner" transform={`translate(${size.w - inset},${size.h - inset}) scale(-1,-1)`} />
+
           {/* Faint full frame so the edge is always hinted */}
           <rect
             x={inset} y={inset} width={w} height={h} rx={rx} fill="none"

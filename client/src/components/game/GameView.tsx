@@ -55,6 +55,15 @@ const PHASE_BANNER_CFG: Record<string, { bg: string; borderColor: string; textCo
   voting: { bg: 'rgba(25,4,4,0.92)',   borderColor: 'rgba(185,28,28,0.50)',  textColor: '#f87171', instrColor: '#fca5a5' },
 };
 
+/** Round number as a Roman numeral (Cinzel renders these beautifully). */
+function toRoman(n: number): string {
+  if (n <= 0 || n > 3999) return String(n);
+  const M: [number, string][] = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let out = '';
+  for (const [v, s] of M) while (n >= v) { out += s; n -= v; }
+  return out;
+}
+
 const PHASE_ICON: Record<string, React.ReactNode> = {
   // Crescent moon with a few stars
   night: (
@@ -729,7 +738,7 @@ export function GameView({
                 : phaseTransition === 'day' ? 'rgba(251,191,36,0.55)'
                 : 'rgba(248,113,113,0.55)',
             }}>
-              Round {room.round}
+              {T('hud.round', { n: toRoman(room.round) })}
             </p>
           </div>
           <span
@@ -768,7 +777,7 @@ export function GameView({
           <div className="flex items-center gap-1.5 shrink-0" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
             {PHASE_ICON[room.phase]}
             <span className="font-cinzel text-xs tracking-widest uppercase font-semibold">
-              {room.phase === 'ended' ? T('hud.gameOver') : `${T(`phase.${room.phase}`)} · R${room.round}`}
+              {room.phase === 'ended' ? T('hud.gameOver') : `${T(`phase.${room.phase}`)} · ${toRoman(room.round)}`}
             </span>
           </div>
 
@@ -985,7 +994,7 @@ export function GameView({
               <span className="flex items-center gap-1.5" style={{ color: phaseHudColor, textShadow: `0 0 10px ${phaseHudColor}66` }}>
                 {PHASE_ICON[room.phase]}
                 <span className="font-cinzel text-sm tracking-[0.18em] uppercase font-bold">
-                  {room.phase === 'ended' ? T('hud.gameOver') : `${T(`phase.${room.phase}`)} · R${room.round}`}
+                  {room.phase === 'ended' ? T('hud.gameOver') : `${T(`phase.${room.phase}`)} · ${toRoman(room.round)}`}
                 </span>
               </span>
               {showTimer && (

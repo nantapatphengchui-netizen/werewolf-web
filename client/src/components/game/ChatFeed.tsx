@@ -66,9 +66,32 @@ export function ChatFeed({ messages, events, playerId, canChat, wolfMode, deadMo
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 shrink-0" style={{ borderBottom: `1px solid ${accent}33` }}>
         <div className="flex items-center gap-2">
-          <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke={accent} strokeWidth="1.6">
-            <path d="M17 9.5a6.5 6.5 0 0 1-9.3 5.9L3 16.5l1.2-4.4A6.5 6.5 0 1 1 17 9.5z" strokeLinejoin="round" />
-          </svg>
+          {deadMode ? (
+            /* Tombstone — graveyard channel */
+            <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke={accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 16V8.5a5 5 0 0 1 10 0V16" />
+              <path d="M3.5 16.5h13" />
+              <path d="M10 7.5v4M8.3 9h3.4" />
+            </svg>
+          ) : wolfMode ? (
+            /* Paw print — the wolves' private channel */
+            <svg viewBox="0 0 20 20" className="w-4 h-4" fill={accent}>
+              <ellipse cx="10" cy="13" rx="3.4" ry="3" />
+              <ellipse cx="5.2" cy="9.4" rx="1.5" ry="1.9" transform="rotate(-18 5.2 9.4)" />
+              <ellipse cx="8.3" cy="6.6" rx="1.5" ry="2" transform="rotate(-6 8.3 6.6)" />
+              <ellipse cx="11.7" cy="6.6" rx="1.5" ry="2" transform="rotate(6 11.7 6.6)" />
+              <ellipse cx="14.8" cy="9.4" rx="1.5" ry="1.9" transform="rotate(18 14.8 9.4)" />
+            </svg>
+          ) : (
+            /* Village houses — public square */
+            <svg viewBox="0 0 20 20" className="w-4 h-4" fill="none" stroke={accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2.5 9.5 7 5l4.5 4.5" />
+              <path d="M4 9v7h6V9" />
+              <path d="M10.5 16h6v-5" />
+              <path d="M11 8.5 14 6l3.5 3" />
+              <path d="M6.2 16v-3h1.6v3" />
+            </svg>
+          )}
           <p className="font-cinzel text-[11px] uppercase tracking-widest" style={{ color: accent }}>
             {deadMode ? T('chat.deadTitle') : wolfMode ? T('chat.wolfTitle') : T('chat.title')}
           </p>
