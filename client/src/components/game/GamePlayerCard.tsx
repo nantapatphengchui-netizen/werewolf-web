@@ -232,7 +232,16 @@ export function GamePlayerCard({
   actionType = null, actorRole, onConfirmAction, onCancelAction, reaction,
 }: Props) {
   const T = useT();
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef  = useRef<HTMLDivElement>(null);
+  const glareRef = useRef<HTMLDivElement>(null);
+  const tiltOk   = useRef(false);
+
+  // 3D tilt is desktop-only (fine pointer) and honours prefers-reduced-motion
+  useEffect(() => {
+    tiltOk.current =
+      window.matchMedia('(pointer: fine)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
 
   // ── Burn-on-death effect ──────────────────────────────────────────────────
   const prevAliveRef = useRef(player.isAlive);
@@ -303,10 +312,28 @@ export function GamePlayerCard({
       cardRef.current.style.boxShadow = ac.hoverGlow;
     }
   };
-  const handleMouseLeave = () => {
-    if (cardRef.current && isValidTarget && !isSelected) {
-      cardRef.current.style.boxShadow = boxShadow ?? '';
+
+  // Perspective tilt + light glare that tracks the cursor (transform/opacity only)
+  const handleTiltMove = (e: React.MouseEvent) => {
+    if (!tiltOk.current || burning || !cardRef.current) return;
+    const r  = cardRef.current.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;   // -0.5 … 0.5
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    cardRef.current.style.transform =
+      `perspective(720px) rotateY(${(px * 7).toFixed(2)}deg) rotateX(${(-py * 7).toFixed(2)}deg)`;
+    if (glareRef.current) {
+      glareRef.current.style.opacity = '1';
+      glareRef.current.style.background =
+        `radial-gradient(circle at ${((px + 0.5) * 100).toFixed(1)}% ${((py + 0.5) * 100).toFixed(1)}%, rgba(255,240,205,0.11), transparent 58%)`;
     }
+  };
+
+  const handleMouseLeave = () => {
+    if (cardRef.current) {
+      cardRef.current.style.transform = '';
+      if (isValidTarget && !isSelected) cardRef.current.style.boxShadow = boxShadow ?? '';
+    }
+    if (glareRef.current) glareRef.current.style.opacity = '0';
   };
 
   const imgFilter = burning  ? undefined
@@ -364,12 +391,20 @@ export function GamePlayerCard({
       ref={cardRef}
       onClick={isValidTarget || isSelected ? onClick : undefined}
       onMouseEnter={handleMouseEnter}
+      onMouseMove={handleTiltMove}
       onMouseLeave={handleMouseLeave}
       style={{ border, boxShadow, animation: cardAnimation, ['--you-rgb' as string]: myRoleRgb } as React.CSSProperties}
       className={`relative w-full h-full overflow-hidden rounded-xl select-none transition-all duration-200 ${cursor}`}
     >
       {/* ── Corner ornaments ── */}
       <CardCorners color={cornerColor} opacity={cornerOpacity} />
+
+      {/* ── Cursor-tracking glare (paired with the 3D tilt) ── */}
+      <div
+        ref={glareRef}
+        className="absolute inset-0 pointer-events-none rounded-xl"
+        style={{ opacity: 0, transition: 'opacity 0.3s ease', zIndex: 6 }}
+      />
 
       {/* ── Background image ── */}
       {shownRole ? (

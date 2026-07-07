@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRoom } from '@/hooks/useRoom';
 import { useGameStore } from '@/store/gameStore';
@@ -23,10 +23,36 @@ const PHASE_TINT: Record<string, string> = {
 
 function Background({ phase }: { phase: string }) {
   const tint = PHASE_TINT[phase] ?? 'bg-black/55';
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Subtle mouse parallax — the village drifts against the cursor for depth.
+  // Desktop only, honours prefers-reduced-motion; transform-only via rAF easing.
+  useEffect(() => {
+    if (
+      !window.matchMedia('(pointer: fine)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) return;
+
+    let raf = 0, tx = 0, ty = 0, cx = 0, cy = 0;
+    const step = () => {
+      cx += (tx - cx) * 0.06;
+      cy += (ty - cy) * 0.06;
+      if (imgRef.current) imgRef.current.style.transform = `scale(1.06) translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px)`;
+      raf = (Math.abs(tx - cx) > 0.1 || Math.abs(ty - cy) > 0.1) ? requestAnimationFrame(step) : 0;
+    };
+    const onMove = (e: MouseEvent) => {
+      tx = (e.clientX / window.innerWidth - 0.5) * -16;
+      ty = (e.clientY / window.innerHeight - 0.5) * -10;
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => { window.removeEventListener('mousemove', onMove); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+
   return (
-    <div className="fixed inset-0 -z-10">
+    <div className="fixed inset-0 -z-10 overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/bg.png" alt="" className="w-full h-full object-cover object-center" draggable={false} />
+      <img ref={imgRef} src="/bg.png" alt="" className="w-full h-full object-cover object-center" draggable={false} style={{ transform: 'scale(1.06)' }} />
       <div className="absolute inset-0 bg-black/40" />
       <div className={`absolute inset-0 transition-colors duration-1000 ${tint}`} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.5)_100%)]" />

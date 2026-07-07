@@ -214,6 +214,14 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Cards dealt onto the table at game start — staggered per index.
+   fill-mode backwards only: once finished the animation stops applying,
+   so the hover-lift transform on the same wrapper keeps working. */
+@keyframes card-deal-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* ── Event log slide-in ─────────────────────────────────────────────────────── */
 
 @keyframes log-entry-slide {
