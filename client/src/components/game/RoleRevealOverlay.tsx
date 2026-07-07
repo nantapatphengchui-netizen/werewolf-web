@@ -15,7 +15,7 @@ const ROLE_IMAGE: Record<Role, string> = {
   hunter:    '/role-hunter.png',
   witch:     '/role-witch.png',
   bodyguard: '/role-bodyguard.png',
-  jester:    '/role-villager.png',
+  jester:    '/role-joker.png',
 };
 
 type Phase = 'enter' | 'spread' | 'shuffle' | 'pick' | 'flip' | 'revealed';

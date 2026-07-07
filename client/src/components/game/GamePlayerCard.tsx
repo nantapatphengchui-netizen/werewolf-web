@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useRef, useState, useEffect } from 'react';
 import type { Player, Role } from '@/types/game';
@@ -14,10 +14,10 @@ const ROLE_IMAGE: Record<Role, string> = {
   hunter:    '/role-hunter.png',
   witch:     '/role-witch.png',
   bodyguard: '/role-bodyguard.png',
-  jester:    '/role-villager.png', // no dedicated art yet — accent color distinguishes it
+  jester:    '/role-joker.png',
 };
 
-// ── Action color config ───────────────────────────────────────────────────────
+// โ”€โ”€ Action color config โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 
 export type CardActionType = 'vote' | 'kill' | 'inspect' | 'protect';
 
@@ -63,7 +63,7 @@ const ACTION_COLORS: Record<CardActionType, ActionColorConfig> = {
   },
 };
 
-// ── Ember particles config ────────────────────────────────────────────────────
+// โ”€โ”€ Ember particles config โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 
 const EMBERS = [
   { left: '22%', top: '58%', color: '#fb923c', delay: '0.10s', dur: '0.82s', anim: 'ember-0' },
@@ -78,7 +78,7 @@ const EMBERS = [
   { left: '8%',  top: '64%', color: '#fcd34d', delay: '0.12s', dur: '0.80s', anim: 'ember-2' },
 ] as const;
 
-// ── Action icon config ────────────────────────────────────────────────────────
+// โ”€โ”€ Action icon config โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 
 const PULSE_COLORS: Record<CardActionType, string> = {
   vote:    'rgba(251,191,36,0.18)',
@@ -162,7 +162,7 @@ function SkullIcon() {
 }
 
 function VoteIcon() {
-  // Gavel — the village's judgment, distinct from the confirm check
+  // Gavel โ€” the village's judgment, distinct from the confirm check
   return (
     <svg viewBox="0 0 40 40" style={{ width: 44, height: 44 }} fill="none" stroke="#fbbf24" strokeLinecap="round" strokeLinejoin="round">
       <path d="M8 18 L16 10" strokeWidth="6.5" />
@@ -181,7 +181,7 @@ function getActionIcon(role: Role | null | undefined, actionType: CardActionType
   return <ClawIcon />;
 }
 
-// ── Props ─────────────────────────────────────────────────────────────────────
+// โ”€โ”€ Props โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 
 interface Props {
   player: Player;
@@ -202,7 +202,7 @@ interface Props {
   reaction?: { emoji: string; key: number };
 }
 
-// ── Corner ornaments ──────────────────────────────────────────────────────────
+// โ”€โ”€ Corner ornaments โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 
 function CardCorners({ color, opacity }: { color: string; opacity: number }) {
   const p = { stroke: color, strokeWidth: '1.5', fill: 'none', strokeLinecap: 'round' as const };
@@ -224,7 +224,7 @@ function CardCorners({ color, opacity }: { color: string; opacity: number }) {
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// โ”€โ”€ Component โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 
 export function GamePlayerCard({
   player, index, isCurrentPlayer, isWerewolfTeammate,
@@ -244,7 +244,7 @@ export function GamePlayerCard({
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }, []);
 
-  // ── Burn-on-death effect ──────────────────────────────────────────────────
+  // โ”€โ”€ Burn-on-death effect โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
   const prevAliveRef = useRef(player.isAlive);
   const [burning, setBurning] = useState(false);
 
@@ -318,7 +318,7 @@ export function GamePlayerCard({
   const handleTiltMove = (e: React.MouseEvent) => {
     if (!tiltOk.current || burning || !cardRef.current) return;
     const r  = cardRef.current.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;   // -0.5 … 0.5
+    const px = (e.clientX - r.left) / r.width - 0.5;   // -0.5 โ€ฆ 0.5
     const py = (e.clientY - r.top) / r.height - 0.5;
     cardRef.current.style.transform =
       `perspective(720px) rotateY(${(px * 7).toFixed(2)}deg) rotateX(${(-py * 7).toFixed(2)}deg)`;
@@ -397,17 +397,17 @@ export function GamePlayerCard({
       style={{ border, boxShadow, animation: cardAnimation, ['--you-rgb' as string]: myRoleRgb } as React.CSSProperties}
       className={`relative w-full h-full overflow-hidden rounded-xl select-none transition-all duration-200 ${cursor}`}
     >
-      {/* ── Corner ornaments ── */}
+      {/* โ”€โ”€ Corner ornaments โ”€โ”€ */}
       <CardCorners color={cornerColor} opacity={cornerOpacity} />
 
-      {/* ── Cursor-tracking glare (paired with the 3D tilt) ── */}
+      {/* โ”€โ”€ Cursor-tracking glare (paired with the 3D tilt) โ”€โ”€ */}
       <div
         ref={glareRef}
         className="absolute inset-0 pointer-events-none rounded-xl"
         style={{ opacity: 0, transition: 'opacity 0.3s ease', zIndex: 6 }}
       />
 
-      {/* ── Background image ── */}
+      {/* โ”€โ”€ Background image โ”€โ”€ */}
       {shownRole ? (
         <img
           src={ROLE_IMAGE[shownRole]}
@@ -426,7 +426,7 @@ export function GamePlayerCard({
         />
       )}
 
-      {/* ── Moonlight rim on the hood (adds form to dark portraits) ── */}
+      {/* โ”€โ”€ Moonlight rim on the hood (adds form to dark portraits) โ”€โ”€ */}
       {!burning && (
         <div
           className="absolute inset-x-0 top-0 h-1/2 pointer-events-none"
@@ -434,19 +434,19 @@ export function GamePlayerCard({
         />
       )}
 
-      {/* ── Inner frame highlight (crafted edge) ── */}
+      {/* โ”€โ”€ Inner frame highlight (crafted edge) โ”€โ”€ */}
       <div
         className="absolute inset-0 pointer-events-none rounded-xl"
         style={{ boxShadow: 'inset 0 1px 0 rgba(255,240,210,0.10), inset 0 0 0 1px rgba(0,0,0,0.35), inset 0 -18px 30px rgba(0,0,0,0.45)' }}
       />
 
-      {/* ── Nameplate gradient ── */}
+      {/* โ”€โ”€ Nameplate gradient โ”€โ”€ */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.62) 38%, rgba(0,0,0,0.10) 65%, transparent 100%)' }}
       />
 
-      {/* ── Ambient shimmer (alive cards only) ── */}
+      {/* โ”€โ”€ Ambient shimmer (alive cards only) โ”€โ”€ */}
       {alive && !burning && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl" style={{ zIndex: 4 }}>
           <div
@@ -459,7 +459,7 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── Burn death effect ── */}
+      {/* โ”€โ”€ Burn death effect โ”€โ”€ */}
       {burning && (
         <>
           {/* Initial flash burst */}
@@ -501,7 +501,7 @@ export function GamePlayerCard({
         </>
       )}
 
-      {/* ── Emoji reaction float ── */}
+      {/* โ”€โ”€ Emoji reaction float โ”€โ”€ */}
       {reaction && (
         <div
           key={reaction.key}
@@ -523,7 +523,7 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── Role action icon overlay ── */}
+      {/* โ”€โ”€ Role action icon overlay โ”€โ”€ */}
       {isSelected && alive && actionType && (
         <div
           className="absolute inset-x-0 flex justify-center pointer-events-none"
@@ -538,7 +538,7 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── State overlays ── */}
+      {/* โ”€โ”€ State overlays โ”€โ”€ */}
       {isInvalidTarget && (
         <div className="absolute inset-0 bg-black/55 pointer-events-none" />
       )}
@@ -563,7 +563,7 @@ export function GamePlayerCard({
         )
       )}
 
-      {/* ── Dead state: blood wash + "ตายแล้ว" stamp ── */}
+      {/* โ”€โ”€ Dead state: blood wash + "เธ•เธฒเธขเนเธฅเนเธง" stamp โ”€โ”€ */}
       {!alive && !burning && (
         <>
           {/* Blood-red vignette darkening the edges */}
@@ -579,7 +579,7 @@ export function GamePlayerCard({
             className="absolute inset-x-0 top-0 h-2/5 pointer-events-none"
             style={{ background: 'linear-gradient(to bottom, rgba(96,4,4,0.52) 0%, rgba(60,0,0,0.20) 46%, transparent 100%)', zIndex: 6 }}
           />
-          {/* Diagonal "ตายแล้ว" stamp */}
+          {/* Diagonal "เธ•เธฒเธขเนเธฅเนเธง" stamp */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 16 }}>
             <span
               className="font-cinzel font-bold uppercase tracking-[0.2em] text-[11px] px-2.5 py-1 rounded"
@@ -598,7 +598,7 @@ export function GamePlayerCard({
         </>
       )}
 
-      {/* ── Host crown ── */}
+      {/* โ”€โ”€ Host crown โ”€โ”€ */}
       {player.isHost && (
         <div className="absolute top-1 left-1/2 -translate-x-1/2 z-20">
           <svg viewBox="0 0 18 12" className="w-4 h-3" fill="#fbbf24">
@@ -610,7 +610,7 @@ export function GamePlayerCard({
         </div>
       )}
 
-      {/* ── Top-right: wolf badge or connection dot ── */}
+      {/* โ”€โ”€ Top-right: wolf badge or connection dot โ”€โ”€ */}
       <div className="absolute top-1.5 right-1.5 z-10">
         {isWerewolfTeammate && alive ? (
           <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(127,29,29,0.97)', border: '1px solid rgba(220,38,38,0.70)' }}>
@@ -626,7 +626,7 @@ export function GamePlayerCard({
         )}
       </div>
 
-      {/* ── Vote seal ── */}
+      {/* โ”€โ”€ Vote seal โ”€โ”€ */}
       {typeof voteCount === 'number' && voteCount > 0 && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
           <div key={voteCount} style={{ animation: 'vote-pop 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
@@ -656,7 +656,7 @@ export function GamePlayerCard({
       )}
 
 
-      {/* ── Nameplate ── */}
+      {/* โ”€โ”€ Nameplate โ”€โ”€ */}
       <div className="absolute bottom-0 left-0 right-0 px-2 pb-1.5 z-10">
         {/* Accent divider */}
         <div
@@ -712,7 +712,7 @@ export function GamePlayerCard({
                 fontSize: '13px',
                 lineHeight: 1,
               }}
-            >✕</button>
+            >โ•</button>
             {/* Confirm */}
             <button
               onClick={e => { e.stopPropagation(); onConfirmAction(); }}
@@ -726,7 +726,7 @@ export function GamePlayerCard({
                 boxShadow: ac ? `0 0 8px ${ac.btnBorder}55` : undefined,
               }}
             >
-              ✓ {actionType ? T(`action.${actionType}`) : T('action.confirm')}
+              โ“ {actionType ? T(`action.${actionType}`) : T('action.confirm')}
             </button>
           </div>
         )}

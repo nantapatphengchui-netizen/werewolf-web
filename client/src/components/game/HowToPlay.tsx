@@ -13,7 +13,7 @@ const ROLE_IMAGE: Record<Role, string> = {
   hunter:    '/role-hunter.png',
   witch:     '/role-witch.png',
   bodyguard: '/role-bodyguard.png',
-  jester:    '/role-villager.png',
+  jester:    '/role-joker.png',
 };
 
 // Werewolf first (the threat), then village roles, then the neutral jester
